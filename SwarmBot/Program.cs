@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using System.IO;
 
 namespace SwarmBot
 {
@@ -15,9 +17,12 @@ namespace SwarmBot
     {
         static void Main(string[] args)
         {
+            XDocument configFile = XDocument.Load("config.xml");
+            var email = configFile.Descendants("email").ToString();
+            var password = configFile.Descendants("password").ToString();
             DiscordClient client = new DiscordClient();
-            client.ClientPrivateInformation.email = "EMAIL";
-            client.ClientPrivateInformation.password = "PASSWORD";
+            client.ClientPrivateInformation.email = email;
+            client.ClientPrivateInformation.password = password;
 
             client.Connected += (sender, e) =>
             {
@@ -79,7 +84,7 @@ namespace SwarmBot
                                 try {
                                     e.Channel.parent.members.Find(x => x.Username == firstMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + secondMatch);
                                 }
-                                catch (Exception f)
+                                catch (Exception)
                                 {
                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off? Make sure you're putting commas inbetween the names!");
                                 }
@@ -94,7 +99,7 @@ namespace SwarmBot
                                     e.Channel.parent.members.Find(x => x.Username == firstMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + thirdMatch);
                                     e.Channel.parent.members.Find(x => x.Username == secondMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + thirdMatch);
                                 }
-                                catch (Exception f)
+                                catch (Exception)
                                 {
                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off? Make sure you're putting commas inbetween the names!");
                                 }
@@ -111,7 +116,7 @@ namespace SwarmBot
                                     e.Channel.parent.members.Find(x => x.Username == secondMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + fourthMatch);
                                     e.Channel.parent.members.Find(x => x.Username == thirdMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + fourthMatch);
                                 }
-                                catch (Exception f)
+                                catch (Exception)
                                 {
                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off? Make sure you're putting commas inbetween the names!");
                                 }
@@ -132,7 +137,7 @@ namespace SwarmBot
                                     e.Channel.parent.members.Find(x => x.Username == thirdMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + fifthMatch);
                                     e.Channel.parent.members.Find(x => x.Username == fourthMatch).SendMessage("@" + e.message.author.Username + " has invited you to play: " + fifthMatch);
                                 }
-                                catch (Exception f)
+                                catch (Exception)
                                 {
                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off? Make sure you're putting commas inbetween the names!");
                                 }

@@ -88,8 +88,8 @@
     <None Include="SwarmBot_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="bin\Debug\config.xml" />
     <None Include="lib\DiscordSharp.dll" />
-    <Content Include="config.txt" />
     <Content Include="lib\libsodium.dll" />
     <Content Include="lib\NAudio.dll" />
     <Content Include="lib\Newtonsoft.Json.dll" />
