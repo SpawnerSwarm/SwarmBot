@@ -90,6 +90,7 @@
   <ItemGroup>
     <Content Include="bin\Debug\config.xml" />
     <None Include="lib\DiscordSharp.dll" />
+    <Content Include="bin\Debug\PersonellDB.xml" />
     <Content Include="lib\libsodium.dll" />
     <Content Include="lib\NAudio.dll" />
     <Content Include="lib\Newtonsoft.Json.dll" />

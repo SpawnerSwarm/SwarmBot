@@ -7,6 +7,7 @@
 *.userosscache
 *.sln.docstates
 config.xml
+PersonellDB.xml
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
