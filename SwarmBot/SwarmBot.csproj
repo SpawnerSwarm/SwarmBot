@@ -89,13 +89,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\DiscordSharp.dll" />
-<<<<<<< HEAD
     <Content Include="bin\Debug\PersonellDB.xml">
       <SubType>Designer</SubType>
     </Content>
-=======
     <Content Include="bin\Debug\config.xml" />
->>>>>>> f40ccf83faaf73e27e3ff3b3fb79acfc45768196
     <Content Include="lib\libsodium.dll" />
     <Content Include="lib\NAudio.dll" />
     <Content Include="lib\Newtonsoft.Json.dll" />
