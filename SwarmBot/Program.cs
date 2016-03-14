@@ -180,93 +180,93 @@ namespace SwarmBot
                         e.Channel.SendMessage(guildmail);
                     }
                     else if (e.message_text.StartsWith("!invite"))
-                     {
-                         string numInvitees = Regex.Match(e.message_text, @"([1-8])", RegexOptions.Singleline).Groups[1].Value;
-                         if (numInvitees != "")
-                         {
-                             if (numInvitees == "1")
-                             {
-                                 Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (.+)");
-                                 string firstMatch = matches.Groups[1].Value;
-                                 string secondMatch = matches.Groups[2].Value;
-                                 /*Console.WriteLine(firstMatch);
-                                 Console.WriteLine(secondMatch);*/
-                                 // In the future, this will also dispatch a steam message.
-                                 try
-                                 {
-                                     SendInvite(firstMatch, secondMatch, e);
-                                 }
-                                 catch (Exception)
-                                 {
-                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                                 }
-                             }
-                             else if (numInvitees == "2")
-                             {
-                                 Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (.+)");
-                                 string firstMatch = matches.Groups[1].Value;
-                                 string secondMatch = matches.Groups[2].Value;
-                                 string thirdMatch = matches.Groups[3].Value;
-                                 try
-                                 {
-                                     SendInvite(firstMatch, thirdMatch, e);
-                                     SendInvite(secondMatch, thirdMatch, e);
-                                 }
-                                 catch (Exception)
-                                 {
-                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                                 }
-                             }
-                             else if (numInvitees == "3")
-                             {
-                                 Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
-                                 string firstMatch = matches.Groups[1].Value;
-                                 string secondMatch = matches.Groups[2].Value;
-                                 string thirdMatch = matches.Groups[3].Value;
-                                 string fourthMatch = matches.Groups[4].Value;
-                                 try
-                                 {
-                                     SendInvite(firstMatch, fourthMatch, e);
-                                     SendInvite(secondMatch, fourthMatch, e);
-                                     SendInvite(thirdMatch, fourthMatch, e);
-                                 }
-                                 catch (Exception)
-                                 {
-                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                                 }
-                             }
-                             else if (numInvitees == "4")
-                             {
-                                 Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
-                                 string firstMatch = matches.Groups[1].Value;
-                                 string secondMatch = matches.Groups[2].Value;
-                                 string thirdMatch = matches.Groups[3].Value;
-                                 string fourthMatch = matches.Groups[4].Value;
-                                 string fifthMatch = matches.Groups[5].Value;
+                    {
+                        string numInvitees = Regex.Match(e.message_text, @"([1-8])", RegexOptions.Singleline).Groups[1].Value;
+                        if (numInvitees != "")
+                        {
+                            if (numInvitees == "1")
+                            {
+                                Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (.+)");
+                                string firstMatch = matches.Groups[1].Value;
+                                string secondMatch = matches.Groups[2].Value;
+                                /*Console.WriteLine(firstMatch);
+                                Console.WriteLine(secondMatch);*/
+                                // In the future, this will also dispatch a steam message.
+                                try
+                                {
+                                    SendInvite(firstMatch, secondMatch, e);
+                                }
+                                catch (Exception)
+                                {
+                                    e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
+                                }
+                            }
+                            else if (numInvitees == "2")
+                            {
+                                Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (.+)");
+                                string firstMatch = matches.Groups[1].Value;
+                                string secondMatch = matches.Groups[2].Value;
+                                string thirdMatch = matches.Groups[3].Value;
+                                try
+                                {
+                                    SendInvite(firstMatch, thirdMatch, e);
+                                    SendInvite(secondMatch, thirdMatch, e);
+                                }
+                                catch (Exception)
+                                {
+                                    e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
+                                }
+                            }
+                            else if (numInvitees == "3")
+                            {
+                                Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
+                                string firstMatch = matches.Groups[1].Value;
+                                string secondMatch = matches.Groups[2].Value;
+                                string thirdMatch = matches.Groups[3].Value;
+                                string fourthMatch = matches.Groups[4].Value;
+                                try
+                                {
+                                    SendInvite(firstMatch, fourthMatch, e);
+                                    SendInvite(secondMatch, fourthMatch, e);
+                                    SendInvite(thirdMatch, fourthMatch, e);
+                                }
+                                catch (Exception)
+                                {
+                                    e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
+                                }
+                            }
+                            else if (numInvitees == "4")
+                            {
+                                Match matches = Regex.Match(e.message_text, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
+                                string firstMatch = matches.Groups[1].Value;
+                                string secondMatch = matches.Groups[2].Value;
+                                string thirdMatch = matches.Groups[3].Value;
+                                string fourthMatch = matches.Groups[4].Value;
+                                string fifthMatch = matches.Groups[5].Value;
 
-                                 try
-                                 {
-                                     SendInvite(firstMatch, fifthMatch, e);
-                                     SendInvite(secondMatch, fifthMatch, e);
-                                     SendInvite(thirdMatch, fifthMatch, e);
-                                     SendInvite(fourthMatch, fifthMatch, e);
-                                 }
-                                 catch (Exception)
-                                 {
-                                     e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                                 }
+                                try
+                                {
+                                    SendInvite(firstMatch, fifthMatch, e);
+                                    SendInvite(secondMatch, fifthMatch, e);
+                                    SendInvite(thirdMatch, fifthMatch, e);
+                                    SendInvite(fourthMatch, fifthMatch, e);
+                                }
+                                catch (Exception)
+                                {
+                                    e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
+                                }
 
-                             }
-                             else
-                             {
-                                 e.Channel.SendMessage("Sorry, only 1-4 invitees are supported with one command!");
-                             };
-                         }
-                         else
-                         {
-                             e.Channel.SendMessage("Error: Number of invitees not specified.");
-                         };
-                     }
+                            }
+                            else
+                            {
+                                e.Channel.SendMessage("Sorry, only 1-4 invitees are supported with one command!");
+                            };
+                        }
+                        else
+                        {
+                            e.Channel.SendMessage("Error: Number of invitees not specified.");
+                        };
+                    }
                     else if (e.message_text.StartsWith("!getMember"))
                     {
                         Match cmd = Regex.Match(e.message_text, @"!getMember (?:<@(.+)>)?(?: )?(?:(-f))?(?: )?(?:(-h))?");
@@ -340,9 +340,17 @@ namespace SwarmBot
                     }
                     else if (e.message_text.StartsWith("!promote"))
                     {
-                        Match cmd = Regex.Match(e.message_text, @"!promote <@(.+)>(?: -f \((.+)\))?(?: (-h))?");
+                        Match cmd = Regex.Match(e.message_text, @"!promote <@(.+)>(?: -f \((.+)\))?(?: --date ([^ ]+)| -d ([^ ]+))?(?: (-h))?");
                         DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
                         string force = cmd.Groups[2].Value;
+                        string date = "";
+                            if (cmd.Groups[3].Value != "")
+                            {
+                                date = cmd.Groups[3].Value;
+                            } else if(cmd.Groups[4].Value != "")
+                            {
+                                date = cmd.Groups[4].Value;
+                            }
                         bool isForce = force != "";
                         bool help = cmd.Groups[3].Value.Equals("-h");
 
@@ -382,7 +390,7 @@ namespace SwarmBot
                                                         jToRank = j.Attribute("name").Value;
                                                     }
                                                     Console.WriteLine(jToRank);
-                                                    e.Channel.parent.AssignRoleToMember(e.Channel.parent.roles.Find(x => x.name == jToRank), member);
+                                                    try { e.Channel.parent.AssignRoleToMember(e.Channel.parent.roles.Find(x => x.name == jToRank), member); } catch(Exception) { Console.WriteLine("No Rank exists"); };
                                                     h.Value = jToRank;
                                                     DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
                                                     Console.WriteLine(now);
@@ -391,7 +399,8 @@ namespace SwarmBot
                                                         .Where(x => x.Attribute("name").Value == jToRank);
                                                     foreach (XElement k in lastRankUp)
                                                     {
-                                                        k.Value = Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value;
+                                                        if(date != "") { k.Value = date; }
+                                                        else { k.Value = Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value; }
                                                     }
                                                     memberDB.Save("PersonellDB.xml");
                                                     e.Channel.SendMessage("Successfully promoted " + member.Username + " to " + jToRank);
@@ -414,29 +423,100 @@ namespace SwarmBot
                     }
                     else if (e.message_text.StartsWith("!createMember"))
                     {
-                        Match cmd = Regex.Match(e.message_text, @"!createMember <@(.+) > (?: --steam([^ 1 - 9] +) | -s([^ 1 - 9] +) | --steam([^ ][1 - 8] +)| -s([^ ][1 - 8] +))?(--populate | -p)");
-                        DiscordMember member = e.Channel.parent.members.Find(x => x.Username == cmd.Groups[1].Value);
+                        Match cmd = Regex.Match(e.message_text, @"!createMember <@(.+)>(?: --date ([^ ]+)| -d ([^ ]+))?(?: --steam ([^ 0-9]+)| -s ([^ 0-9]+)| --steam ([^ ][0-9]+)| -s ([^ ][0-9]+))?( --populate| -p)?");
+                        DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
+                        bool isSettingSteam = false;
+                        bool isSteamNumerical = false;
+                        bool isSettingDate = false;
+                        string date = "";
+                        string steamId = "";
                         if (cmd.Groups[2].Value != "")
                         {
-                            bool isSettingSteam = true;
-                            bool isSteamNumerical = false;
-                            string steamId = cmd.Groups[2].Value;
-                        }
-                        else if (cmd.Groups[3].Value != "")
+                            isSettingDate = true;
+                            date = cmd.Groups[2].Value;
+                        } else if (cmd.Groups[3].Value != "")
                         {
-                            bool isSettingSteam = true;
-                            bool isSteamNumerical = false;
-                            string steamId = cmd.Groups[3].Value;
+                            isSettingDate = true;
+                            date = cmd.Groups[3].Value;
+                        }
+
+                        if (cmd.Groups[4].Value != "")
+                        {
+                            isSettingSteam = true;
+                            isSteamNumerical = false;
+                            steamId = cmd.Groups[4].Value;
+                        }
+                        else if (cmd.Groups[5].Value != "")
+                        {
+                            isSettingSteam = true;
+                            isSteamNumerical = false;
+                            steamId = cmd.Groups[5].Value;
+                        }
+                        else if (cmd.Groups[6].Value != "")
+                        {
+                            isSettingSteam = true;
+                            isSteamNumerical = true;
+                            steamId = cmd.Groups[6].Value;
+                        } else if (cmd.Groups[7].Value != "")
+                        {
+                            isSettingSteam = true;
+                            isSteamNumerical = true;
+                            steamId = cmd.Groups[7].Value;
                         }
                         XDocument memberDB = XDocument.Load("PersonellDB.xml");
                         var hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                         foreach (XElement p in hasPermission)
                         {
+                            Console.WriteLine(p.Value);
                             var hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
                             foreach (XElement q in hasPermissionNum)
                             {
+                                
                                 if (Int32.Parse(q.Value) >= 5)
                                 {
+                                    Console.WriteLine(q.Value);
+                                    Console.WriteLine("Creating");
+                                    Console.WriteLine(member.Username);
+                                    XDocument memberDBT = XDocument.Load("PersonellDB.xml");
+                                    var doc = memberDBT.Descendants("Database");
+                                    foreach(var h in doc)
+                                    {
+                                        DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
+
+                                        h.Add(
+                                            new XElement("Member",
+                                                new XElement("Name", member.Username),
+                                                new XElement("Rank", "Recruit"),
+                                                new XElement("RankupHistory",
+                                                    new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
+                                                    new XElement("Rankup", new XAttribute("name", "Member"), "NaN"),
+                                                    new XElement("Rankup", new XAttribute("name", "Member II"), "NaN"),
+                                                    new XElement("Rankup", new XAttribute("name", "Veteran"), "NaN"),
+                                                    new XElement("Rankup", new XAttribute("name", "Officer"), "NaN"),
+                                                    new XElement("Rankup", new XAttribute("name", "General"), "NaN"),
+                                                    new XElement("Rankup", new XAttribute("name", "Guild Master"), "NaN")),
+                                                new XElement("Names",
+                                                    new XElement("Warframe", ""),
+                                                    new XElement("SpiralKnights", ""),
+                                                    new XElement("Discord", member.Username),
+                                                    new XElement("DiscordId", member.ID),
+                                                    new XElement("Steam", steamId),
+                                                    new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)))
+                                            );
+                                        if(isSettingDate)
+                                        {
+                                            var i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
+                                            foreach (var ii in i) { ii.SetValue(date); };
+                                        }
+                                        Console.WriteLine(h);
+                                        Console.WriteLine("Created");
+                                        memberDBT.Save("PersonellDB.xml");
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine(q.Value);
+                                    Console.WriteLine("Sorry, you don't seem to have permission to perform that action!");
                                 }
                             }
                         }
