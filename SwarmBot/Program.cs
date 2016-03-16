@@ -16,99 +16,6 @@ namespace SwarmBot
 {
     class Program
     {
-        public struct DateTimeSpan
-        {
-            private readonly int years;
-            private readonly int months;
-            private readonly int days;
-            private readonly int hours;
-            private readonly int minutes;
-            private readonly int seconds;
-            private readonly int milliseconds;
-
-            public DateTimeSpan(int years, int months, int days, int hours, int minutes, int seconds, int milliseconds)
-            {
-                this.years = years;
-                this.months = months;
-                this.days = days;
-                this.hours = hours;
-                this.minutes = minutes;
-                this.seconds = seconds;
-                this.milliseconds = milliseconds;
-            }
-
-            public int Years { get { return years; } }
-            public int Months { get { return months; } }
-            public int Days { get { return days; } }
-            public int Hours { get { return hours; } }
-            public int Minutes { get { return minutes; } }
-            public int Seconds { get { return seconds; } }
-            public int Milliseconds { get { return milliseconds; } }
-
-            enum Phase { Years, Months, Days, Done }
-
-            public static DateTimeSpan CompareDates(DateTime date1, DateTime date2)
-            {
-                if (date2 < date1)
-                {
-                    var sub = date1;
-                    date1 = date2;
-                    date2 = sub;
-                }
-
-                DateTime current = date1;
-                int years = 0;
-                int months = 0;
-                int days = 0;
-
-                Phase phase = Phase.Years;
-                DateTimeSpan span = new DateTimeSpan();
-
-                while (phase != Phase.Done)
-                {
-                    switch (phase)
-                    {
-                        case Phase.Years:
-                            if (current.AddYears(years + 1) > date2)
-                            {
-                                phase = Phase.Months;
-                                current = current.AddYears(years);
-                            }
-                            else
-                            {
-                                years++;
-                            }
-                            break;
-                        case Phase.Months:
-                            if (current.AddMonths(months + 1) > date2)
-                            {
-                                phase = Phase.Days;
-                                current = current.AddMonths(months);
-                            }
-                            else
-                            {
-                                months++;
-                            }
-                            break;
-                        case Phase.Days:
-                            if (current.AddDays(days + 1) > date2)
-                            {
-                                current = current.AddDays(days);
-                                var timespan = date2 - current;
-                                span = new DateTimeSpan(years, months, days, timespan.Hours, timespan.Minutes, timespan.Seconds, timespan.Milliseconds);
-                                phase = Phase.Done;
-                            }
-                            else
-                            {
-                                days++;
-                            }
-                            break;
-                    }
-                }
-
-                return span;
-            }
-        }
         static bool SendInvite(string recipient, string Game, DiscordSharp.Events.DiscordMessageEventArgs e)
         {
             //SendInvite(firstMatch, fifthMatch, firstMatch.StartsWith("<@"), e);
@@ -307,15 +214,15 @@ namespace SwarmBot
                                         }
                                         else {
                                             DateTime compareTo = DateTime.Parse(iLastRankUp);
+                                            Console.WriteLine(compareTo);
                                             DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
-                                            var dateSpan = DateTimeSpan.CompareDates(compareTo, now);
-                                            int yrs = dateSpan.Years * 12;
-                                            int mnths = dateSpan.Months * 30;
-                                            Console.WriteLine(yrs + mnths);
+                                            Console.WriteLine(now);
+                                            double time = (now - compareTo).TotalDays;
+                                            Console.WriteLine(time + " Days");
                                             var isEligible = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == hRank + "LastRankUp");
                                             foreach (XElement j in isEligible)
                                             {
-                                                bool jIsEligible = Int32.Parse(j.Value) <= yrs + mnths;
+                                                bool jIsEligible = Int32.Parse(j.Value) <= time;
                                                 if (jIsEligible)
                                                 {
                                                     Console.WriteLine("He/she is eligible for a rank up.");
@@ -325,6 +232,7 @@ namespace SwarmBot
                                                 {
                                                     e.Channel.SendMessage("He/she is not eligible for a rank up.");
                                                 }
+                                                e.Channel.SendMessage("It has been " + time + " days since their last rankup");
                                             }
                                         }
                                     }
@@ -472,7 +380,7 @@ namespace SwarmBot
                             foreach (XElement q in hasPermissionNum)
                             {
                                 
-                                if (Int32.Parse(q.Value) >= 5)
+                                if (Int32.Parse(q.Value) >= 4)
                                 {
                                     Console.WriteLine(q.Value);
                                     Console.WriteLine("Creating");
@@ -481,36 +389,70 @@ namespace SwarmBot
                                     var doc = memberDBT.Descendants("Database");
                                     foreach(var h in doc)
                                     {
-                                        DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
-
-                                        h.Add(
-                                            new XElement("Member",
-                                                new XElement("Name", member.Username),
-                                                new XElement("Rank", "Recruit"),
-                                                new XElement("RankupHistory",
-                                                    new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
-                                                    new XElement("Rankup", new XAttribute("name", "Member"), "NaN"),
-                                                    new XElement("Rankup", new XAttribute("name", "Member II"), "NaN"),
-                                                    new XElement("Rankup", new XAttribute("name", "Veteran"), "NaN"),
-                                                    new XElement("Rankup", new XAttribute("name", "Officer"), "NaN"),
-                                                    new XElement("Rankup", new XAttribute("name", "General"), "NaN"),
-                                                    new XElement("Rankup", new XAttribute("name", "Guild Master"), "NaN")),
-                                                new XElement("Names",
-                                                    new XElement("Warframe", ""),
-                                                    new XElement("SpiralKnights", ""),
-                                                    new XElement("Discord", member.Username),
-                                                    new XElement("DiscordId", member.ID),
-                                                    new XElement("Steam", steamId),
-                                                    new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)))
-                                            );
-                                        if(isSettingDate)
+                                        bool jExists = false;
+                                        var exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.ID);
+                                        foreach(var j in exists)
                                         {
-                                            var i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
-                                            foreach (var ii in i) { ii.SetValue(date); };
+                                            jExists = true;
                                         }
-                                        Console.WriteLine(h);
-                                        Console.WriteLine("Created");
-                                        memberDBT.Save("PersonellDB.xml");
+                                        if(!jExists)
+                                        {
+                                            var existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Username);
+                                            foreach(var k in existsBackup)
+                                            {
+                                                jExists = true;
+                                                var setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Username);
+                                                foreach (var l in setId)
+                                                {
+                                                    k.SetValue(member.ID);
+                                                    memberDBT.Save("PersonellDB.xml");
+                                                }
+                                            }
+                                            if(!jExists)
+                                            {
+                                                DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
+
+                                                h.Add(
+                                                    new XElement("Member",
+                                                        new XElement("Name", member.Username),
+                                                        new XElement("Rank", "Recruit"),
+                                                        new XElement("RankupHistory",
+                                                            new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
+                                                            new XElement("Rankup", new XAttribute("name", "Member"), "NaN"),
+                                                            new XElement("Rankup", new XAttribute("name", "Member II"), "NaN"),
+                                                            new XElement("Rankup", new XAttribute("name", "Veteran"), "NaN"),
+                                                            new XElement("Rankup", new XAttribute("name", "Officer"), "NaN"),
+                                                            new XElement("Rankup", new XAttribute("name", "General"), "NaN"),
+                                                            new XElement("Rankup", new XAttribute("name", "Guild Master"), "NaN")),
+                                                        new XElement("Names",
+                                                            new XElement("Warframe", ""),
+                                                            new XElement("SpiralKnights", ""),
+                                                            new XElement("Discord", member.Username),
+                                                            new XElement("DiscordId", member.ID),
+                                                            new XElement("Steam", steamId),
+                                                            new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)))
+                                                    );
+                                                if (isSettingDate)
+                                                {
+                                                    var i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
+                                                    foreach (var ii in i) { ii.SetValue(date); };
+                                                }
+                                                Console.WriteLine(h);
+                                                Console.WriteLine("Created");
+                                                memberDBT.Save("PersonellDB.xml");
+                                                e.Channel.SendMessage("Successfully created member " + member.Username);
+                                            } else
+                                            {
+                                                e.Channel.SendMessage("An error occured, that member already exists!");
+                                                Console.WriteLine("exists");
+                                            }
+
+                                        } else
+                                        {
+                                            e.Channel.SendMessage("An error occured, that member already exists!");
+                                            Console.WriteLine("exists");
+                                        }
+ 
                                     }
                                 }
                                 else
