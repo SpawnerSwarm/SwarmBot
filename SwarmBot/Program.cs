@@ -58,7 +58,10 @@ namespace SwarmBot
                         e.Channel.SendMessage("--   Search the Warframe Wiki (!wfwiki <page name>)");
                         e.Channel.SendMessage("--   Search the Spiral Knights Wiki (!skwiki <page name>)");
                         e.Channel.SendMessage("--   Link you to the Guild Mail (!guildmail)");
-                        e.Channel.SendMessage("--   BETA Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
+                        e.Channel.SendMessage("--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
+                        e.Channel.SendMessage("--   Get a member's information (!getMember <@Member>)");
+                        e.Channel.SendMessage("--   Create a new member entry [Officer +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
+                        e.Channel.SendMessage("--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]");
                         e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");
                         Console.WriteLine("Sent help because of this message: " + e.message_text);
                     }
