@@ -202,8 +202,14 @@ namespace SwarmBot
                                 foreach (XElement h in rank)
                                 {
                                     var hRank = h.Value;
-                                    Console.WriteLine(member + " is a(n) " + hRank);
-                                    e.Channel.SendMessage(member + " is a(n) " + hRank);
+                                    IEnumerable<XElement> namelist = h.Parent.Descendants("Name");
+                                    string memberName = null;
+                                    foreach(XElement name in namelist)
+                                    {
+                                        memberName = name.Value;
+                                    }
+                                    Console.WriteLine(memberName + " is a(n) " + hRank);
+                                    e.Channel.SendMessage(memberName + " is a(n) " + hRank);
                                     IEnumerable<XElement> lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
                                         .Where(x => x.Parent.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member))
                                         .Where(x => x.Attribute("name").Value == hRank);
