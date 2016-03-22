@@ -60,7 +60,7 @@ namespace SwarmBot
                         e.Channel.SendMessage("--   Link you to the Guild Mail (!guildmail)");
                         e.Channel.SendMessage("--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
                         e.Channel.SendMessage("--   Get a member's information (!getMember <@Member>)");
-                        e.Channel.SendMessage("--   Create a new member entry [Officer +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
+                        e.Channel.SendMessage("--   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
                         e.Channel.SendMessage("--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]");
                         e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");
                         Console.WriteLine("Sent help because of this message: " + e.message_text);
@@ -197,14 +197,14 @@ namespace SwarmBot
                             {
                                 Console.WriteLine(member + " " + force + " " + help);
                                 XDocument memberDB = XDocument.Load("PersonellDB.xml");
-                                var rank = memberDB.Descendants("Rank")
+                                IEnumerable<XElement> rank = memberDB.Descendants("Rank")
                                     .Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member));
                                 foreach (XElement h in rank)
                                 {
                                     var hRank = h.Value;
                                     Console.WriteLine(member + " is a(n) " + hRank);
-                                    e.Channel.SendMessage(member + " is a(n)" + hRank);
-                                    var lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
+                                    e.Channel.SendMessage(member + " is a(n) " + hRank);
+                                    IEnumerable<XElement> lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
                                         .Where(x => x.Parent.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member))
                                         .Where(x => x.Attribute("name").Value == hRank);
                                     foreach (XElement i in lastRankUp)
@@ -222,7 +222,7 @@ namespace SwarmBot
                                             Console.WriteLine(now);
                                             double time = (now - compareTo).TotalDays;
                                             Console.WriteLine(time + " Days");
-                                            var isEligible = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == hRank + "LastRankUp");
+                                            IEnumerable<XElement> isEligible = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == hRank + "LastRankUp");
                                             foreach (XElement j in isEligible)
                                             {
                                                 bool jIsEligible = Int32.Parse(j.Value) <= time;
@@ -269,20 +269,20 @@ namespace SwarmBot
                         {
                             Console.WriteLine(member.Username + " " + force + " " + help);
                             XDocument memberDB = XDocument.Load("PersonellDB.xml");
-                            var hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                             foreach (XElement p in hasPermission)
                             {
-                                var hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
                                 foreach (XElement q in hasPermissionNum)
                                 {
                                     if (Int32.Parse(q.Value) >= 5)
                                     {
-                                        var rank = memberDB.Descendants("Rank")
+                                        IEnumerable<XElement> rank = memberDB.Descendants("Rank")
                                         .Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member.Username));
                                         foreach (XElement h in rank)
                                         {
                                             var hRank = h.Value;
-                                            var hRankId = memberDB.Descendants("Define")
+                                            IEnumerable<XElement> hRankId = memberDB.Descendants("Define")
                                                 .Where(x => x.Attribute("name").Value == hRank);
                                             foreach (XElement i in hRankId)
                                             {
@@ -291,7 +291,7 @@ namespace SwarmBot
                                                 int iHRankId = Int32.Parse(i.Value);
 
                                                 var iHRankIdProgressed = iHRankId + 1;
-                                                var toRank = memberDB.Descendants("Define")
+                                                IEnumerable<XElement> toRank = memberDB.Descendants("Define")
                                                     .Where(x => x.Value == iHRankIdProgressed.ToString());
                                                 foreach (XElement j in toRank)
                                                 {
@@ -305,7 +305,7 @@ namespace SwarmBot
                                                     h.Value = jToRank;
                                                     DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
                                                     Console.WriteLine(now);
-                                                    var lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
+                                                    IEnumerable<XElement> lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
                                                         .Where(x => x.Parent.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member.Username))
                                                         .Where(x => x.Attribute("name").Value == jToRank);
                                                     foreach (XElement k in lastRankUp)
@@ -336,6 +336,7 @@ namespace SwarmBot
                     {
                         Match cmd = Regex.Match(e.message_text, @"!createMember <@(.+)>(?: --date ([^ ]+)| -d ([^ ]+))?(?: --steam ([^ 0-9]+)| -s ([^ 0-9]+)| --steam ([^ ][0-9]+)| -s ([^ ][0-9]+))?( --populate| -p)?");
                         DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
+                        Console.WriteLine(cmd.Groups[1].Value);
                         bool isSettingSteam = false;
                         bool isSteamNumerical = false;
                         bool isSettingDate = false;
@@ -375,11 +376,11 @@ namespace SwarmBot
                             steamId = cmd.Groups[7].Value;
                         }
                         XDocument memberDB = XDocument.Load("PersonellDB.xml");
-                        var hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                        IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                         foreach (XElement p in hasPermission)
                         {
                             Console.WriteLine(p.Value);
-                            var hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                            IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
                             foreach (XElement q in hasPermissionNum)
                             {
                                 
@@ -389,22 +390,22 @@ namespace SwarmBot
                                     Console.WriteLine("Creating");
                                     Console.WriteLine(member.Username);
                                     XDocument memberDBT = XDocument.Load("PersonellDB.xml");
-                                    var doc = memberDBT.Descendants("Database");
+                                    IEnumerable<XElement> doc = memberDBT.Descendants("Database");
                                     foreach(var h in doc)
                                     {
                                         bool jExists = false;
-                                        var exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.ID);
+                                        IEnumerable<XElement> exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.ID);
                                         foreach(var j in exists)
                                         {
                                             jExists = true;
                                         }
                                         if(!jExists)
                                         {
-                                            var existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Username);
+                                            IEnumerable<XElement> existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Username);
                                             foreach(var k in existsBackup)
                                             {
                                                 jExists = true;
-                                                var setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Username);
+                                                IEnumerable<XElement> setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Username);
                                                 foreach (var l in setId)
                                                 {
                                                     k.SetValue(member.ID);
@@ -437,7 +438,7 @@ namespace SwarmBot
                                                     );
                                                 if (isSettingDate)
                                                 {
-                                                    var i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
+                                                    IEnumerable<XElement> i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
                                                     foreach (var ii in i) { ii.SetValue(date); };
                                                 }
                                                 Console.WriteLine(h);
@@ -466,7 +467,133 @@ namespace SwarmBot
                             }
                         }
                     }
-
+                    else if(e.message_text.StartsWith("!updateMember"))
+                    {
+                        Match cmd = Regex.Match(e.message_text, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
+                        DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
+                        for(int i = 1; i <= 6; i++)
+                        {
+                            Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
+                        }
+                        string node = cmd.Groups[2].Value;
+                        string targetValue = null;
+                        string attribute = null;
+                            string attributeValue = null;
+                            bool isSettingAttribute = false;
+                            bool isGettingByAttribute = false;
+                        if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
+                        {
+                            isGettingByAttribute = true;
+                            attribute = cmd.Groups[3].Value;
+                            attributeValue = cmd.Groups[4].Value;
+                            targetValue = cmd.Groups[6].Value;
+                            Console.WriteLine("Getting");
+                        } else if(cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
+                        {
+                            isSettingAttribute = true;
+                            attribute = cmd.Groups[5].Value;
+                            attributeValue = cmd.Groups[6].Value;
+                            Console.WriteLine(cmd.Groups[5].Value);
+                            Console.WriteLine("Setting");
+                        } else //Neither (ex Name)
+                        {
+                            targetValue = cmd.Groups[6].Value;
+                            Console.WriteLine("else");
+                        }
+                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                        foreach(XElement p in hasPermission)
+                        {
+                            Console.WriteLine(p.Value);
+                            IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                            foreach (XElement q in hasPermissionNum)
+                            {
+                                if (Int32.Parse(q.Value) >= 5)
+                                {
+                                    Console.WriteLine(q.Value);
+                                    XDocument memberDBT = XDocument.Load("PersonellDB.xml");
+                                    IEnumerable<XElement> doc = memberDBT.Descendants("Database");
+                                    foreach(XElement h in doc)
+                                    {
+                                        Console.WriteLine("Loaded Document");
+                                        bool multiple = false;
+                                        bool multipleFound = false;
+                                        string successMessage = null;
+                                        IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Username));
+                                        foreach(XElement i in docMember)
+                                        {
+                                            if(isGettingByAttribute)
+                                            {
+                                                IEnumerable<XElement> iNode = i.Descendants(node).Where(x => x.Attribute(attribute).Value == attributeValue);
+                                                foreach(var j in iNode)
+                                                {
+                                                    Console.WriteLine("Found node");
+                                                    if(!multiple)
+                                                    {
+                                                        multiple = true;
+                                                        j.Value = targetValue;
+                                                        successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Username + " to " + targetValue;
+                                                        Console.WriteLine(j.Value);
+                                                    } else
+                                                    {
+                                                        Console.WriteLine("multiple");
+                                                        multipleFound = true;
+                                                    }
+                                                }
+                                            }
+                                            else if(isSettingAttribute)
+                                            {
+                                                IEnumerable<XAttribute> iAttribute = i.Descendants(node).Attributes(attribute);
+                                                foreach(var j in iAttribute)
+                                                {
+                                                    Console.WriteLine("Found node");
+                                                    if(!multiple)
+                                                    {
+                                                        multiple = true;
+                                                        j.Value = attributeValue;
+                                                        successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Username + " to " + attributeValue;
+                                                        Console.WriteLine(j.Value);
+                                                    } else
+                                                    {
+                                                        Console.WriteLine("multiple");
+                                                        multipleFound = true;
+                                                    }
+                                                }
+                                            }
+                                            else if(!isGettingByAttribute && !isSettingAttribute)
+                                            {
+                                                IEnumerable<XElement> iNode = i.Descendants(node);
+                                                foreach(XElement j in iNode)
+                                                {
+                                                    Console.WriteLine("Found node");
+                                                    if(!multiple)
+                                                    {
+                                                        multiple = true;
+                                                        j.Value = targetValue;
+                                                        successMessage = "Successfully set " + node + " of " + member.Username + " to " + targetValue;
+                                                    }
+                                                }
+                                            }
+                                            //
+                                            if (multipleFound)
+                                            {
+                                                e.Channel.SendMessage("An error occured. Multiple nodes were found; please try being more specific.");
+                                            }
+                                            else
+                                            {
+                                                e.Channel.SendMessage(successMessage);
+                                                memberDBT.Save("PersonellDB.xml");
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    e.Channel.SendMessage("Sorry, you don't seem to have permission to perform that action!");
+                                }
+                            }
+                        }
+                    }
                 };
             };
                 client.PrivateMessageReceived += (sender, e) =>
