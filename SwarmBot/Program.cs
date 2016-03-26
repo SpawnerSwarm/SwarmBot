@@ -204,7 +204,7 @@ namespace SwarmBot
                                     var hRank = h.Value;
                                     IEnumerable<XElement> namelist = h.Parent.Descendants("Name");
                                     string memberName = null;
-                                    foreach(XElement name in namelist)
+                                    foreach (XElement name in namelist)
                                     {
                                         memberName = name.Value;
                                     }
@@ -261,13 +261,13 @@ namespace SwarmBot
                         DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
                         string force = cmd.Groups[2].Value;
                         string date = "";
-                            if (cmd.Groups[3].Value != "")
-                            {
-                                date = cmd.Groups[3].Value;
-                            } else if(cmd.Groups[4].Value != "")
-                            {
-                                date = cmd.Groups[4].Value;
-                            }
+                        if (cmd.Groups[3].Value != "")
+                        {
+                            date = cmd.Groups[3].Value;
+                        } else if (cmd.Groups[4].Value != "")
+                        {
+                            date = cmd.Groups[4].Value;
+                        }
                         bool isForce = force != "";
                         bool help = cmd.Groups[3].Value.Equals("-h");
 
@@ -307,7 +307,7 @@ namespace SwarmBot
                                                         jToRank = j.Attribute("name").Value;
                                                     }
                                                     Console.WriteLine(jToRank);
-                                                    try { e.Channel.parent.AssignRoleToMember(e.Channel.parent.roles.Find(x => x.name == jToRank), member); } catch(Exception) { Console.WriteLine("No Rank exists"); };
+                                                    try { e.Channel.parent.AssignRoleToMember(e.Channel.parent.roles.Find(x => x.name == jToRank), member); } catch (Exception) { Console.WriteLine("No Rank exists"); };
                                                     h.Value = jToRank;
                                                     DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
                                                     Console.WriteLine(now);
@@ -316,7 +316,7 @@ namespace SwarmBot
                                                         .Where(x => x.Attribute("name").Value == jToRank);
                                                     foreach (XElement k in lastRankUp)
                                                     {
-                                                        if(date != "") { k.Value = date; }
+                                                        if (date != "") { k.Value = date; }
                                                         else { k.Value = Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value; }
                                                     }
                                                     memberDB.Save("PersonellDB.xml");
@@ -389,7 +389,7 @@ namespace SwarmBot
                             IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
                             foreach (XElement q in hasPermissionNum)
                             {
-                                
+
                                 if (Int32.Parse(q.Value) >= 4)
                                 {
                                     Console.WriteLine(q.Value);
@@ -397,28 +397,28 @@ namespace SwarmBot
                                     Console.WriteLine(member.Username);
                                     XDocument memberDBT = XDocument.Load("PersonellDB.xml");
                                     IEnumerable<XElement> doc = memberDBT.Descendants("Database");
-                                    foreach(var h in doc)
+                                    foreach (XElement h in doc)
                                     {
                                         bool jExists = false;
                                         IEnumerable<XElement> exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.ID);
-                                        foreach(var j in exists)
+                                        foreach (XElement j in exists)
                                         {
                                             jExists = true;
                                         }
-                                        if(!jExists)
+                                        if (!jExists)
                                         {
                                             IEnumerable<XElement> existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Username);
-                                            foreach(var k in existsBackup)
+                                            foreach (XElement k in existsBackup)
                                             {
                                                 jExists = true;
                                                 IEnumerable<XElement> setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Username);
-                                                foreach (var l in setId)
+                                                foreach (XElement l in setId)
                                                 {
                                                     k.SetValue(member.ID);
                                                     memberDBT.Save("PersonellDB.xml");
                                                 }
                                             }
-                                            if(!jExists)
+                                            if (!jExists)
                                             {
                                                 DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
 
@@ -445,7 +445,7 @@ namespace SwarmBot
                                                 if (isSettingDate)
                                                 {
                                                     IEnumerable<XElement> i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
-                                                    foreach (var ii in i) { ii.SetValue(date); };
+                                                    foreach (XElement ii in i) { ii.SetValue(date); };
                                                 }
                                                 Console.WriteLine(h);
                                                 Console.WriteLine("Created");
@@ -462,7 +462,7 @@ namespace SwarmBot
                                             e.Channel.SendMessage("An error occured, that member already exists!");
                                             Console.WriteLine("exists");
                                         }
- 
+
                                     }
                                 }
                                 else
@@ -473,131 +473,141 @@ namespace SwarmBot
                             }
                         }
                     }
-                    else if(e.message_text.StartsWith("!updateMember"))
+                    else if (e.message_text.StartsWith("!updateMember"))
                     {
-                        Match cmd = Regex.Match(e.message_text, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
-                        DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
-                        for(int i = 1; i <= 6; i++)
-                        {
-                            Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
-                        }
-                        string node = cmd.Groups[2].Value;
-                        string targetValue = null;
-                        string attribute = null;
+                        try {
+                            Match cmd = Regex.Match(e.message_text, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
+                            DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
+                            for (int i = 1; i <= 6; i++)
+                            {
+                                Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
+                            }
+                            string node = cmd.Groups[2].Value;
+                            string targetValue = null;
+                            string attribute = null;
                             string attributeValue = null;
                             bool isSettingAttribute = false;
                             bool isGettingByAttribute = false;
-                        if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
-                        {
-                            isGettingByAttribute = true;
-                            attribute = cmd.Groups[3].Value;
-                            attributeValue = cmd.Groups[4].Value;
-                            targetValue = cmd.Groups[6].Value;
-                            Console.WriteLine("Getting");
-                        } else if(cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
-                        {
-                            isSettingAttribute = true;
-                            attribute = cmd.Groups[5].Value;
-                            attributeValue = cmd.Groups[6].Value;
-                            Console.WriteLine(cmd.Groups[5].Value);
-                            Console.WriteLine("Setting");
-                        } else //Neither (ex Name)
-                        {
-                            targetValue = cmd.Groups[6].Value;
-                            Console.WriteLine("else");
-                        }
-                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
-                        IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
-                        foreach(XElement p in hasPermission)
-                        {
-                            Console.WriteLine(p.Value);
-                            IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
-                            foreach (XElement q in hasPermissionNum)
+                            if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
                             {
-                                if (Int32.Parse(q.Value) >= 5)
+                                isGettingByAttribute = true;
+                                attribute = cmd.Groups[3].Value;
+                                attributeValue = cmd.Groups[4].Value;
+                                targetValue = cmd.Groups[6].Value;
+                                Console.WriteLine("Getting");
+                            } else if (cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
+                            {
+                                isSettingAttribute = true;
+                                attribute = cmd.Groups[5].Value;
+                                attributeValue = cmd.Groups[6].Value;
+                                Console.WriteLine(cmd.Groups[5].Value);
+                                Console.WriteLine("Setting");
+                            } else //Neither (ex Name)
+                            {
+                                targetValue = cmd.Groups[6].Value;
+                                Console.WriteLine("else");
+                            }
+                            XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                            foreach (XElement p in hasPermission)
+                            {
+                                Console.WriteLine(p.Value);
+                                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                                foreach (XElement q in hasPermissionNum)
                                 {
-                                    Console.WriteLine(q.Value);
-                                    XDocument memberDBT = XDocument.Load("PersonellDB.xml");
-                                    IEnumerable<XElement> doc = memberDBT.Descendants("Database");
-                                    foreach(XElement h in doc)
+                                    if (Int32.Parse(q.Value) >= 5)
                                     {
-                                        Console.WriteLine("Loaded Document");
-                                        bool multiple = false;
-                                        bool multipleFound = false;
-                                        string successMessage = null;
-                                        IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Username));
-                                        foreach(XElement i in docMember)
+                                        Console.WriteLine(q.Value);
+                                        XDocument memberDBT = XDocument.Load("PersonellDB.xml");
+                                        IEnumerable<XElement> doc = memberDBT.Descendants("Database");
+                                        foreach (XElement h in doc)
                                         {
-                                            if(isGettingByAttribute)
+                                            Console.WriteLine("Loaded Document");
+                                            bool multiple = false;
+                                            bool multipleFound = false;
+                                            string successMessage = null;
+                                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Username));
+                                            foreach (XElement i in docMember)
                                             {
-                                                IEnumerable<XElement> iNode = i.Descendants(node).Where(x => x.Attribute(attribute).Value == attributeValue);
-                                                foreach(var j in iNode)
+                                                if (isGettingByAttribute)
                                                 {
-                                                    Console.WriteLine("Found node");
-                                                    if(!multiple)
+                                                    IEnumerable<XElement> iNode = i.Descendants(node).Where(x => x.Attribute(attribute).Value == attributeValue);
+                                                    foreach (XElement j in iNode)
                                                     {
-                                                        multiple = true;
-                                                        j.Value = targetValue;
-                                                        successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Username + " to " + targetValue;
-                                                        Console.WriteLine(j.Value);
-                                                    } else
-                                                    {
-                                                        Console.WriteLine("multiple");
-                                                        multipleFound = true;
+                                                        Console.WriteLine("Found node");
+                                                        if (!multiple)
+                                                        {
+                                                            multiple = true;
+                                                            j.Value = targetValue;
+                                                            successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Username + " to " + targetValue;
+                                                            Console.WriteLine(j.Value);
+                                                        } else
+                                                        {
+                                                            Console.WriteLine("multiple");
+                                                            multipleFound = true;
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            else if(isSettingAttribute)
-                                            {
-                                                IEnumerable<XAttribute> iAttribute = i.Descendants(node).Attributes(attribute);
-                                                foreach(var j in iAttribute)
+                                                else if (isSettingAttribute)
                                                 {
-                                                    Console.WriteLine("Found node");
-                                                    if(!multiple)
+                                                    IEnumerable<XAttribute> iAttribute = i.Descendants(node).Attributes(attribute);
+                                                    foreach (XAttribute j in iAttribute)
                                                     {
-                                                        multiple = true;
-                                                        j.Value = attributeValue;
-                                                        successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Username + " to " + attributeValue;
-                                                        Console.WriteLine(j.Value);
-                                                    } else
-                                                    {
-                                                        Console.WriteLine("multiple");
-                                                        multipleFound = true;
+                                                        Console.WriteLine("Found node");
+                                                        if (!multiple)
+                                                        {
+                                                            j.Value = attributeValue;
+                                                            successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Username + " to " + attributeValue;
+                                                            Console.WriteLine(j.Value);
+                                                            multiple = true;
+                                                        } else
+                                                        {
+                                                            Console.WriteLine("multiple");
+                                                            multipleFound = true;
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            else if(!isGettingByAttribute && !isSettingAttribute)
-                                            {
-                                                IEnumerable<XElement> iNode = i.Descendants(node);
-                                                foreach(XElement j in iNode)
+                                                else if (!isGettingByAttribute && !isSettingAttribute)
                                                 {
-                                                    Console.WriteLine("Found node");
-                                                    if(!multiple)
+                                                    IEnumerable<XElement> iNode = i.Descendants(node);
+                                                    foreach (XElement j in iNode)
                                                     {
-                                                        multiple = true;
-                                                        j.Value = targetValue;
-                                                        successMessage = "Successfully set " + node + " of " + member.Username + " to " + targetValue;
+                                                        Console.WriteLine("Found node");
+                                                        if (!multiple)
+                                                        {
+                                                            multiple = true;
+                                                            j.Value = targetValue;
+                                                            successMessage = "Successfully set " + node + " of " + member.Username + " to " + targetValue;
+                                                        }
+                                                        else
+                                                        {
+                                                            Console.WriteLine("multiple");
+                                                            multipleFound = true;
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            //
-                                            if (multipleFound)
-                                            {
-                                                e.Channel.SendMessage("An error occured. Multiple nodes were found; please try being more specific.");
-                                            }
-                                            else
-                                            {
-                                                e.Channel.SendMessage(successMessage);
-                                                memberDBT.Save("PersonellDB.xml");
+                                                //
+                                                if (multipleFound)
+                                                {
+                                                    e.Channel.SendMessage("An error occured. Multiple nodes were found; please try being more specific.");
+                                                }
+                                                else
+                                                {
+                                                    e.Channel.SendMessage(successMessage);
+                                                    memberDBT.Save("PersonellDB.xml");
+                                                }
                                             }
                                         }
                                     }
-                                }
-                                else
-                                {
-                                    e.Channel.SendMessage("Sorry, you don't seem to have permission to perform that action!");
+                                    else
+                                    {
+                                        e.Channel.SendMessage("Sorry, you don't seem to have permission to perform that action!");
+                                    }
                                 }
                             }
+                        } catch(Exception)
+                        {
+                            e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
                         }
                     }
                 };
