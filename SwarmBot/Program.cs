@@ -35,6 +35,7 @@ namespace SwarmBot
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Initializing SwarmBot...");
             XDocument configFile = XDocument.Load("config.xml");
             string email = configFile.Descendants("email").ToString();
             string password = configFile.Descendants("password").ToString();
@@ -58,11 +59,13 @@ namespace SwarmBot
                         e.Channel.SendMessage("--   Search the Warframe Wiki (!wfwiki <page name>)");
                         e.Channel.SendMessage("--   Search the Spiral Knights Wiki (!skwiki <page name>)");
                         e.Channel.SendMessage("--   Link you to the Guild Mail (!guildmail)");
+                        e.Channel.SendMessage("--   Send you the latest news (!news)");
+                        e.Channel.SendMessage("--   Update the news [Officer +] (!updateNews <News>)");
                         e.Channel.SendMessage("--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
                         e.Channel.SendMessage("--   Get a member's information (!getMember <@Member>)");
                         e.Channel.SendMessage("--   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
                         e.Channel.SendMessage("--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]");
-                        e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");
+                        //e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");
                         Console.WriteLine("Sent help because of this message: " + e.message_text);
                     }
                     else if (e.message_text.StartsWith("!wfwiki"))
@@ -605,9 +608,58 @@ namespace SwarmBot
                                     }
                                 }
                             }
-                        } catch(Exception)
+                        } catch (Exception)
                         {
                             e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
+                        }
+                    }
+                    else if (e.message_text == "!news")
+                    {
+                        using (StreamReader sr = File.OpenText("news.txt"))
+                        {
+                            string s = sr.ReadToEnd();
+                            e.Channel.SendMessage(s);
+                        }
+                    }
+                    else if (e.message_text.StartsWith("!updateNews"))
+                    {
+                        bool hasPermission = false;
+                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                        foreach (XElement p in permission)
+                        {
+                            Console.WriteLine(p.Value);
+                            IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                            foreach (XElement q in hasPermissionNum)
+                            {
+                                if (Int32.Parse(q.Value) >= 5)
+                                {
+                                    hasPermission = true;
+                                }
+                            }
+                        }
+                        if(hasPermission)
+                        {
+                            string news = e.message_text.Replace("!updateNews ", "");
+                            System.IO.File.WriteAllText("news.txt", DateTime.Now + " -- " + news);
+                            e.Channel.SendMessage("News Updated: " + news);
+                        }
+                    }
+                    else if (e.message_text.StartsWith("!populate"))
+                    {
+                        Console.WriteLine("hi");
+                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        IEnumerable<XElement> memberToPopulate = memberDB.Descendants("Member").Where(x => x.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Channel.parent.members.Find(z => z.ID == Regex.Match(e.message_text.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value).Username));
+                        foreach (XElement h in memberToPopulate)
+                        {
+                            Console.WriteLine("Found member");
+                            IEnumerable<XElement> memberId = h.Descendants("DiscordId");
+                            foreach(XElement i in memberId)
+                            {
+                                i.SetValue(Regex.Match(e.message_text.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value);
+                                memberDB.Save("PersonellDB.xml");
+                                Console.WriteLine("succeeded");
+                            }
                         }
                     }
                 };
@@ -615,6 +667,30 @@ namespace SwarmBot
                 client.PrivateMessageReceived += (sender, e) =>
                 {
                     Console.WriteLine(e.author);
+                    if(e.message.StartsWith("!updateNews"))
+                    {
+                        bool hasPermission = false;
+                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
+                        foreach (XElement p in permission)
+                        {
+                            Console.WriteLine(p.Value);
+                            IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                            foreach (XElement q in hasPermissionNum)
+                            {
+                                if (Int32.Parse(q.Value) >= 5)
+                                {
+                                    hasPermission = true;
+                                }
+                            }
+                        }
+                        if (hasPermission)
+                        {
+                            string news = e.message.Replace("!updateNews ", "");
+                            System.IO.File.WriteAllText("news.txt", DateTime.Now + " -- " + news);
+                            e.author.SendMessage("News Updated: " + news);
+                        }
+                    }
                 };
                 try
                 {
