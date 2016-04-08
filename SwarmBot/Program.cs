@@ -35,8 +35,10 @@ namespace SwarmBot
 
         static void Main(string[] args)
         {
+            string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot");
+
             Console.WriteLine("Initializing SwarmBot...");
-            XDocument configFile = XDocument.Load("config.xml");
+            XDocument configFile = XDocument.Load(Path.Combine(configDir, "config.xml"));
             string email = configFile.Descendants("email").ToString();
             string password = configFile.Descendants("password").ToString();
             DiscordClient client = new DiscordClient();
@@ -183,7 +185,7 @@ namespace SwarmBot
                     else if (e.message_text.StartsWith("!getMember"))
                     {
                         Match cmd = Regex.Match(e.message_text, @"!getMember (?:<@(.+)>)?(?: )?(?:(-f))?(?: )?(?:(-h))?");
-                        string member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value).Username;
+                        DiscordMember member = e.Channel.parent.members.Find(x => x.ID == cmd.Groups[1].Value);
                         bool force = cmd.Groups[2].Value.Equals("-f");
                         bool help = cmd.Groups[3].Value.Equals("-h");
 
@@ -199,9 +201,9 @@ namespace SwarmBot
                             try
                             {
                                 Console.WriteLine(member + " " + force + " " + help);
-                                XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                                XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                                 IEnumerable<XElement> rank = memberDB.Descendants("Rank")
-                                    .Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member));
+                                    .Where(x => x.Parent.Descendants("Names").Descendants("DiscordId").Any(y => y.Value == member.ID));
                                 foreach (XElement h in rank)
                                 {
                                     var hRank = h.Value;
@@ -214,7 +216,7 @@ namespace SwarmBot
                                     Console.WriteLine(memberName + " is a(n) " + hRank);
                                     e.Channel.SendMessage(memberName + " is a(n) " + hRank);
                                     IEnumerable<XElement> lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
-                                        .Where(x => x.Parent.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member))
+                                        .Where(x => x.Parent.Parent.Descendants("Names").Descendants("DiscordId").Any(y => y.Value == member.ID))
                                         .Where(x => x.Attribute("name").Value == hRank);
                                     foreach (XElement i in lastRankUp)
                                     {
@@ -222,7 +224,7 @@ namespace SwarmBot
                                         Console.WriteLine(iLastRankUp);
                                         if (iLastRankUp == "Old")
                                         {
-                                            e.Channel.SendMessage("We can't tell whether or not " + member + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.");
+                                            e.Channel.SendMessage("We can't tell whether or not " + memberName + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.");
                                         }
                                         else {
                                             DateTime compareTo = DateTime.Parse(iLastRankUp);
@@ -277,7 +279,7 @@ namespace SwarmBot
                         if (!help)
                         {
                             Console.WriteLine(member.Username + " " + force + " " + help);
-                            XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                             IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                             foreach (XElement p in hasPermission)
                             {
@@ -322,7 +324,7 @@ namespace SwarmBot
                                                         if (date != "") { k.Value = date; }
                                                         else { k.Value = Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value; }
                                                     }
-                                                    memberDB.Save("PersonellDB.xml");
+                                                    memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                                     e.Channel.SendMessage("Successfully promoted " + member.Username + " to " + jToRank);
 
                                                 }
@@ -384,7 +386,7 @@ namespace SwarmBot
                             isSteamNumerical = true;
                             steamId = cmd.Groups[7].Value;
                         }
-                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                         IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                         foreach (XElement p in hasPermission)
                         {
@@ -398,7 +400,7 @@ namespace SwarmBot
                                     Console.WriteLine(q.Value);
                                     Console.WriteLine("Creating");
                                     Console.WriteLine(member.Username);
-                                    XDocument memberDBT = XDocument.Load("PersonellDB.xml");
+                                    XDocument memberDBT = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                                     IEnumerable<XElement> doc = memberDBT.Descendants("Database");
                                     foreach (XElement h in doc)
                                     {
@@ -418,19 +420,19 @@ namespace SwarmBot
                                                 foreach (XElement l in setId)
                                                 {
                                                     k.SetValue(member.ID);
-                                                    memberDBT.Save("PersonellDB.xml");
+                                                    memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                                 }
                                             }
                                             if (!jExists)
                                             {
-                                                DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
-
+                                                //DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
+                                                DateTime now = DateTime.Now;
                                                 h.Add(
                                                     new XElement("Member",
                                                         new XElement("Name", member.Username),
                                                         new XElement("Rank", "Recruit"),
                                                         new XElement("RankupHistory",
-                                                            new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
+                                                            new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [0-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
                                                             new XElement("Rankup", new XAttribute("name", "Member"), "NaN"),
                                                             new XElement("Rankup", new XAttribute("name", "Member II"), "NaN"),
                                                             new XElement("Rankup", new XAttribute("name", "Veteran"), "NaN"),
@@ -447,12 +449,20 @@ namespace SwarmBot
                                                     );
                                                 if (isSettingDate)
                                                 {
-                                                    IEnumerable<XElement> i = h.Descendants("Rankup").Where(x => x.Attribute("name").Value == "Recruit");
-                                                    foreach (XElement ii in i) { ii.SetValue(date); };
-                                                }
+                                                    IEnumerable<XElement> i = h.Descendants("Member").Where(x => x.Descendants("Name").Any(y => y.Value == member.Username));
+                                                    foreach (XElement ii in i)
+                                                    {
+                                                        IEnumerable<XElement> j = i.Descendants("Rankup").Where(y => y.Attribute("name").Value == "Recruit");
+                                                        foreach (XElement jj in j) {
+                                                            ii.SetValue(date);
+                                                        }; };
+                                                };
                                                 Console.WriteLine(h);
+                                                Console.WriteLine(isSettingDate);
+                                                Console.WriteLine(now.ToString());
+                                                Console.WriteLine(Regex.Match(now.ToString(), @"(.+) [0-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value);
                                                 Console.WriteLine("Created");
-                                                memberDBT.Save("PersonellDB.xml");
+                                                memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                                 e.Channel.SendMessage("Successfully created member " + member.Username);
                                             } else
                                             {
@@ -510,7 +520,7 @@ namespace SwarmBot
                                 targetValue = cmd.Groups[6].Value;
                                 Console.WriteLine("else");
                             }
-                            XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                             IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                             foreach (XElement p in hasPermission)
                             {
@@ -521,7 +531,7 @@ namespace SwarmBot
                                     if (Int32.Parse(q.Value) >= 5)
                                     {
                                         Console.WriteLine(q.Value);
-                                        XDocument memberDBT = XDocument.Load("PersonellDB.xml");
+                                        XDocument memberDBT = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                                         IEnumerable<XElement> doc = memberDBT.Descendants("Database");
                                         foreach (XElement h in doc)
                                         {
@@ -597,7 +607,7 @@ namespace SwarmBot
                                                 else
                                                 {
                                                     e.Channel.SendMessage(successMessage);
-                                                    memberDBT.Save("PersonellDB.xml");
+                                                    memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                                 }
                                             }
                                         }
@@ -615,7 +625,7 @@ namespace SwarmBot
                     }
                     else if (e.message_text == "!news")
                     {
-                        using (StreamReader sr = File.OpenText("news.txt"))
+                        using (StreamReader sr = File.OpenText(Path.Combine(configDir, "news.txt")))
                         {
                             string s = sr.ReadToEnd();
                             e.Channel.SendMessage(s);
@@ -624,7 +634,7 @@ namespace SwarmBot
                     else if (e.message_text.StartsWith("!updateNews"))
                     {
                         bool hasPermission = false;
-                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                         IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                         foreach (XElement p in permission)
                         {
@@ -641,14 +651,14 @@ namespace SwarmBot
                         if(hasPermission)
                         {
                             string news = e.message_text.Replace("!updateNews ", "");
-                            System.IO.File.WriteAllText("news.txt", DateTime.Now + " -- " + news);
-                            e.Channel.SendMessage("News Updated: " + news);
+                            System.IO.File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
+                            client.GetChannelByName("general").SendMessage("News Updated: " + news);
                         }
                     }
                     else if (e.message_text.StartsWith("!populate"))
                     {
                         Console.WriteLine("hi");
-                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                         IEnumerable<XElement> memberToPopulate = memberDB.Descendants("Member").Where(x => x.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Channel.parent.members.Find(z => z.ID == Regex.Match(e.message_text.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value).Username));
                         foreach (XElement h in memberToPopulate)
                         {
@@ -657,10 +667,14 @@ namespace SwarmBot
                             foreach(XElement i in memberId)
                             {
                                 i.SetValue(Regex.Match(e.message_text.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value);
-                                memberDB.Save("PersonellDB.xml");
+                                memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                 Console.WriteLine("succeeded");
                             }
                         }
+                    }
+                    else if(e.message_text.StartsWith("!lenny"))
+                    {
+                        e.Channel.SendMessage("( ͡° ͜ʖ ͡°)");
                     }
                 };
             };
@@ -670,7 +684,7 @@ namespace SwarmBot
                     if(e.message.StartsWith("!updateNews"))
                     {
                         bool hasPermission = false;
-                        XDocument memberDB = XDocument.Load("PersonellDB.xml");
+                        XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                         IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.author.Username));
                         foreach (XElement p in permission)
                         {
@@ -687,8 +701,9 @@ namespace SwarmBot
                         if (hasPermission)
                         {
                             string news = e.message.Replace("!updateNews ", "");
-                            System.IO.File.WriteAllText("news.txt", DateTime.Now + " -- " + news);
+                            System.IO.File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
                             e.author.SendMessage("News Updated: " + news);
+                            client.GetChannelByName("general").SendMessage("News Updated: " + news);
                         }
                     }
                 };
@@ -698,6 +713,7 @@ namespace SwarmBot
                     // The SendLoginRequest should be called after the events are defined, to prevent issues.
                     client.SendLoginRequest();
                     client.Connect(); // Login request, and then connect using the discordclient i just made.
+                    Console.WriteLine("hi");
                 }
                 catch (Exception e)
                 {
