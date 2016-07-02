@@ -208,6 +208,10 @@ namespace SwarmBot
                             e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");
                         }
                     }
+                    else if(e.MessageText.StartsWith("(╯°□°）╯︵ ┻━┻"))
+                    {
+                        e.Channel.SendMessage(" ┬─┬ノ( º _ ºノ)");
+                    }
                     else if(e.MessageText.StartsWith("!warframemarket") || e.MessageText.StartsWith("!wfmarket") || e.MessageText.StartsWith("!wfm"))
                     {
                         e.Channel.SendMessage("http://warframe.market");

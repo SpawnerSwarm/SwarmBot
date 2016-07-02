@@ -825,9 +825,34 @@ namespace SwarmBot
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             XMLMember author = memberDB.getMemberById(e.Author.ID);
 
-            if(cmd == "list")
+            if(cmd.StartsWith("list"))
             {
-                e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png");
+                if(cmd == "list")
+                {
+                    var block = emotes.list(0, memberDB);
+                    Console.WriteLine(block == "");
+                    Console.WriteLine(block);
+                    e.Channel.SendMessage(block);
+                } else
+                {
+                    int i = 0;
+                    try
+                    {
+                        i = int.Parse(cmd.Replace("list", "").Replace("-", ""));
+                        e.Channel.SendMessage(emotes.list(i, memberDB));
+                    } catch
+                    {
+                        trilean t = emotes.getEmote(cmd.Replace("list", ""));
+                        if(t)
+                        {
+                            e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB));
+                        }
+                        else
+                        {
+                            e.Channel.SendMessage("Really?");
+                        }
+                    }
+                }
             }
             else
             {

@@ -86,6 +86,48 @@ namespace SwarmBot.Chat
             x.Save(path);
             return true;
         }
+        public string list(int page, XMLDocument db)
+        {
+            Emote[] emotes = this.emotes;
+            string block = @"";
+            if(page == 0) { page = 1; };
+            for(int i = (page - 1) * 5;i < page * 5;i++)
+            {
+                if (emotes.Length > i)
+                {
+                    block += @"Name: " + emotes[i].name;
+                    block += @"
+Reference: " + emotes[i].reference;
+                    block += @"
+Required Rank: " + db.getRankName(emotes[i].requiredRank);
+                    block += @"
+Creator: " + emotes[i].creator + @"
+
+";
+                }
+            }
+            if(block == "")
+            {
+                block = "http://i.imgur.com/zdMAeE9.png";
+            }
+            return block;
+        }
+        public string getEmoteData(Emote emote, XMLDocument db)
+        {
+            string block = @"";
+            block += @"Name: " + emote.name;
+            block += @"
+Reference: " + emote.reference;
+            block += @"
+Required Rank: " + db.getRankName(emote.requiredRank);
+            block += @"
+Creator: " + emote.creator;
+            block += @"
+
+" + emote.URL;
+
+            return block;
+        }
     }
     public class Emote
     {
@@ -93,7 +135,7 @@ namespace SwarmBot.Chat
         public string name { get; internal set; }
         public string reference { get; internal set; }
         public short requiredRank { get; internal set; }
-        private string creator { get; set; }
+        public string creator { get; set; }
 
         public Emote(XElement xE)
         {
