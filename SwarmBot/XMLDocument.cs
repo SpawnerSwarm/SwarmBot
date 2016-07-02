@@ -4,15 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using System.IO;
-using System.Globalization;
-using SwarmBot;
 using Trileans;
 
-namespace SwarmBot
+namespace SwarmBot.XML
 {
     
     public class Rankup
@@ -95,6 +91,9 @@ namespace SwarmBot
     {
         public string name { get; internal set; }
         public string rank { get; internal set; }
+        /// <summary>
+        /// The Rankup history of the member consisting of <see cref="Rankup"/> objects
+        /// </summary>
         private Rankup[] rankupHistory { get; set; }
         public string WFName { get; internal set; }
         public string SKName { get; internal set; }
@@ -103,6 +102,10 @@ namespace SwarmBot
         public string steamName { get; internal set; }
         private string steamIdAlpha { get; set; }
         private long steamIdNum { get; set; }
+        public short forma { get; set; }
+        /// <summary>
+        /// The parent <see cref="XMLDocument"/> of the <see cref="XElement"/> (<see cref="xE"/>) of the member
+        /// </summary>
         internal XMLDocument x { get; set; }
         internal XElement xE { get; set; }
 
@@ -152,8 +155,14 @@ namespace SwarmBot
                 steamIdAlpha = steamId;
                 steamIdNum = 0;
             }
+            forma = short.Parse(xE.Descendants("FormaDonated").ToArray()[0].Value);
         }
 
+        /// <summary>
+        /// Returns the numerical or alphabetical Steam ID of the member.
+        /// </summary>
+        /// <returns><see cref="trilean"/>. Outer bool <see cref="true"/> if numerical. Embedded is the ID</returns>
+        /// <remarks>Will throw an error if the parsing fails</remarks>
         public trilean getSteamId()
         {
             if(steamIdAlpha == null)
@@ -196,7 +205,8 @@ namespace SwarmBot
         {
             try
             {
-                return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
+                //return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
+                return checkPermissions(x.getDefine(s));
             }
             catch
             {
@@ -258,7 +268,7 @@ namespace SwarmBot
             }*/
             return isReady;
         }
-        public trilean promote(DateTime date, string forceRank = null)
+        public trilean promote(DateTime date, XMLMember m, string forceRank = null)
         {
             string rank;
             int rankInt;
@@ -286,8 +296,16 @@ namespace SwarmBot
                     throw new Exception("Error: Invalid rank -- " + exception);
                 }
             }
-            return x.promote(this, rank, date);
-            
+            if (x.getDefine(m.rank) > x.getDefine(rank))
+            {
+                return x.promote(this, rank, date);
+            } else
+            {
+                Console.WriteLine("FOO");
+                Console.WriteLine(x.getDefine(this.rank));
+                Console.WriteLine(x.getDefine(rank));
+                return new trilean(false, true, ">");
+            }
         }
         public XElement toXElement()
         {
@@ -307,13 +325,18 @@ namespace SwarmBot
                     new XElement("Discord", discordName),
                     new XElement("DiscordId", discordId),
                     new XElement("Steam", steamName),
-                    new XElement("SteamId", new XAttribute("numerical", getSteamId().table[0]), getSteamId().embedded)));
+                    new XElement("SteamId", new XAttribute("numerical", getSteamId().table[0]), getSteamId().embedded)),
+                new XElement("FormaDonated", forma));
             return member;
                 
         }
         public static implicit operator string(XMLMember x)
         {
             return x.name;
+        }
+        public trilean addForma(short formas)
+        {
+            return x.addForma(this, formas);
         }
     }
     public class XMLDocument
@@ -404,8 +427,38 @@ namespace SwarmBot
                 XElement xMember = xMemberArray[0];
                 xMember.Descendants("Rank").ToArray()[0].SetValue(rank);
                 xMember.Descendants("Rankup").Where(x => x.Attribute("name").Value == rank).ToArray()[0].SetValue(date.ToString());
+                resetForma(member);
                 Save(path);
                 return new trilean(true, rank);
+            }
+        }
+        public trilean addForma(XMLMember member, short formas)
+        {
+            XElement[] xMemberArray = document.Descendants("Member").Where(x => x.Descendants("Name").ToArray()[0].Value == member).ToArray();
+            if(xMemberArray.Length != 1)
+            {
+                return new trilean(false, true, "Multiple");
+            } else
+            {
+                XElement xMember = xMemberArray[0];
+                xMember.Descendants("FormaDonated").ToArray()[0].SetValue(short.Parse(xMember.Descendants("FormaDonated").ToArray()[0].Value) + formas);
+                Save(path);
+                return new trilean(true);
+            }
+        }
+        public trilean resetForma(XMLMember member)
+        {
+            XElement[] xMemberArray = document.Descendants("Member").Where(x => x.Descendants("Name").ToArray()[0].Value == member).ToArray();
+            if (xMemberArray.Length != 1)
+            {
+                return new trilean(false, true, "Multiple");
+            }
+            else
+            {
+                XElement xMember = xMemberArray[0];
+                xMember.Descendants("FormaDonated").ToArray()[0].SetValue(0);
+                Save(path);
+                return new trilean(true);
             }
         }
     }

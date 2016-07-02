@@ -8,10 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using System.IO;
-using System.Globalization;
-using SwarmBot;
+using SwarmBot.Chat;
 
 namespace SwarmBot
 {
@@ -28,11 +26,15 @@ namespace SwarmBot
                 Discord.client.UpdateCurrentGame("Type !help for help");
             };
 
+            //Emotes
+            string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+            string emoteDir = Path.Combine(configDir, "emotes.xml");
+
             Discord.client.MessageReceived += (sender, e) =>
             {
                 if (e.Author.Username != "SwarmBot")
                 {
-                    if (e.MessageText == "!help")
+                    if (e.MessageText == "!help" || e.MessageText == "!OHMAHGAWDHALPMEPLS" || e.MessageText == "!ONOIAMNOTGOODWITHCOMPOOTERPLSTOHALP")
                     {
                         Discord.help(e);
                     }
@@ -46,7 +48,7 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!guildmail"))
                     {
-                        string guildmail = "https://onedrive.live.com/redir?resid=F485764E97178E7C!5421&authkey=!AC4Oi92whZUO3xo&ithint=file%2cpdf";
+                        string guildmail = "https://onedrive.live.com/redir?resid=EB28C1A942749087!7909&authkey=!AEcoJaL5hNrQgXE&ithint=file%2cpdf";
                         e.Channel.SendMessage(guildmail);
                     }
                     else if (e.MessageText.StartsWith("!invite"))
@@ -56,7 +58,8 @@ namespace SwarmBot
                     else if (e.MessageText.StartsWith("!getMember"))
                     {
                         Match cmd = Regex.Match(e.MessageText, @"!getMember (?:<@(.+)>)?(?: )?(?:(-f))?(?: )?(?:(-h))?");
-                        DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value);
+                        //DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value.Replace("!", ""));
+                        DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
                         bool force = cmd.Groups[2].Value.Equals("-f");
                         bool help = cmd.Groups[3].Value.Equals("-h");
 
@@ -64,26 +67,25 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!promote"))
                     {
-                        Match cmd = Regex.Match(e.MessageText, @"!promote <@(.+)>(?: -f \((.+)\))?(?: --date ([^ ]+)| -d ([^ ]+))?(?: (-h))?");
-                        DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value);
-                        string force = cmd.Groups[2].Value;
-                        string date = "";
-                        if (cmd.Groups[3].Value != "")
+                        Match cmd = Regex.Match(e.MessageText, @"!promote <@([^ ]+)>(?:(?: --force | -f )\((.+)\))?(?:(?: --date | -d )([^ ]+))?(?: (-h))?");
+                        if (cmd.Groups[1].Value != "")
                         {
-                            date = cmd.Groups[3].Value;
-                        } else if (cmd.Groups[4].Value != "")
-                        {
-                            date = cmd.Groups[4].Value;
-                        }
-                        bool isForce = force != "";
-                        bool help = cmd.Groups[3].Value.Equals("-h");
+                            DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
+                            string force = cmd.Groups[2].Value;
+                            string date = cmd.Groups[3].Value;
+                            bool isForce = force != "";
+                            bool help = cmd.Groups[3].Value.Equals("-h");
 
-                        Discord.promote(member, e, force, date, isForce, help);
+                            Discord.promote(member, e, force, date, isForce, help);
+                        } else
+                        {
+                            e.Channel.SendMessage("Error: Incorrect syntax");
+                        }
                     }
                     else if (e.MessageText.StartsWith("!createMember"))
                     {
                         Match cmd = Regex.Match(e.MessageText, @"!createMember <@(.+)>(?: --date ([^ ]+)| -d ([^ ]+))?(?: --steam ([^ 0-9]+)| -s ([^ 0-9]+)| --steam ([^ ][0-9]+)| -s ([^ ][0-9]+))?( --populate| -p)?");
-                        DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value);
+                        DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
                         Console.WriteLine(cmd.Groups[1].Value);
                         bool isSettingSteam = false;
                         bool isSteamNumerical = false;
@@ -130,7 +132,7 @@ namespace SwarmBot
                     {
                         try {
                             Match cmd = Regex.Match(e.MessageText, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
-                            DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value);
+                            DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
                             for (int i = 1; i <= 6; i++)
                             {
                                 Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
@@ -177,7 +179,8 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!populate"))
                     {
-                        DiscordMember member = e.Channel.Parent.GetMemberByKey(Regex.Match(e.MessageText.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value);
+                        //DiscordMember member = e.Channel.Parent.GetMemberByKey(Regex.Match(e.MessageText.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value);
+                        DiscordMember member = Discord.getDiscordMemberByID(Regex.Match(e.MessageText.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value, e.Channel.Parent);
                         Discord.populate(member, e);
                     }
                     else if(e.MessageText.StartsWith("!lenny"))
@@ -200,11 +203,92 @@ namespace SwarmBot
                         if(e.Author.Username == "FoxTale")
                         {
                             e.Channel.SendMessage("http://i.imgur.com/Vw20PUI.png");
+                        } else
+                        {
+                            e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");
                         }
                     }
                     else if(e.MessageText.StartsWith("!warframemarket") || e.MessageText.StartsWith("!wfmarket") || e.MessageText.StartsWith("!wfm"))
                     {
                         e.Channel.SendMessage("http://warframe.market");
+                    }
+                    else if(e.MessageText.StartsWith("!createChannel"))
+                    {
+                        Match cmd = Regex.Match(e.MessageText, @"!createChannel ([^< ]+)(?: <@([^>]+)>)?(?: <@([^>]+)>)?(?: <@([^>]+)>)?");
+                        string channelName = cmd.Groups[1].Value;
+                        string[] invitees = new string[3];
+                        int numInvitees = 0;
+                        for(int i = 3; i < 6; i++)
+                        {
+                            if(cmd.Groups[i].Value != "")
+                            {
+                                numInvitees++;
+                                invitees[i - 3] = cmd.Groups[i].Value;
+                            }
+                        }
+                        Discord.createChannel(e, channelName, numInvitees, invitees);
+                    }
+                    else if(e.MessageText.StartsWith("!emotes") || e.MessageText.StartsWith("!e ") || e.MessageText == "!e")
+                    {
+                        Emotes emotes = new Emotes(emoteDir);
+                        string cmd = e.MessageText.Replace("!emotes", "").Replace("!e", "").Replace(" ", "");
+                        if (cmd == "")
+                        {
+                            e.Channel.SendMessage("Welcome to the Spawner Swarm Emotes system (beta)! To send an emote, send a message like this '!e <emote_ref>'. To see a list of emotes, send '!emotes list' or '!e list'");
+                        }
+                        else
+                        {
+                            Discord.getEmote(e, emotes, cmd);
+                        }
+                    }
+                    else if(e.MessageText.StartsWith("!newEmote"))
+                    {
+                        Emotes emotes = new Emotes(emoteDir);
+                        Match cmd = Regex.Match(e.MessageText, @"!newEmote \((.+)\) ([^ ]+) ([^ ]+) ([^ ]+)(?: <@([^ ]+)>)?");
+                        string name = cmd.Groups[1].Value;
+                        string reference = cmd.Groups[2].Value;
+                        short reqRank = short.Parse(cmd.Groups[3].Value);
+                        string URL = cmd.Groups[4].Value;
+                        if(cmd.Groups[5].Value != "")
+                        {
+                            //string author = e.Channel.Parent.GetMemberByKey(cmd.Groups[5].Value).Username;
+                            string author = Discord.getDiscordMemberByID(cmd.Groups[5].Value, e.Channel.Parent).Username;
+                            Discord.createEmote(e, emotes, name, URL, reference, reqRank, author);
+                        }
+                        else
+                        {
+                            Discord.createEmote(e, emotes, name, URL, reference, reqRank);
+                        }
+                        
+                    }
+                    else if(e.MessageText.StartsWith("!addForma"))
+                    {
+                        Match cmd = Regex.Match(e.MessageText, @"!addForma <@(.+)> ([1-9])");
+                        if (cmd.Groups[1].Value != "" && cmd.Groups[2].Value != "")
+                        {
+                            DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
+                            short formas = short.Parse(cmd.Groups[2].Value);
+                            if (formas == 0)
+                            {
+                                e.Channel.SendMessage("Must donate between 0 and 10 formas at a time (not inclusive)");
+                            }
+                            else
+                            {
+                                Discord.addForma(e, member, formas);
+                            }
+                        } else
+                        {
+                            e.Channel.SendMessage("Error: Incorrect syntax");
+                        }
+                    }
+                    else if(e.MessageText.StartsWith("!info"))
+                    {
+                        string member = Regex.Match(e.MessageText, @"!info <@(.+)>").Groups[1].Value;
+                        //DiscordMember m = e.Channel.Parent.GetMemberByKey(member);
+                        DiscordMember m = Discord.getDiscordMemberByID(member, e.Channel.Parent);
+                        Console.WriteLine(m.ID);
+                        Console.WriteLine(m.Username);
+                        Console.WriteLine(m.Roles);
                     }
                 };
             };

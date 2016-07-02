@@ -9,19 +9,20 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.IO;
-using System.Globalization;
-using SwarmBot;
+using SwarmBot.XML;
 using Trileans;
+using SwarmBot.Chat;
 
 namespace SwarmBot
 {
     class Discord
     {
-        public static DiscordClient client = new DiscordClient();
+        public static string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+        public static DiscordClient client/* = new DiscordClient(token, true)*/;
         private static string email;
         private static string password;
+        private static string token;
         public static DiscordServer Swarm;
-        public static string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
 
         public static bool SendInvite(string recipient, string Game, DiscordMessageEventArgs e)
         {
@@ -31,7 +32,8 @@ namespace SwarmBot
 
             if (isTag)
             {
-                e.Channel.Parent.GetMemberByKey(recipient.Replace("<", "").Replace("@", "").Replace(">", "")).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
+                //e.Channel.Parent.GetMemberByKey(recipient.Replace("<", "").Replace("@", "").Replace(">", "")).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
+                getDiscordMemberByID(recipient.Replace("<", "").Replace("@", "").Replace(">", ""), e.Channel.Parent).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
             }
             else {
                 e.Channel.Parent.GetMemberByUsername(recipient).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
@@ -40,20 +42,29 @@ namespace SwarmBot
             return true;
         }
 
+        public static DiscordMember getDiscordMemberByID(string ID, DiscordServer server)
+        {
+            return server.GetMemberByKey(ID.Replace("!", ""));
+        }
+
         public static void Connect()
         {
             using (StreamReader sr = File.OpenText(Path.Combine(configDir, "config.txt")))
             {
-                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+)");
+                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+)");
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
+                token = info.Groups[3].Value;
             }
 
-            client.ClientPrivateInformation.Email = email;
-            client.ClientPrivateInformation.Password = password;
+            client = new DiscordClient(token, true);
+
+            /*client.ClientPrivateInformation.Email = email;
+            client.ClientPrivateInformation.Password = password;*/
 
             try
             {
+                client.Autoconnect = true;
                 client.SendLoginRequest();
                 client.Connect();
             }
@@ -64,17 +75,65 @@ namespace SwarmBot
         }
         public static void help(DiscordMessageEventArgs e)
         {
-            e.Channel.SendMessage("I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:");
-            e.Channel.SendMessage("--   Search the Warframe Wiki (!wfwiki <page name>)");
-            e.Channel.SendMessage("--   Search the Spiral Knights Wiki (!skwiki <page name>)");
-            e.Channel.SendMessage("--   Link you to the Guild Mail (!guildmail)");
-            e.Channel.SendMessage("--   Send you the latest news (!news)");
-            e.Channel.SendMessage("--   Update the news [Officer +] (!updateNews <News>)");
-            e.Channel.SendMessage("--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
-            e.Channel.SendMessage("--   Get a member's information (!getMember <@Member>)");
-            e.Channel.SendMessage("--   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
-            e.Channel.SendMessage("--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]");
-            //e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");
+            if (e.Author.Username != "Quantum-Nova")
+            {
+                /*e.Channel.SendMessage("I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:");
+                e.Channel.SendMessage("--   Search the Warframe Wiki (!wfwiki <page name>)");
+                e.Channel.SendMessage("--   Search the Spiral Knights Wiki (!skwiki <page name>)");
+                e.Channel.SendMessage("--   Link you to the Guild Mail (!guildmail)");
+                e.Channel.SendMessage("--   Send you the latest news (!news)");
+                e.Channel.SendMessage("--   Update the news [Officer +] (!updateNews <News>)");
+                e.Channel.SendMessage("--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>");
+                e.Channel.SendMessage("--   Get a member's information (!getMember <@Member>)");
+                e.Channel.SendMessage("--   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])");
+                e.Channel.SendMessage("--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]");
+                //e.Channel.SendMessage("More functions will be added soon; feel free to pm @Mardan with suggestions!");*/
+                e.Channel.SendMessage(@"I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:
+
+--   Search the Warframe Wiki (!wfwiki <page name>)
+
+--   Search the Spiral Knights Wiki (!skwiki <page name>)
+
+--   Link you to the Guild Mail(!guildmail)
+
+--   Send you the latest news (!news)
+
+--   Update the news [Officer +] (!updateNews <News>)
+
+--   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>
+
+--   Get a member's information (!getMember <@Member>)
+
+--   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])
+
+--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]
+
+--   Add donated forma to a member's account [Officer +] (!addForma <@Member> <1-9>");
+            }
+            else
+            {
+                e.Channel.SendMessage(@"I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:
+
+--  Search the Warframe Wiki (!wfwiki <page name>)
+
+--  Serach the Spiral Knights Wiki (!skwiki <page name>)
+
+--  Link you to the Guild Mail (!guildmail)
+
+--  Send you the latest news (!news)
+
+--  Update the news [Officer +] (!updateNews <News>)
+
+--  Invite a group of players to play a game (!invite <# of invitees> @Quantum-Nova, [@Quantum-Nova], [@Quantum-Nova], [@Quantum-Nova] <Game>)
+
+--  Get a member's information (!getMember <@Quantum-Nova>)
+
+--  Create a new member entry [Veteran +] (!createMember @Quantum-Nova [--date|-d 01/01/0001] [--steam|-s [SS|GM]Quantum Nova])
+
+--  Promote a member [Officer +] (!promote @Quantum-Nova [--force|-f (Rank)] [--date|-d 01/01/0001]
+
+--  Add donated forma to a member's account [Officer +] (!addForma @Quantum-Nova <1-9>");
+            }
             Console.WriteLine("Sent help because of this message: " + e.MessageText);
         }
         public static void wiki(DiscordMessageEventArgs e, string wiki)
@@ -214,18 +273,19 @@ namespace SwarmBot
                         {
                             e.Channel.SendMessage("He/she is eligible for a rankup.");
                         }
-                        else if (!isReady.table[0] && isReady.embedded != "Max")
+                        else if (!isReady.table[0] && (string)isReady.embedded != "Max")
                         {
                             e.Channel.SendMessage("He/she is not eligible for a rankup at this time.");
-                        } else if(isReady.embedded == "Max")
+                        } else if((string)isReady.embedded == "Max")
                         {
                             e.Channel.SendMessage("He/she has reached the maximum possible rank");
                         }
-                        if(isReady.embedded != "Max")
+                        if((string)isReady.embedded != "Max")
                         {
-                            e.Channel.SendMessage("It has been " + isReady.embedded + " days since their last rankup.");
+                            e.Channel.SendMessage("It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.");
                         } 
                     }
+                    e.Channel.SendMessage(xMember + " has donated " + xMember.forma + " forma");
                 } catch(Exception exception)
                 {
                   Console.WriteLine("Error: " + exception);
@@ -308,92 +368,162 @@ namespace SwarmBot
                 Console.WriteLine(member.Username + " " + force + " " + help);
                 XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
                 XMLMember xMember = memberDB.getMemberById(member.ID);
+                XMLMember xAuthor = memberDB.getMemberById(e.Author.ID);
                 if(memberDB.getMemberById(e.Author.ID).checkPermissions("Officer")) {
-                    if(isForce)
+                    if (long.Parse(e.Message.Author.ID) != xMember.discordId || memberDB.getMemberById(e.Author.ID).checkPermissions("Guild Master"))
                     {
-                        if(date != "")
+                        if (isForce)
                         {
-                            DateTime dateTime;
-                            string s = "n";
-                            try
+                            if (date != "")
                             {
-                                dateTime = DateTime.Parse(date);
-                            } catch
-                            {
-                                throw new Exception("Error: Invalid Date");
-                                e.Channel.SendMessage("Error: Invalid Date");
-                                s = "y";
+                                DateTime dateTime;
+                                string s = "n";
+                                try
+                                {
+                                    dateTime = DateTime.Parse(date);
+                                }
+                                catch
+                                {
+                                    //throw new Exception("Error: Invalid Date");
+                                    e.Channel.SendMessage("Error: Invalid Date");
+                                    dateTime = DateTime.Now;
+                                    s = "y";
+                                }
+                                if (s != "y")
+                                {
+                                    trilean trilean = xMember.promote(dateTime, xAuthor, force);
+                                    if (trilean)
+                                    {
+                                        e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                        e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
+                                    }
+                                    else if (trilean.table[1])
+                                    {
+                                        if ((string)trilean.embedded == "Multiple")
+                                        {
+                                            e.Channel.SendMessage("Error: Multiple Members found");
+                                        }
+                                        else if ((string)trilean.embedded == "Max")
+                                        {
+                                            e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
+                                        }
+                                        else if((string)trilean.embedded == ">")
+                                        {
+                                            e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                        }
+                                        else
+                                        {
+                                            e.Channel.SendMessage("An error occured");
+                                        }
+                                    }
+                                }
                             }
-                            if(s != "y")
+                            else if (date == "")
                             {
-                                xMember.promote(dateTime, force);
-                            }                      
-                        } else if(date == "")
+                                trilean trilean = xMember.promote(DateTime.Now, xAuthor, force);
+                                if (trilean)
+                                {
+                                    e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                    e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + force);
+                                }
+                                else if (trilean.table[1])
+                                {
+                                    if ((string)trilean.embedded == "Multiple")
+                                    {
+                                        e.Channel.SendMessage("Error: Multiple Members found");
+                                    }
+                                    else if ((string)trilean.embedded == "Max")
+                                    {
+                                        e.Channel.SendMessage("Can't promote " + xMember.name + " because they are already at maximum rank.");
+                                    }
+                                    else if ((string)trilean.embedded == ">")
+                                    {
+                                        e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                    }
+                                    else
+                                    {
+                                        e.Channel.SendMessage("An error occured");
+                                    }
+                                }
+                            }
+                        }
+                        else
                         {
-                            trilean trilean = xMember.promote(DateTime.Now, force);
-                            if(trilean)
+                            if (date != "")
                             {
-                                e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == trilean.embedded), member);
-                                e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + force);
-                            } else if(trilean.table[1])
+                                DateTime dateTime = DateTime.Now;
+                                string s = "n";
+                                try
+                                {
+                                    dateTime = DateTime.Parse(date);
+                                }
+                                catch
+                                {
+                                    //throw new Exception("Error: Invalid Date");
+                                    e.Channel.SendMessage("Error: Invalid Date");
+                                    s = "y";
+                                }
+                                if (s != "y")
+                                {
+                                    trilean trilean = xMember.promote(dateTime, xAuthor);
+                                    if (trilean)
+                                    {
+                                        e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                        e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
+                                    }
+                                    else if (trilean.table[1])
+                                    {
+                                        if ((string)trilean.embedded == "Multiple")
+                                        {
+                                            e.Channel.SendMessage("Error: Multiple Members found");
+                                        }
+                                        else if ((string)trilean.embedded == "Max")
+                                        {
+                                            e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
+                                        }
+                                        else if ((string)trilean.embedded == ">")
+                                        {
+                                            e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                        }
+                                        else
+                                        {
+                                            e.Channel.SendMessage("An error occured");
+                                        }
+                                    }
+                                }
+                            }
+                            else if (date == "")
                             {
-                                if (trilean.embedded == "Multiple")
+                                trilean trilean = xMember.promote(DateTime.Now, xAuthor);
+                                if (trilean)
                                 {
-                                    e.Channel.SendMessage("Error: Multiple Members found");
+                                    e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                    e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
                                 }
-                                else if (trilean.embedded == "Max")
+                                else if (trilean.table[1])
                                 {
-                                    e.Channel.SendMessage("Can't promote " + xMember.name + " because they are already at maximum rank.");
-                                }
-                                else
-                                {
-                                    e.Channel.SendMessage("An error occured");
+                                    if ((string)trilean.embedded == "Multiple")
+                                    {
+                                        e.Channel.SendMessage("Error: Multiple Members found");
+                                    }
+                                    else if ((string)trilean.embedded == "Max")
+                                    {
+                                        e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
+                                    }
+                                    else if ((string)trilean.embedded == ">")
+                                    {
+                                        e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                    }
+                                    else
+                                    {
+                                        e.Channel.SendMessage("An error occured");
+                                    }
                                 }
                             }
                         }
                     } else
                     {
-                        if (date != "")
-                        {
-                            DateTime dateTime;
-                            string s = "n";
-                            try
-                            {
-                                dateTime = DateTime.Parse(date);
-                            }
-                            catch
-                            {
-                                throw new Exception("Error: Invalid Date");
-                                e.Channel.SendMessage("Error: Invalid Date");
-                                s = "y";
-                            }
-                            if (s != "y")
-                            {
-                                xMember.promote(dateTime);
-                            }
-                        }
-                        else if (date == "")
-                        {
-                            trilean trilean = xMember.promote(DateTime.Now);
-                            if(trilean) {
-                                e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == trilean.embedded), member);
-                                e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
-                            } else if (trilean.table[1])
-                            {
-                                if (trilean.embedded == "Multiple")
-                                {
-                                    e.Channel.SendMessage("Error: Multiple Members found");
-                                }
-                                else if (trilean.embedded == "Max")
-                                {
-                                    e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
-                                }
-                                else
-                                {
-                                    e.Channel.SendMessage("An error occured");
-                                }
-                            }
-                        }
+                        e.Channel.SendMessage("Sorry, you can't promote yourself!");
                     }
                 } else
                 {
@@ -462,7 +592,8 @@ namespace SwarmBot
                                                 new XElement("Discord", member.Username),
                                                 new XElement("DiscordId", member.ID),
                                                 new XElement("Steam", steamId),
-                                                new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)))
+                                                new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)),
+                                            new XElement("FormaDonated", 0))
                                         );
                                     if (isSettingDate)
                                     {
@@ -644,14 +775,14 @@ namespace SwarmBot
         }
         public static void populate(DiscordMember member, DiscordMessageEventArgs e)
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            /*XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             XElement[] memberArray = memberDB.document.Descendants("Member").ToArray();
             for(int i = 0;i<memberArray.Length;i++)
             {
-                memberArray[i].Add(new XElement("FailedTrial", "false"));
+                memberArray[i].Add(new XElement("FormaDonated", 0));
             }
             Console.WriteLine(memberDB.document);
-            memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));
+            memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));*/
         }
         public static void pmUpdateNews(DiscordMember member, DiscordPrivateMessageEventArgs e)
         {
@@ -676,6 +807,116 @@ namespace SwarmBot
                 File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
                 e.Author.SendMessage("News Updated: " + news);
                 client.GetChannelByName("general").SendMessage("News Updated: " + news);
+            }
+        }
+        public static void createChannel(DiscordMessageEventArgs e, string channelName, int numInvitees, string[] invitees)
+        {
+            if(e.Channel.Parent.Channels.Where(x => x.Type == ChannelType.Voice).ToArray().Length >= 10)
+            {
+                e.Channel.SendMessage("Sorry, we can't create another channel as there is no more room. Try again later or ask an admin to delete a channel");
+            } else
+            {
+                e.Channel.Parent.CreateChannel(channelName, true);
+                e.Channel.SendMessage("Successfully created new voice channel " + channelName + "!");
+            }
+        }
+        public static void getEmote(DiscordMessageEventArgs e, Emotes emotes, string cmd = "list")
+        {
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLMember author = memberDB.getMemberById(e.Author.ID);
+
+            if(cmd == "list")
+            {
+                e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png");
+            }
+            else
+            {
+                //Emote emote = (Emote)emotes.getEmote(cmd).embedded;
+                trilean t = emotes.getEmote(cmd);
+                if (t.value == 0)
+                {
+                    Emote emote = (Emote)t.embedded;
+                    if (emote.getEligible(author))
+                    {
+                        e.Channel.SendMessage(emote.URL);
+                    }
+                    else
+                    {
+                        e.Channel.SendMessage("Sorry, you don't have permission to send that emote!");
+                    }
+                } else if(t == false)
+                {
+                    e.Channel.SendMessage("Could not find emote " + cmd);
+                } else if(t.value == 1)
+                {
+                    if((string)t.embedded == "Multiple")
+                    {
+                        e.Channel.SendMessage("Error: Multiple emotes found by that ref");
+                    } else
+                    {
+                        e.Channel.SendMessage("An unknown error occured");
+                    }
+                }
+            }
+        }
+        public static void createEmote(DiscordMessageEventArgs e, Emotes emotes, string name, string URL, string reference, short reqRank, string author = "Mardan")
+        {
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLMember xAuthor = memberDB.getMemberByUsername(author);
+            Emote emote = new Emote(URL, name, reference, reqRank, xAuthor);
+            if (e.Message.Author.Username == "Mardan")
+            {
+                trilean success = emotes.newEmote(emote);
+
+                if (success.table[1] == true)
+                {
+                    e.Channel.SendMessage("There was an error creating a new emote; an emote with the same " + success.embedded + " already exists");
+                }
+                else
+                {
+                    e.Channel.SendMessage("Successfully created emote " + name + "!");
+                }
+            }
+            else
+            {
+                e.Channel.SendMessage("Sorry, you don't have permissions to add emotes. Send an application to a Guild Master instead.");
+            }
+        }
+        public static void addForma(DiscordMessageEventArgs e, DiscordMember member, short formas)
+        {
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLMember author = memberDB.getMemberById(e.Author.ID);
+            XMLMember xMember = memberDB.getMemberById(member.ID);
+            if (author.checkPermissions(5))
+            {
+                if (author.discordId != xMember.discordId || author.checkPermissions("Guild Master"))
+                {
+                    if (memberDB.getDefine(author.rank) > memberDB.getDefine(xMember.rank))
+                    {
+                        trilean t = xMember.addForma(formas);
+                        if (t.table[1])
+                        {
+                            if ((string)t.embedded == "Multiple")
+                            {
+                                e.Channel.SendMessage("Error: Multiple members were found. Could not add forma.");
+                            }
+                            else
+                            {
+                                e.Channel.SendMessage("An unknown error occured. Unable to add forma");
+                            }
+                        }
+                        else if (t)
+                        {
+                            e.Channel.SendMessage("Successfully added " + formas + " formas to " + xMember);
+                        }
+                    } else
+                    {
+                        e.Channel.SendMessage("You must be a higher rank to add forma to " + xMember);
+                    }
+                } else
+                {
+                    e.Channel.SendMessage("You can't add forma to yourself!");
+                }
             }
         }
     }
