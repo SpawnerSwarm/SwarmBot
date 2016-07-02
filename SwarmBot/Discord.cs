@@ -845,7 +845,9 @@ namespace SwarmBot
                         trilean t = emotes.getEmote(cmd.Replace("list", ""));
                         if(t)
                         {
-                            e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB));
+                            Emote emote = (Emote)t.embedded;
+                            bool hasPermission = emote.getEligible(author);
+                            e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB, hasPermission));
                         }
                         else
                         {

@@ -64,9 +64,9 @@ namespace SwarmBot.Chat
             }
             return getEligibleForEmote(member, emote);
         }
-        public static trilean getEligibleForEmote(XMLMember member, Emote emote)
+        public static bool getEligibleForEmote(XMLMember member, Emote emote)
         {
-            return new trilean(member.checkPermissions(emote.requiredRank), false);
+            return member.checkPermissions(emote.requiredRank);
         }
         public trilean newEmote(Emote emote)
         {
@@ -89,8 +89,10 @@ namespace SwarmBot.Chat
         public string list(int page, XMLDocument db)
         {
             Emote[] emotes = this.emotes;
-            string block = @"";
-            if(page == 0) { page = 1; };
+            if (page == 0) { page = 1; };
+            string block = @"Page " + page + ". To move to the next page, use \"!e list " + (page + 1) + "\". To view information about a specific emote, use \"!e list <emote_ref>\"." + @"
+
+";
             for(int i = (page - 1) * 5;i < page * 5;i++)
             {
                 if (emotes.Length > i)
@@ -112,7 +114,7 @@ Creator: " + emotes[i].creator + @"
             }
             return block;
         }
-        public string getEmoteData(Emote emote, XMLDocument db)
+        public string getEmoteData(Emote emote, XMLDocument db, bool hasPermission)
         {
             string block = @"";
             block += @"Name: " + emote.name;
@@ -122,10 +124,12 @@ Reference: " + emote.reference;
 Required Rank: " + db.getRankName(emote.requiredRank);
             block += @"
 Creator: " + emote.creator;
-            block += @"
+            if(hasPermission)
+            {
+                block += @"
 
 " + emote.URL;
-
+            }
             return block;
         }
     }
@@ -155,7 +159,7 @@ Creator: " + emote.creator;
             this.creator = creator.name;
         }
 
-        public trilean getEligible(XMLMember member)
+        public bool getEligible(XMLMember member)
         {
             return Emotes.getEligibleForEmote(member, this);
         }
