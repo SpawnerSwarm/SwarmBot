@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwarmBot", "SwarmBot\SwarmBot.csproj", "{A253C5E5-F90B-4640-9D49-D1CF20275A36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SwarmRestarter", "SwarmRestarter\SwarmRestarter.csproj", "{8824588F-05B7-41B9-8FE8-1E154C9F14EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A253C5E5-F90B-4640-9D49-D1CF20275A36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A253C5E5-F90B-4640-9D49-D1CF20275A36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A253C5E5-F90B-4640-9D49-D1CF20275A36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8824588F-05B7-41B9-8FE8-1E154C9F14EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8824588F-05B7-41B9-8FE8-1E154C9F14EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8824588F-05B7-41B9-8FE8-1E154C9F14EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8824588F-05B7-41B9-8FE8-1E154C9F14EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

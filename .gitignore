@@ -8,6 +8,8 @@
 *.sln.docstates
 config.xml
 PersonellDB.xml
+news.txt
+*.dll
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
