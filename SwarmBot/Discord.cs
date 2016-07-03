@@ -51,7 +51,7 @@ namespace SwarmBot
         {
             using (StreamReader sr = File.OpenText(Path.Combine(configDir, "config.txt")))
             {
-                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+)");
+                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+);.+");
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
                 token = info.Groups[3].Value;

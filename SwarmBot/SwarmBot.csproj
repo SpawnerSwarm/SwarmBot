@@ -70,12 +70,11 @@
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DiscordSharp, Version=0.6.0.7, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>E:\Downloads (Soul)\DiscordSharp-dev\DiscordSharp\bin\Release\DiscordSharp.dll</HintPath>
+    <Reference Include="DiscordSharp">
+      <HintPath>E:\Downloads (Soul)\DiscordSharp\DiscordSharp\bin\Release\DiscordSharp.dll</HintPath>
     </Reference>
     <Reference Include="DiscordSharp.Commands">
-      <HintPath>E:\Downloads (Soul)\DiscordSharp-dev\DiscordSharp.Commands\bin\Release\DiscordSharp.Commands.dll</HintPath>
+      <HintPath>E:\Downloads (Soul)\DiscordSharp\DiscordSharp.Commands\bin\Release\DiscordSharp.Commands.dll</HintPath>
     </Reference>
     <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NAudio.1.7.3\lib\net35\NAudio.dll</HintPath>

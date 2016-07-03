@@ -23,12 +23,29 @@ namespace SwarmBot
             Discord.client.Connected += (sender, e) =>
             {
                 Console.WriteLine("Connected! User: " + e.User.Username);
-                Discord.client.UpdateCurrentGame("Type !help for help");
+                Discord.client.UpdateCurrentGame("Type !help for help", true, "https://github.com/SpawnerSwarm/SwarmBot");
             };
 
             //Emotes
             string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
             string emoteDir = Path.Combine(configDir, "emotes.xml");
+            string restarterPath = "";
+            using (StreamReader sr = File.OpenText(Path.Combine(configDir, "config.txt")))
+            {
+                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+);(.+)");
+                restarterPath = info.Groups[5].Value;
+            }
+
+            Discord.client.SocketClosed += (sender, e) =>
+            {
+                int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                p.StartInfo = new System.Diagnostics.ProcessStartInfo(restarterPath, pid.ToString())
+                {
+                    UseShellExecute = false
+                };
+                p.Start();
+            };
 
             Discord.client.MessageReceived += (sender, e) =>
             {
