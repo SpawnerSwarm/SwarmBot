@@ -157,93 +157,12 @@ namespace SwarmBot
             }
             Console.WriteLine("Sent " + target.Replace(" ", "_") + " to " + e.Author.ID + " because of this message: " + e.MessageText);
         }
-        public static void invite(DiscordMessageEventArgs e)
+        public static void invite(DiscordMessageEventArgs e, MatchCollection cmd, string inviteSubject, string[] inviteTargetKeys)
         {
-            string numInvitees = Regex.Match(e.MessageText, @"([1-8])", RegexOptions.Singleline).Groups[1].Value;
-            if (numInvitees != "")
+            foreach(string inviteTargetKey in inviteTargetKeys)
             {
-                if (numInvitees == "1")
-                {
-                    Match matches = Regex.Match(e.MessageText, @"!invite (?:[1-8]) (?:@)?(.+) (.+)");
-                    string firstMatch = matches.Groups[1].Value;
-                    string secondMatch = matches.Groups[2].Value;
-                    /*Console.WriteLine(firstMatch);
-                    Console.WriteLine(secondMatch);*/
-                    // In the future, this will also dispatch a steam message.
-                    try
-                    {
-                        SendInvite(firstMatch, secondMatch, e);
-                    }
-                    catch (Exception)
-                    {
-                        e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                    }
-                }
-                else if (numInvitees == "2")
-                {
-                    Match matches = Regex.Match(e.MessageText, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (.+)");
-                    string firstMatch = matches.Groups[1].Value;
-                    string secondMatch = matches.Groups[2].Value;
-                    string thirdMatch = matches.Groups[3].Value;
-                    try
-                    {
-                        SendInvite(firstMatch, thirdMatch, e);
-                        SendInvite(secondMatch, thirdMatch, e);
-                    }
-                    catch (Exception)
-                    {
-                        e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                    }
-                }
-                else if (numInvitees == "3")
-                {
-                    Match matches = Regex.Match(e.MessageText, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
-                    string firstMatch = matches.Groups[1].Value;
-                    string secondMatch = matches.Groups[2].Value;
-                    string thirdMatch = matches.Groups[3].Value;
-                    string fourthMatch = matches.Groups[4].Value;
-                    try
-                    {
-                        SendInvite(firstMatch, fourthMatch, e);
-                        SendInvite(secondMatch, fourthMatch, e);
-                        SendInvite(thirdMatch, fourthMatch, e);
-                    }
-                    catch (Exception)
-                    {
-                        e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                    }
-                }
-                else if (numInvitees == "4")
-                {
-                    Match matches = Regex.Match(e.MessageText, @"!invite (?:[1-8]) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (?:@)?(.+) (.+)");
-                    string firstMatch = matches.Groups[1].Value;
-                    string secondMatch = matches.Groups[2].Value;
-                    string thirdMatch = matches.Groups[3].Value;
-                    string fourthMatch = matches.Groups[4].Value;
-                    string fifthMatch = matches.Groups[5].Value;
-
-                    try
-                    {
-                        SendInvite(firstMatch, fifthMatch, e);
-                        SendInvite(secondMatch, fifthMatch, e);
-                        SendInvite(thirdMatch, fifthMatch, e);
-                        SendInvite(fourthMatch, fifthMatch, e);
-                    }
-                    catch (Exception)
-                    {
-                        e.Channel.SendMessage("Sorry, something went wrong. Perhaps your syntax is off?");
-                    }
-
-                }
-                else
-                {
-                    e.Channel.SendMessage("Sorry, only 1-4 invitees are supported with one command!");
-                };
-            }
-            else
-            {
-                e.Channel.SendMessage("Error: Number of invitees not specified.");
-            };
+                getDiscordMemberByID(inviteTargetKey, e.Channel.Parent).SendMessage(e.Author.Username + " has invited you to play " + inviteSubject);
+            }            
         }
         public static void getMember(DiscordMember member, DiscordMessageEventArgs e, bool force, bool help)
         {
@@ -294,72 +213,6 @@ namespace SwarmBot
         }
         public static void promote(DiscordMember member, DiscordMessageEventArgs e, string force, string date, bool isForce, bool help)
         {
-            /*if (!help)
-            {
-                Console.WriteLine(member.Username + " " + force + " " + help);
-                XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-                IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Author.Username));
-                foreach (XElement p in hasPermission)
-                {
-                    IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
-                    foreach (XElement q in hasPermissionNum)
-                    {
-                        if (Int32.Parse(q.Value) >= 5)
-                        {
-                            IEnumerable<XElement> rank = memberDB.Descendants("Rank")
-                            .Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member.Username));
-                            foreach (XElement h in rank)
-                            {
-                                var hRank = h.Value;
-                                IEnumerable<XElement> hRankId = memberDB.Descendants("Define")
-                                    .Where(x => x.Attribute("name").Value == hRank);
-                                foreach (XElement i in hRankId)
-                                {
-                                    Console.WriteLine(i.Value);
-                                    Console.WriteLine(Int32.Parse(i.Value));
-                                    int iHRankId = Int32.Parse(i.Value);
-
-                                    var iHRankIdProgressed = iHRankId + 1;
-                                    IEnumerable<XElement> toRank = memberDB.Descendants("Define")
-                                        .Where(x => x.Value == iHRankIdProgressed.ToString());
-                                    foreach (XElement j in toRank)
-                                    {
-                                        string jToRank = force;
-                                        if (jToRank == "")
-                                        {
-                                            jToRank = j.Attribute("name").Value;
-                                        }
-                                        Console.WriteLine(jToRank);
-                                        try { e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == jToRank), member); } catch (Exception) { Console.WriteLine("No Rank exists"); };
-                                        h.Value = jToRank;
-                                        DateTime now = DateTime.Parse(DateTime.Now.ToString(new CultureInfo("en-us")));
-                                        Console.WriteLine(now);
-                                        IEnumerable<XElement> lastRankUp = memberDB.Descendants("RankupHistory").Descendants("Rankup")
-                                            .Where(x => x.Parent.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member.Username))
-                                            .Where(x => x.Attribute("name").Value == jToRank);
-                                        foreach (XElement k in lastRankUp)
-                                        {
-                                            if (date != "") { k.Value = date; }
-                                            else { k.Value = Regex.Match(now.ToString(), @"(.+) [1-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value; }
-                                        }
-                                        memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));
-                                        e.Channel.SendMessage("Successfully promoted " + member.Username + " to " + jToRank);
-
-                                    }
-
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Sorry, you don't seem to have permission to perform that action!");
-                        }
-                    }
-
-
-
-                }
-            }*/
             if(help)
             {
                 e.Channel.SendMessage("Help text");

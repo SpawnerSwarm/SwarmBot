@@ -70,7 +70,17 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!invite"))
                     {
-                        Discord.invite(e);
+                        //Discord.invite(e);
+                        MatchCollection cmd = Regex.Matches(e.MessageText, @"(?:!invite)? <@((?:!)?\d+)>( [^<@>]+)?");
+                        Console.WriteLine(cmd[0].Groups[1].Value);
+                        Console.WriteLine(cmd[cmd.Count - 1].Groups[2].Value);
+                        string inviteSubject = Regex.Match(cmd[cmd.Count - 1].Groups[2].Value, @" (.+)").Groups[1].Value;
+                        string[] memberKeys = new string[cmd.Count];
+                        for(int i = 0; i < cmd.Count; i++)
+                        {
+                            memberKeys[i] = cmd[i].Groups[1].Value;
+                        }
+                        Discord.invite(e, cmd, inviteSubject, memberKeys);
                     }
                     else if (e.MessageText.StartsWith("!getMember"))
                     {
@@ -227,7 +237,7 @@ namespace SwarmBot
                     }
                     else if(e.MessageText.StartsWith("(╯°□°）╯︵ ┻━┻"))
                     {
-                        e.Channel.SendMessage(" ┬─┬ノ( º _ ºノ)");
+                        e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)");
                     }
                     else if(e.MessageText.StartsWith("!warframemarket") || e.MessageText.StartsWith("!wfmarket") || e.MessageText.StartsWith("!wfm"))
                     {
