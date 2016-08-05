@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.IO;
-using SwarmBot.XML;
 using Trileans;
+using SwarmBot.XML;
 using SwarmBot.Chat;
+using SwarmBot.Nexus;
 
 namespace SwarmBot
 {
@@ -108,7 +109,11 @@ namespace SwarmBot
 
 --   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]
 
---   Add donated forma to a member's account [Officer +] (!addForma <@Member> <1-9>");
+--   Add donated forma to a member's account [Officer +] (!addForma <@Member> <1-9>
+
+--   Price check a Warframe item using Nexus Stats (!pc <Item Name>)
+
+--   Access the Swarm Emotes system (!e|!emotes)");
             }
             else
             {
@@ -181,30 +186,36 @@ namespace SwarmBot
                     XMLDocument memberDB = new XMLDocument(Path.Combine(configDir + "PersonellDB.xml"));
                     XMLMember xMember = memberDB.getMemberById(member.ID);
                     Console.WriteLine(xMember.name + " is a(n) " + xMember.rank);
-                    e.Channel.SendMessage(xMember.name + " is a(n) " + xMember.rank);
                     trilean isReady = xMember.checkReadyForRankUp();
+                    string message = "```xl\n";
+                    message += xMember.name + " is a(n) " + xMember.rank + "\n";
                     if (isReady.table[1])
                     {
-                        e.Channel.SendMessage("We can't tell whether or not " + xMember.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception");
+                        message += "We can't tell whether or not " + xMember.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.\n";
                     }
-                    else {
+                    else
+                    {
                         if (isReady.table[0])
                         {
-                            e.Channel.SendMessage("He/she is eligible for a rankup.");
+                            message += "He/she is eligible for a rankup.\n";
                         }
                         else if (!isReady.table[0] && (string)isReady.embedded != "Max")
                         {
-                            e.Channel.SendMessage("He/she is not eligible for a rankup at this time.");
-                        } else if((string)isReady.embedded == "Max")
-                        {
-                            e.Channel.SendMessage("He/she has reached the maximum possible rank");
+                            message += "He/she is not eligible for a rankup at this time.\n";
                         }
-                        if((string)isReady.embedded != "Max")
+                        else if ((string)isReady.embedded == "Max")
                         {
-                            e.Channel.SendMessage("It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.");
-                        } 
+                            message += "He/she has reached the maximum possible rank.\n";
+                        }
+                        if ((string)isReady.embedded != "Max")
+                        {
+                            message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                        }
                     }
-                    e.Channel.SendMessage(xMember + " has donated " + xMember.forma + " forma");
+                    message += xMember + " has donated " + xMember.forma + " forma\n";
+                    message += "```";
+                    Console.WriteLine(message);
+                    e.Channel.SendMessage(message);
                 } catch(Exception exception)
                 {
                   Console.WriteLine("Error: " + exception);
@@ -237,8 +248,7 @@ namespace SwarmBot
                                 }
                                 catch
                                 {
-                                    //throw new Exception("Error: Invalid Date");
-                                    e.Channel.SendMessage("Error: Invalid Date");
+                                    e.Channel.SendMessage("```xl\nError: Invalid Date\n```");
                                     dateTime = DateTime.Now;
                                     s = "y";
                                 }
@@ -248,25 +258,25 @@ namespace SwarmBot
                                     if (trilean)
                                     {
                                         e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
-                                        e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
+                                        e.Channel.SendMessage("```xl\nSuccessfully promoted " + xMember.name + " to " + trilean.embedded + "\n```");
                                     }
                                     else if (trilean.table[1])
                                     {
                                         if ((string)trilean.embedded == "Multiple")
                                         {
-                                            e.Channel.SendMessage("Error: Multiple Members found");
+                                            e.Channel.SendMessage("```xl\nError: Multiple Members found\n```");
                                         }
                                         else if ((string)trilean.embedded == "Max")
                                         {
-                                            e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
+                                            e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because they are already at maximum rank.\n```");
                                         }
                                         else if((string)trilean.embedded == ">")
                                         {
-                                            e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                            e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because the destination rank is higher than your rank!\n```");
                                         }
                                         else
                                         {
-                                            e.Channel.SendMessage("An error occured");
+                                            e.Channel.SendMessage("```xl\nAn error occured\n```");
                                         }
                                     }
                                 }
@@ -696,15 +706,20 @@ namespace SwarmBot
                     } catch
                     {
                         trilean t = emotes.getEmote(cmd.Replace("list", ""));
-                        if(t)
+                        if (t)
                         {
                             Emote emote = (Emote)t.embedded;
                             bool hasPermission = emote.getEligible(author);
                             e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB, hasPermission));
-                        }
-                        else
+                        } else if (t.value == 1 && (string)t.embedded == "Multiple")
                         {
-                            e.Channel.SendMessage("Really?");
+                            e.Channel.SendMessage("```xl\nError: Multiple emotes found.\n```");
+                        } else if (t.value == 2)
+                        {
+                            e.Channel.SendMessage("```xl\nError: Requested emote was not found.\n```");
+                        } else
+                        {
+                            e.Channel.SendMessage("```xl\nAn unknown error occured.\n```");
                         }
                     }
                 }
@@ -797,6 +812,36 @@ namespace SwarmBot
                 {
                     e.Channel.SendMessage("You can't add forma to yourself!");
                 }
+            }
+        }
+        public static void priceCheck(DiscordMessageEventArgs e, string id)
+        {
+            trilean t = Program.nexus.getItemById(id);
+            if (t.value == 0)
+            {
+                Item i = (Item)t.embedded;
+                //e.Channel.SendMessage(i.Title);
+                string message = "```xl\n";
+                Component[] set = i.Components.Where(x => x.name == "Set").ToArray();
+                if (set.Length > 0)
+                {
+                    message += "Average complete set price is " + set[0].avg + "\n";
+                }
+                foreach(Component component in i.Components)
+                {
+                    if(component.name != "Set")
+                    {
+                        message += "\t" + component.name + " average price is " + component.avg + "\n";
+                    }
+                }
+                message += "Supply is at " + i.SupDem[0] + "%\n";
+                message += "Demand is at " + i.SupDem[1] + "%\n";
+                message += "\n```\nThis feature is in Alpha. Stats provided by https://nexus-stats.com.";
+                e.Channel.SendMessage(message);
+            }
+            else
+            {
+                e.Channel.SendMessage("Sorry, could not find the item you requested.");
             }
         }
     }

@@ -10,11 +10,15 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 using SwarmBot.Chat;
+using SwarmBot.Nexus;
+using Trileans;
 
 namespace SwarmBot
 {
     class Program
     {
+        public static NexusStats nexus;
+
         static void Main(string[] args)
         {
             Console.WriteLine("Initializing SwarmBot...");
@@ -25,6 +29,9 @@ namespace SwarmBot
                 Console.WriteLine("Connected! User: " + e.User.Username);
                 Discord.client.UpdateCurrentGame("Type !help for help", true, "https://github.com/SpawnerSwarm/SwarmBot");
             };
+
+            nexus = new NexusStats();
+            nexus.Connect();
 
             //Emotes
             string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
@@ -214,7 +221,7 @@ namespace SwarmBot
                     {
                         if(e.Author.Username == "FoxTale")
                         {
-                            e.Channel.SendMessage("http://i.imgur.com/fAEYhFH.gifv");
+                            e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv");
                         }
                         else if(e.Author.Username == "Mardan")
                         {
@@ -321,11 +328,20 @@ namespace SwarmBot
                         Console.WriteLine(m.Username);
                         Console.WriteLine(m.Roles);
                     }
+                    
+                    //-------------------------------------NEXUS-----------------------------------------
+
+                    else if(Regex.IsMatch(e.MessageText, @"^!p(rice)?\s?c(heck)?", RegexOptions.IgnoreCase))
+                    {
+                        string id = Regex.Match(e.MessageText, @"^!p(rice)?\s?c(heck)? (.+)", RegexOptions.IgnoreCase).Groups[3].Value;
+                        Discord.priceCheck(e, id);
+                    }
+
                 };
             };
                 Discord.client.PrivateMessageReceived += (sender, e) =>
                 {
-                    Console.WriteLine(e.Author);
+                    Console.WriteLine(e.Author.Username + ": " + e.Message);
                     if(e.Message.StartsWith("!updateNews"))
                     {
                         Discord.pmUpdateNews(e.Author, e);
