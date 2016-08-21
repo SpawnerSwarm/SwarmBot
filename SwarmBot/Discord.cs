@@ -228,7 +228,7 @@ namespace SwarmBot
                 XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
                 XMLMember xMember = memberDB.getMemberById(member.ID);
                 XMLMember xAuthor = memberDB.getMemberById(e.Author.ID);
-                if(memberDB.getMemberById(e.Author.ID).checkPermissions("Officer")) {
+                if(xAuthor.checkPermissions("Officer")) {
                     if (long.Parse(e.Message.Author.ID) != xMember.discordId || memberDB.getMemberById(e.Author.ID).checkPermissions("Guild Master"))
                     {
                         trilean isRankMaxed;
@@ -628,26 +628,17 @@ namespace SwarmBot
         }
         public static void updateNews(DiscordMessageEventArgs e)
         {
-            bool hasPermission = false;
-            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Author.Username));
-            foreach (XElement p in permission)
-            {
-                Console.WriteLine(p.Value);
-                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
-                foreach (XElement q in hasPermissionNum)
-                {
-                    if (Int32.Parse(q.Value) >= 5)
-                    {
-                        hasPermission = true;
-                    }
-                }
-            }
-            if (hasPermission)
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLMember xMember = memberDB.getMemberById(e.Author.ID);
+            if (xMember.checkPermissions("Officer"))
             {
                 string news = e.MessageText.Replace("!updateNews ", "");
                 File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
                 client.GetChannelByName("general").SendMessage("News Updated: " + news);
+            }
+            else
+            {
+                e.Author.SendMessage("Sorry, you don't have permission to perform that action.");
             }
         }
         public static void populate(DiscordMember member, DiscordMessageEventArgs e)
@@ -661,29 +652,35 @@ namespace SwarmBot
             Console.WriteLine(memberDB.document);
             memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));*/
         }
-        public static void pmUpdateNews(DiscordMember member, DiscordPrivateMessageEventArgs e)
+        public static void pmUpdateNews( DiscordPrivateMessageEventArgs e, string news, bool silent, string force = "general")
         {
-            bool hasPermission = false;
-            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> permission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == member.Username));
-            foreach (XElement p in permission)
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLMember xMember = memberDB.getMemberById(e.Author.ID);
+            Console.WriteLine(force);
+            if(xMember.checkPermissions("Officer"))
             {
-                Console.WriteLine(p.Value);
-                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
-                foreach (XElement q in hasPermissionNum)
+                if (xMember.name != "Mardan")
                 {
-                    if (Int32.Parse(q.Value) >= 5)
+                    File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
+                    e.Author.SendMessage("News Updated: " + news);
+                    if (!silent) { client.GetServersList().Find(x => x.Name == "Spawner Swarm").Channels.Find(x => x.Name == force).SendMessage("News Updated: " + news); }
+                } else
+                {
+                    if(Regex.IsMatch(news, @"SwarmBot [^ ]+ [^ ]+ patch notes are live: https:\/\/github\.com\/SpawnerSwarm\/SwarmBot\/commit\/.+", RegexOptions.IgnoreCase))
                     {
-                        hasPermission = true;
+                        e.Author.SendMessage("Patch notes updated");
+                        client.GetChannelByName("swarmbotpatchnotes").SendMessage(DateTime.Now + " -- " + news);
+                    }
+                    else
+                    {
+                        File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
+                        e.Author.SendMessage("News Updated: " + news);
+                        if (!silent) { client.GetServersList().Find(x => x.Name == "Spawner Swarm").Channels.Find(x => x.Name == force).SendMessage("News Updated: " + news); }
                     }
                 }
-            }
-            if (hasPermission)
+            } else
             {
-                string news = e.Message.Replace("!updateNews ", "");
-                File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
-                e.Author.SendMessage("News Updated: " + news);
-                client.GetChannelByName("general").SendMessage("News Updated: " + news);
+                e.Author.SendMessage("Sorry, you don't have permission to perform that action.");
             }
         }
         public static void createChannel(DiscordMessageEventArgs e, string channelName, int numInvitees, string[] invitees)

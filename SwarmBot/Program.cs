@@ -349,7 +349,13 @@ namespace SwarmBot
                     Console.WriteLine(e.Author.Username + ": " + e.Message);
                     if(e.Message.StartsWith("!updateNews"))
                     {
-                        Discord.pmUpdateNews(e.Author, e);
+                        Match cmd = Regex.Match(e.Message, @"!updateNews( --silent| -s)?(?: (?:--force|-f) (?:#)?([^ ]+))? (.+)", RegexOptions.IgnoreCase);
+                        bool silent = cmd.Groups[1].Value != "";
+                        string force = cmd.Groups[2].Value;
+                        if(force == "") { force = "general"; }
+                        Console.WriteLine(force);
+                        string news = cmd.Groups[3].Value;
+                        Discord.pmUpdateNews(e, news, silent, force);
                     }
                 };
 
