@@ -97,7 +97,7 @@ namespace SwarmBot.Chat
                 {
                     block += "```xl\nName: " + emotes[i].name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
                     block += "\nReference: " + emotes[i].reference;
-                    block += "\nRequired Rank: " + db.getRankName(emotes[i].requiredRank);
+                    block += "\nRequired Rank: " + db.getDefineName(emotes[i].requiredRank, "Promotion");
                     block += "\nCreator: " + emotes[i].creator + "\n```\n";
                 }
             }
@@ -115,7 +115,7 @@ namespace SwarmBot.Chat
             block += @"
 Reference: " + emote.reference;
             block += @"
-Required Rank: " + db.getRankName(emote.requiredRank);
+Required Rank: " + db.getDefineName(emote.requiredRank, "Promotion");
             block += @"
 Creator: " + emote.creator;
             if(hasPermission)

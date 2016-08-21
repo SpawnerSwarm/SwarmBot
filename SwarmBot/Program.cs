@@ -72,7 +72,7 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!guildmail"))
                     {
-                        string guildmail = "https://onedrive.live.com/redir?resid=EB28C1A942749087!7909&authkey=!AEcoJaL5hNrQgXE&ithint=file%2cpdf";
+                        string guildmail = "https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy";
                         e.Channel.SendMessage(guildmail);
                     }
                     else if (e.MessageText.StartsWith("!invite"))
@@ -101,16 +101,17 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!promote"))
                     {
-                        Match cmd = Regex.Match(e.MessageText, @"!promote <@([^ ]+)>(?:(?: --force | -f )\((.+)\))?(?:(?: --date | -d )([^ ]+))?(?: (-h))?");
+                        Match cmd = Regex.Match(e.MessageText, @"!promote <@([^ ]+)>(?:(?: --force | -f )\((.+)\))?(?:(?: --date | -d )([^ ]+))?(?: (-h))?((?: --ignore-capacity| --ignore-max-capacity| -i))?");
                         if (cmd.Groups[1].Value != "")
                         {
                             DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
                             string force = cmd.Groups[2].Value;
                             string date = cmd.Groups[3].Value;
                             bool isForce = force != "";
-                            bool help = cmd.Groups[3].Value.Equals("-h");
+                            bool help = cmd.Groups[4].Value.Equals("-h");
+                            bool ignoreCapacity = cmd.Groups[5].Value != "";
 
-                            Discord.promote(member, e, force, date, isForce, help);
+                            Discord.promote(member, e, force, date, isForce, help, ignoreCapacity);
                         } else
                         {
                             e.Channel.SendMessage("Error: Incorrect syntax");
@@ -225,7 +226,7 @@ namespace SwarmBot
                         }
                         else if(e.Author.Username == "Mardan")
                         {
-                            e.Channel.SendMessage("( ͡◉ ͜ʖ ͡◉)﻿");
+                            e.Channel.SendMessage("http://i.imgur.com/hLvfgHe.gif");
                         }
                         else
                         {
@@ -337,6 +338,12 @@ namespace SwarmBot
                         Discord.priceCheck(e, id);
                     }
 
+                    //-------------------------------------END NEXUS-----------------------------------------
+
+                    else if(Regex.IsMatch(e.MessageText, @"!memberList", RegexOptions.IgnoreCase))
+                    {
+                        Discord.getMemberCount(e);
+                    }
                 };
             };
                 Discord.client.PrivateMessageReceived += (sender, e) =>

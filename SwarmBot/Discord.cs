@@ -107,7 +107,7 @@ namespace SwarmBot
 
 --   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])
 
---   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001]
+--   Promote a member [Officer +] (!promote <@Member> [--force|-f (Rank)] [--date|-d 01/01/0001] [--ignore-max-capacity|--ignore-capacity|-i])
 
 --   Add donated forma to a member's account [Officer +] (!addForma <@Member> <1-9>
 
@@ -135,7 +135,7 @@ namespace SwarmBot
 
 --  Create a new member entry [Veteran +] (!createMember @Quantum-Nova [--date|-d 01/01/0001] [--steam|-s [SS|GM]Quantum Nova])
 
---  Promote a member [Officer +] (!promote @Quantum-Nova [--force|-f (Rank)] [--date|-d 01/01/0001]
+--  Promote a member [Officer +] (!promote @Quantum-Nova [--force|-f (Rank)] [--date|-d 01/01/0001] [--ignore-max-capacity|--ignore-capacity|-i])
 
 --  Add donated forma to a member's account [Officer +] (!addForma @Quantum-Nova <1-9>");
             }
@@ -222,7 +222,7 @@ namespace SwarmBot
                 }
             }
         }
-        public static void promote(DiscordMember member, DiscordMessageEventArgs e, string force, string date, bool isForce, bool help)
+        public static void promote(DiscordMember member, DiscordMessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
         {
             if(help)
             {
@@ -236,99 +236,146 @@ namespace SwarmBot
                 if(memberDB.getMemberById(e.Author.ID).checkPermissions("Officer")) {
                     if (long.Parse(e.Message.Author.ID) != xMember.discordId || memberDB.getMemberById(e.Author.ID).checkPermissions("Guild Master"))
                     {
-                        if (isForce)
+                        trilean isRankMaxed;
+                        if(!isForce)
                         {
-                            if (date != "")
+                            isRankMaxed = memberDB.checkRankMaxed(xMember);
+                        } else
+                        {
+                            isRankMaxed = memberDB.checkRankMaxed(xMember, force);
+                        }
+                        if (isRankMaxed.value == 2 && (!ignoreCapacity || !xAuthor.checkPermissions("General")))
+                        {
+                            e.Channel.SendMessage("```xl\nError: The rank you have requested to be promoted to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error.\n```");
+                        }
+                        else if (isRankMaxed.value == 1)
+                        {
+                            e.Channel.SendMessage("```xl\nAn unexpected error occured fetching Rank Capacity\n```");
+                        }
+                        else if (isRankMaxed.value == 0 || (ignoreCapacity && xAuthor.checkPermissions("General")))
+                        {
+                            if (isForce)
                             {
-                                DateTime dateTime;
-                                string s = "n";
-                                try
+                                if (date != "")
                                 {
-                                    dateTime = DateTime.Parse(date);
+                                    DateTime dateTime;
+                                    bool s = false;
+                                    try
+                                    {
+                                        dateTime = DateTime.Parse(date);
+                                    }
+                                    catch
+                                    {
+                                        e.Channel.SendMessage("```xl\nError: Invalid Date\n```");
+                                        dateTime = DateTime.Now;
+                                        s = true;
+                                    }
+                                    if (s != true)
+                                    {
+                                        trilean trilean = xMember.promote(dateTime, xAuthor, force);
+                                        if (trilean)
+                                        {
+                                            e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                            e.Channel.SendMessage("```xl\nSuccessfully promoted " + xMember.name + " to " + trilean.embedded + "\n```");
+                                        }
+                                        else if (trilean.table[1])
+                                        {
+                                            if ((string)trilean.embedded == "Multiple")
+                                            {
+                                                e.Channel.SendMessage("```xl\nError: Multiple Members found\n```");
+                                            }
+                                            else if ((string)trilean.embedded == "Max")
+                                            {
+                                                e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because they are already at maximum rank.\n```");
+                                            }
+                                            else if ((string)trilean.embedded == ">")
+                                            {
+                                                e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because the destination rank is higher than your rank!\n```");
+                                            }
+                                            else
+                                            {
+                                                e.Channel.SendMessage("```xl\nAn error occured\n```");
+                                            }
+                                        }
+                                    }
                                 }
-                                catch
+                                else if (date == "")
                                 {
-                                    e.Channel.SendMessage("```xl\nError: Invalid Date\n```");
-                                    dateTime = DateTime.Now;
-                                    s = "y";
-                                }
-                                if (s != "y")
-                                {
-                                    trilean trilean = xMember.promote(dateTime, xAuthor, force);
+                                    trilean trilean = xMember.promote(DateTime.Now, xAuthor, force);
                                     if (trilean)
                                     {
                                         e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
-                                        e.Channel.SendMessage("```xl\nSuccessfully promoted " + xMember.name + " to " + trilean.embedded + "\n```");
+                                        e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + force);
                                     }
                                     else if (trilean.table[1])
                                     {
                                         if ((string)trilean.embedded == "Multiple")
                                         {
-                                            e.Channel.SendMessage("```xl\nError: Multiple Members found\n```");
+                                            e.Channel.SendMessage("Error: Multiple Members found");
                                         }
                                         else if ((string)trilean.embedded == "Max")
                                         {
-                                            e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because they are already at maximum rank.\n```");
+                                            e.Channel.SendMessage("Can't promote " + xMember.name + " because they are already at maximum rank.");
                                         }
-                                        else if((string)trilean.embedded == ">")
+                                        else if ((string)trilean.embedded == ">")
                                         {
-                                            e.Channel.SendMessage("```xl\nCan't promote " + xMember + " because the destination rank is higher than your rank!\n```");
+                                            e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
                                         }
                                         else
                                         {
-                                            e.Channel.SendMessage("```xl\nAn error occured\n```");
+                                            e.Channel.SendMessage("An error occured");
                                         }
                                     }
                                 }
                             }
-                            else if (date == "")
+                            else
                             {
-                                trilean trilean = xMember.promote(DateTime.Now, xAuthor, force);
-                                if (trilean)
+                                if (date != "")
                                 {
-                                    e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
-                                    e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + force);
-                                }
-                                else if (trilean.table[1])
-                                {
-                                    if ((string)trilean.embedded == "Multiple")
+                                    DateTime dateTime = DateTime.Now;
+                                    bool s = false;
+                                    try
                                     {
-                                        e.Channel.SendMessage("Error: Multiple Members found");
+                                        dateTime = DateTime.Parse(date);
                                     }
-                                    else if ((string)trilean.embedded == "Max")
+                                    catch
                                     {
-                                        e.Channel.SendMessage("Can't promote " + xMember.name + " because they are already at maximum rank.");
+                                        //throw new Exception("Error: Invalid Date");
+                                        e.Channel.SendMessage("Error: Invalid Date");
+                                        s = true;
                                     }
-                                    else if ((string)trilean.embedded == ">")
+                                    if (s != true)
                                     {
-                                        e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
-                                    }
-                                    else
-                                    {
-                                        e.Channel.SendMessage("An error occured");
+                                        trilean trilean = xMember.promote(dateTime, xAuthor);
+                                        if (trilean)
+                                        {
+                                            e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                            e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
+                                        }
+                                        else if (trilean.table[1])
+                                        {
+                                            if ((string)trilean.embedded == "Multiple")
+                                            {
+                                                e.Channel.SendMessage("Error: Multiple Members found");
+                                            }
+                                            else if ((string)trilean.embedded == "Max")
+                                            {
+                                                e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
+                                            }
+                                            else if ((string)trilean.embedded == ">")
+                                            {
+                                                e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
+                                            }
+                                            else
+                                            {
+                                                e.Channel.SendMessage("An error occured");
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        }
-                        else
-                        {
-                            if (date != "")
-                            {
-                                DateTime dateTime = DateTime.Now;
-                                string s = "n";
-                                try
+                                else if (date == "")
                                 {
-                                    dateTime = DateTime.Parse(date);
-                                }
-                                catch
-                                {
-                                    //throw new Exception("Error: Invalid Date");
-                                    e.Channel.SendMessage("Error: Invalid Date");
-                                    s = "y";
-                                }
-                                if (s != "y")
-                                {
-                                    trilean trilean = xMember.promote(dateTime, xAuthor);
+                                    trilean trilean = xMember.promote(DateTime.Now, xAuthor);
                                     if (trilean)
                                     {
                                         e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
@@ -352,34 +399,6 @@ namespace SwarmBot
                                         {
                                             e.Channel.SendMessage("An error occured");
                                         }
-                                    }
-                                }
-                            }
-                            else if (date == "")
-                            {
-                                trilean trilean = xMember.promote(DateTime.Now, xAuthor);
-                                if (trilean)
-                                {
-                                    e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
-                                    e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
-                                }
-                                else if (trilean.table[1])
-                                {
-                                    if ((string)trilean.embedded == "Multiple")
-                                    {
-                                        e.Channel.SendMessage("Error: Multiple Members found");
-                                    }
-                                    else if ((string)trilean.embedded == "Max")
-                                    {
-                                        e.Channel.SendMessage("Can't promote " + xMember + " because they are already at maximum rank.");
-                                    }
-                                    else if ((string)trilean.embedded == ">")
-                                    {
-                                        e.Channel.SendMessage("Can't promote " + xMember + " because the destination rank is higher than your rank!");
-                                    }
-                                    else
-                                    {
-                                        e.Channel.SendMessage("An error occured");
                                     }
                                 }
                             }
@@ -786,7 +805,7 @@ namespace SwarmBot
             {
                 if (author.discordId != xMember.discordId || author.checkPermissions("Guild Master"))
                 {
-                    if (memberDB.getDefine(author.rank) > memberDB.getDefine(xMember.rank))
+                    if (memberDB.getDefine(author.rank, "Promotion") > memberDB.getDefine(xMember.rank, "Promotion"))
                     {
                         trilean t = xMember.addForma(formas);
                         if (t.table[1])
@@ -843,6 +862,19 @@ namespace SwarmBot
             {
                 e.Channel.SendMessage("Sorry, could not find the item you requested.");
             }
+        }
+        public static void getMemberCount(DiscordMessageEventArgs e)
+        {
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            string message = "```xl\n";
+            for (short i = 1; i <= 7; i++)
+            {
+                string rankName = memberDB.getDefineName(i, "Promotion");
+                int memberCount = memberDB.document.Descendants("Member").Where(x => x.Descendants("Rank").ToArray()[0].Value == rankName).ToArray().Count();
+                message += rankName + ": " + memberCount + "\n";
+            }
+            message += "\n```";
+            e.Channel.SendMessage(message);
         }
     }
 }

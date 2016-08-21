@@ -206,7 +206,7 @@ namespace SwarmBot.XML
             try
             {
                 //return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
-                return checkPermissions(x.getDefine(s));
+                return checkPermissions(x.getDefine(s, "Promotion"));
             }
             catch
             {
@@ -226,7 +226,7 @@ namespace SwarmBot.XML
                 return trilean;
             } else
             {
-                reqTime = x.getDefine(rank + "LastRankUp");
+                reqTime = x.getDefine(rank + "LastRankUp", "LastRankUp");
             }
             /*for(int i=0;i<rankupHistory.Length;i++)
             {
@@ -274,7 +274,7 @@ namespace SwarmBot.XML
             int rankInt;
             if (forceRank != null)
             {
-                rankInt = x.getDefine(forceRank);
+                rankInt = x.getDefine(forceRank, "Promotion");
                 rank = forceRank;
             }
             else
@@ -287,8 +287,8 @@ namespace SwarmBot.XML
                     }
                     else
                     {
-                        rankInt = x.getDefine(this.rank) + 1;
-                        rank = x.getRankName(rankInt);
+                        rankInt = x.getDefine(this.rank, "Promotion") + 1;
+                        rank = x.getDefineName(rankInt, "Promotion");
                     }
                 }
                 catch (Exception exception)
@@ -296,14 +296,11 @@ namespace SwarmBot.XML
                     throw new Exception("Error: Invalid rank -- " + exception);
                 }
             }
-            if (x.getDefine(m.rank) > x.getDefine(rank))
+            if (x.getDefine(m.rank, "Promotion") > x.getDefine(rank, "Promotion"))
             {
                 return x.promote(this, rank, date);
             } else
             {
-                Console.WriteLine("FOO");
-                Console.WriteLine(x.getDefine(this.rank));
-                Console.WriteLine(x.getDefine(rank));
                 return new trilean(false, true, ">");
             }
         }
@@ -388,9 +385,9 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Multiple members were found");
             }
         }
-        public int getDefine(string value)
+        public int getDefine(string value, string _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value);
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for);
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(value);
             Console.WriteLine(defineArray[0]);
@@ -402,9 +399,9 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Multiple defines were found");
             }
         }
-        public string getRankName(int value)
+        public string getDefineName(int value, string _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == "Promotion");
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for);
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(defineArray.Length);
             if(defineArray.Length == 1)
@@ -459,6 +456,31 @@ namespace SwarmBot.XML
                 xMember.Descendants("FormaDonated").ToArray()[0].SetValue(0);
                 Save(path);
                 return new trilean(true);
+            }
+        }
+        public trilean checkRankMaxed(XMLMember member, string toRank = null)
+        {
+            if(toRank == null)
+            {
+                toRank = getDefineName(getDefine(member.rank, "Promotion") + 1, "Promotion");
+            }
+            try
+            {
+                short capacity = (short)getDefine(toRank, "RankCapacity");
+                int memberCount = document.Descendants("Member").Where(x => x.Descendants("Rank").ToArray()[0].Value == toRank).ToArray().Length;
+                Console.WriteLine(capacity + "|" + memberCount);
+                if (memberCount >= capacity)
+                {
+                    return new trilean(false, memberCount);
+                }
+                else
+                {
+                    return new trilean(true, memberCount);
+                }
+            }
+            catch
+            {
+                return new trilean(false, true, "Unknown");
             }
         }
     }
