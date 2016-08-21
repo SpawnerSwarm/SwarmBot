@@ -855,7 +855,7 @@ namespace SwarmBot
                 }
                 message += "Supply is at " + i.SupDem[0] + "%\n";
                 message += "Demand is at " + i.SupDem[1] + "%\n";
-                message += "\n```\nThis feature is in Alpha. Stats provided by https://nexus-stats.com.";
+                message += "\n```\nThis feature is in Beta. Stats provided by https://nexus-stats.com.";
                 e.Channel.SendMessage(message);
             }
             else

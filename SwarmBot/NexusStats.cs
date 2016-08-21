@@ -1,8 +1,11 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
-using SwarmBot.MongoDB;
+using System.Collections.Generic;
+using System.Net;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Trileans;
 
 namespace SwarmBot.Nexus
@@ -10,40 +13,35 @@ namespace SwarmBot.Nexus
     public class NexusStats
     {
         public static string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
-        private string address, database, collection;
-        internal Mongo mongoClient;
-        internal MDatabase itemDatabase;
+        private string url;
 
         public void Connect()
         {
             using (StreamReader sr = File.OpenText(Path.Combine(configDir, "nexus.txt")))
             {
-                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+).+");
-                address = info.Groups[1].Value;
-                database = info.Groups[2].Value;
-                collection = info.Groups[3].Value;
+                Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+).+");
+                url = info.Groups[4].Value;
                 Console.Write(sr.ReadToEnd());
             }
-            mongoClient = new Mongo(address);
         }
 
         public trilean getItemById(string id)
         {
-            itemDatabase = mongoClient.GetDatabase(database, new string[] { collection });
-            trilean t = itemDatabase.getBsonDocumentByPropertyEq("_id", id, itemDatabase.collections[0]);
-            if(t.value == 0)
+            WebClient client = new WebClient();
+            Stream stream = client.OpenRead("http://nexus-stats.com/api");
+            StreamReader reader = new StreamReader(stream);
+            string content = reader.ReadToEnd();
+            JArray json = JArray.Parse(content);
+            List<JToken> items = json.Where(x => Regex.IsMatch(x["Title"].ToString(), @"\A" + id + @"\Z", RegexOptions.IgnoreCase) || Regex.IsMatch(x["id"].ToString(), @"\A" + id + @"\Z", RegexOptions.IgnoreCase)).ToList();
+            if(items.Count == 1)
             {
-                return new trilean(true, JsonConvert.DeserializeObject<Item>((string)t.embedded));
+                return new trilean(true, JsonConvert.DeserializeObject<Item>(items[0].ToString()));
+            } else if (items.Count < 1)
+            {
+                return new trilean(false, "none");
             } else
             {
-                t = itemDatabase.getBsonDocumentByPropertyEq("Title", id, itemDatabase.collections[0]);
-                if(t.value == 0)
-                {
-                    return new trilean(true, JsonConvert.DeserializeObject<Item>((string)t.embedded));
-                } else
-                {
-                    return false;
-                }
+                return new trilean(false, "multiple");
             }
         }
     }
