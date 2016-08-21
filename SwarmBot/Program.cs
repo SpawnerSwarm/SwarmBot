@@ -89,15 +89,13 @@ namespace SwarmBot
                         }
                         Discord.invite(e, cmd, inviteSubject, memberKeys);
                     }
-                    else if (e.MessageText.StartsWith("!getMember"))
+                    else if (Regex.IsMatch(e.MessageText, "^!getMember", RegexOptions.IgnoreCase))
                     {
-                        Match cmd = Regex.Match(e.MessageText, @"!getMember (?:<@(.+)>)?(?: )?(?:(-f))?(?: )?(?:(-h))?");
-                        //DiscordMember member = e.Channel.Parent.GetMemberByKey(cmd.Groups[1].Value.Replace("!", ""));
+                        Match cmd = Regex.Match(e.MessageText, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
                         DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
-                        bool force = cmd.Groups[2].Value.Equals("-f");
-                        bool help = cmd.Groups[3].Value.Equals("-h");
+                        bool verbose = cmd.Groups[2].Value != "";
 
-                        Discord.getMember(member, e, force, help);
+                        Discord.getMember(member, e, verbose);
                     }
                     else if (e.MessageText.StartsWith("!promote"))
                     {

@@ -103,7 +103,7 @@ namespace SwarmBot
 
 --   Invite a group of players to play a game (!invite <Number of invitees> <Discord username 1>, [Discord username 2], [Discord username 3], [Discord username 4] <Game name>
 
---   Get a member's information (!getMember <@Member>)
+--   Get a member's information (!getMember <@Member> [--verbose|-v])
 
 --   Create a new member entry [Veteran +] (!createMember <@Member> [--date|-d 01/01/0001] [--steam|-s Steam Name] [--populate|-p Deprecated])
 
@@ -169,57 +169,52 @@ namespace SwarmBot
                 getDiscordMemberByID(inviteTargetKey, e.Channel.Parent).SendMessage(e.Author.Username + " has invited you to play " + inviteSubject);
             }            
         }
-        public static void getMember(DiscordMember member, DiscordMessageEventArgs e, bool force, bool help)
+        public static void getMember(DiscordMember member, DiscordMessageEventArgs e, bool verbose)
         {
-            if(help)
+            try
             {
-                e.Channel.SendMessage("Help text");
-            } else
+                XMLDocument memberDB = new XMLDocument(Path.Combine(configDir + "PersonellDB.xml"));
+                XMLMember xMember = memberDB.getMemberById(member.ID);
+                Console.WriteLine(xMember.name + " is a(n) " + xMember.rank);
+                trilean isReady = xMember.checkReadyForRankUp();
+                string message = "```xl\n";
+                message += xMember.name + " is a(n) " + xMember.rank + "\n";
+                if (isReady.table[1])
+                {
+                    message += "We can't tell whether or not " + xMember.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.\n";
+                }
+                else
+                {
+                    if (isReady.table[0])
+                    {
+                        message += "He/she is eligible for a rankup.\n";
+                    }
+                    else if (!isReady.table[0] && (string)isReady.embedded != "Max")
+                    {
+                        message += "He/she is not eligible for a rankup at this time.\n";
+                    }
+                    else if ((string)isReady.embedded == "Max")
+                    {
+                        message += "He/She has reached the maximum possible rank.\n";
+                    }
+                    if ((string)isReady.embedded != "Max")
+                    {
+                        message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                    }
+                }
+                message += xMember + " has donated " + xMember.forma + " Forma\n";
+                if(verbose)
+                {
+                    if (xMember.WFName != "" && xMember.WFName != "NaN") { message += "\nWarframe name is " + xMember.WFName; }
+                    if (xMember.SKName != "" && xMember.SKName != "NaN") { message += "\nSpiral Knights name is " + xMember.SKName; }
+                    if (xMember.steamName != "" && xMember.steamName != "NaN") { message += "\nSteam name is " + xMember.steamName; }
+                }
+                message += "```";
+                Console.WriteLine(message);
+                e.Channel.SendMessage(message);
+            } catch(Exception exception)
             {
-                if(force)
-                {
-                    var destChannel = e.Channel;
-                }
-                try
-                {
-                    Console.WriteLine(member + " " + force + " " + help);
-                    XMLDocument memberDB = new XMLDocument(Path.Combine(configDir + "PersonellDB.xml"));
-                    XMLMember xMember = memberDB.getMemberById(member.ID);
-                    Console.WriteLine(xMember.name + " is a(n) " + xMember.rank);
-                    trilean isReady = xMember.checkReadyForRankUp();
-                    string message = "```xl\n";
-                    message += xMember.name + " is a(n) " + xMember.rank + "\n";
-                    if (isReady.table[1])
-                    {
-                        message += "We can't tell whether or not " + xMember.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.\n";
-                    }
-                    else
-                    {
-                        if (isReady.table[0])
-                        {
-                            message += "He/she is eligible for a rankup.\n";
-                        }
-                        else if (!isReady.table[0] && (string)isReady.embedded != "Max")
-                        {
-                            message += "He/she is not eligible for a rankup at this time.\n";
-                        }
-                        else if ((string)isReady.embedded == "Max")
-                        {
-                            message += "He/she has reached the maximum possible rank.\n";
-                        }
-                        if ((string)isReady.embedded != "Max")
-                        {
-                            message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
-                        }
-                    }
-                    message += xMember + " has donated " + xMember.forma + " forma\n";
-                    message += "```";
-                    Console.WriteLine(message);
-                    e.Channel.SendMessage(message);
-                } catch(Exception exception)
-                {
-                  Console.WriteLine("Error: " + exception);
-                }
+              Console.WriteLine("Error: " + exception);
             }
         }
         public static void promote(DiscordMember member, DiscordMessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
