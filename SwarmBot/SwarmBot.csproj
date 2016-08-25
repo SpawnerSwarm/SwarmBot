@@ -124,6 +124,7 @@
   <ItemGroup>
     <Compile Include="Discord.cs" />
     <Compile Include="Emotes.cs" />
+    <Compile Include="Events.cs" />
     <Compile Include="Mongo.cs" />
     <Compile Include="NexusStats.cs" />
     <Compile Include="Program.cs" />

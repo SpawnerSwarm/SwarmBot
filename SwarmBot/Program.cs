@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 using SwarmBot.Chat;
-using SwarmBot.Nexus;
 using Trileans;
 
 namespace SwarmBot
@@ -36,6 +35,7 @@ namespace SwarmBot
             //Emotes
             string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
             string emoteDir = Path.Combine(configDir, "emotes.xml");
+            string eventDir = Path.Combine(configDir, "events.xml");
             string restarterPath = "";
             using (StreamReader sr = File.OpenText(Path.Combine(configDir, "config.txt")))
             {
@@ -99,7 +99,7 @@ namespace SwarmBot
                     }
                     else if (e.MessageText.StartsWith("!promote"))
                     {
-                        Match cmd = Regex.Match(e.MessageText, @"!promote <@([^ ]+)>(?:(?: --force | -f )\((.+)\))?(?:(?: --date | -d )([^ ]+))?(?: (-h))?((?: --ignore-capacity| --ignore-max-capacity| -i))?");
+                        Match cmd = Regex.Match(e.MessageText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*");
                         if (cmd.Groups[1].Value != "")
                         {
                             DiscordMember member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.Parent);
@@ -342,6 +342,35 @@ namespace SwarmBot
                     {
                         Discord.getMemberCount(e);
                     }
+                    else if(Regex.IsMatch(e.MessageText, @"!event(?:s)?", RegexOptions.IgnoreCase))
+                    {
+                        Events events = new Events(eventDir);
+                        string cmd = e.MessageText.Replace("!event", "").Replace(" ", "");//Regex.Match(e.MessageText, @"!event(?:s)?(.+)").Groups[1].Value;
+                        if (cmd.StartsWith("list"))
+                        {
+                            if (cmd == "list")
+                            {
+                                Discord.listEvents(e, events);
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    Discord.listEvents(e, events, int.Parse(cmd.Replace("list", "").Replace("-", "")));
+                                }
+                                catch
+                                {
+                                    e.Channel.SendMessage("```xl\nError: Invalid page\n```");
+                                }
+                            }
+                        } else if(cmd == "")
+                        {
+                            Discord.displayEvent(e, events);
+                        } else
+                        {
+                            Discord.displayEvent(e, events, cmd);
+                        }
+                    }
                 };
             };
                 Discord.client.PrivateMessageReceived += (sender, e) =>
@@ -349,7 +378,7 @@ namespace SwarmBot
                     Console.WriteLine(e.Author.Username + ": " + e.Message);
                     if(e.Message.StartsWith("!updateNews"))
                     {
-                        Match cmd = Regex.Match(e.Message, @"!updateNews( --silent| -s)?(?: (?:--force|-f) (?:#)?([^ ]+))? (.+)", RegexOptions.IgnoreCase);
+                        Match cmd = Regex.Match(e.Message, @"!updateNews(?: (?:(--silent|-s)|(?:(?:--force|-f) (?:#)?([^ ]+))))* (.+)", RegexOptions.IgnoreCase);
                         bool silent = cmd.Groups[1].Value != "";
                         string force = cmd.Groups[2].Value;
                         if(force == "") { force = "general"; }

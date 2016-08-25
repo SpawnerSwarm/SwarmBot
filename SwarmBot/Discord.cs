@@ -12,7 +12,6 @@ using System.IO;
 using Trileans;
 using SwarmBot.XML;
 using SwarmBot.Chat;
-using SwarmBot.Nexus;
 
 namespace SwarmBot
 {
@@ -867,6 +866,46 @@ namespace SwarmBot
             }
             message += "\n```";
             e.Channel.SendMessage(message);
+        }
+        public static void listEvents(DiscordMessageEventArgs e, Events events, int page = 0)
+        {
+            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            string block = events.list(page, memberDB);
+            e.Channel.SendMessage(block);
+        }
+        public static void displayEvent(DiscordMessageEventArgs e, Events events, string _ref = "Latest")
+        {
+            Event _event = events.getLatestEvent();
+            if(_ref != "Latest")
+            {
+                trilean t = events.getEvent(_ref);
+                if(t.value == 0)
+                {
+                    _event = (Event)t.embedded;
+                } else if(t.value == 1)
+                {
+                    e.Channel.SendMessage("```xl\nSorry, multiple events were found by that ref.\n```");
+                    return;
+                } else if(t.value == 2)
+                {
+                    e.Channel.SendMessage("```xl\nSorry, that event could not be found.\n```");
+                    return;
+                }
+            }
+            string block = "";
+            block += _event.icon + " **" + _event.name + "** " + _event.icon + "\n\n";
+            block += _event.lotusText;
+            block += "\n\nTasks:\n\n";
+            foreach(Chat.Task task in _event.tasks)
+            {
+                block += "\t " + task.getTask() + "\n";
+            }
+            block += "\nRewards:\n\n";
+            foreach(Reward reward in _event.rewards)
+            {
+                block += "\t " + reward.getReward() + "\n";
+            }
+            e.Channel.SendMessage(block);
         }
     }
 }

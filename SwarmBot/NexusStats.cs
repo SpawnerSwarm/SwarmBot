@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Trileans;
 
-namespace SwarmBot.Nexus
+namespace SwarmBot.Chat
 {
     public class NexusStats
     {
