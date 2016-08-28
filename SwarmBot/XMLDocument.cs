@@ -372,6 +372,10 @@ namespace SwarmBot.XML
                 Console.WriteLine(memberArray.Length);
             }
         }
+        public XMLMember getMemberById(ulong id)
+        {
+            return getMemberById(id.ToString());
+        }
         public XMLMember getMemberByUsername(string username)
         {
             IEnumerable<XElement> memberNum = document.Descendants("Member").Where(x => x.Descendants("Discord").ToArray()[0].Value == username);

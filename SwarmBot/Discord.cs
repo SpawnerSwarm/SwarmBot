@@ -1,6 +1,10 @@
-﻿using DiscordSharp;
-using DiscordSharp.Objects;
+﻿//using DiscordSharp;
+//using DiscordSharp.Objects;
 using DiscordSharp.Events;
+using Discord;
+using Discord.API;
+using Discord.Commands;
+using Discord.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,9 +26,9 @@ namespace SwarmBot
         private static string email;
         private static string password;
         private static string token;
-        public static DiscordServer Swarm;
+        public static Server Swarm;
 
-        public static bool SendInvite(string recipient, string Game, DiscordMessageEventArgs e)
+        public static bool SendInvite(string recipient, string Game, MessageEventArgs e)
         {
             //SendInvite(firstMatch, fifthMatch, firstMatch.StartsWith("<@"), e);
 
@@ -32,19 +36,19 @@ namespace SwarmBot
 
             if (isTag)
             {
-                //e.Channel.Parent.GetMemberByKey(recipient.Replace("<", "").Replace("@", "").Replace(">", "")).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
-                getDiscordMemberByID(recipient.Replace("<", "").Replace("@", "").Replace(">", ""), e.Channel.Parent).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
+                //e.Server.GetMemberByKey(recipient.Replace("<", "").Replace("@", "").Replace(">", "")).SendMessage("@" + e.User.Name + " has invited you to play: " + Game);
+                getDiscordMemberByID(recipient.Replace("<", "").Replace("@", "").Replace(">", ""), e.Server).SendMessage("@" + e.User.Name + " has invited you to play: " + Game);
             }
             else {
-                e.Channel.Parent.GetMemberByUsername(recipient).SendMessage("@" + e.Message.Author.Username + " has invited you to play: " + Game);
+                e.Server.FindUsers(recipient, true).ToArray()[0].SendMessage("@" + e.User.Name + " has invited you to play: " + Game);
             }
 
             return true;
         }
 
-        public static DiscordMember getDiscordMemberByID(string ID, DiscordServer server)
+        public static User getDiscordMemberByID(string ID, Server server)
         {
-            return server.GetMemberByKey(ID.Replace("!", ""));
+            return server.GetUser(ulong.Parse(ID.Replace("!", "")));
         }
 
         public static void Connect()
@@ -57,25 +61,30 @@ namespace SwarmBot
                 token = info.Groups[3].Value;
             }
 
-            client = new DiscordClient(token, true);
+            //client = new DiscordClient();
 
             /*client.ClientPrivateInformation.Email = email;
             client.ClientPrivateInformation.Password = password;*/
 
             try
             {
-                client.Autoconnect = true;
-                client.SendLoginRequest();
-                client.Connect();
+                //client.Autoconnect = true;
+                //client.SendLoginRequest();
+                client.ExecuteAndWait(async () =>
+                {
+                    await client.Connect(token);
+                });
+                //client.Connect(token);
+
             }
             catch (Exception e)
             {
                 Console.WriteLine("Something went wrong!\n" + e.Message + "\nPress any key to close this window.");
             }
         }
-        public static void help(DiscordMessageEventArgs e)
+        public static void help(MessageEventArgs e)
         {
-            if (e.Author.Username != "Quantum-Nova")
+            if (e.User.Name != "Quantum-Nova")
             {
                 /*e.Channel.SendMessage("I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:");
                 e.Channel.SendMessage("--   Search the Warframe Wiki (!wfwiki <page name>)");
@@ -138,42 +147,42 @@ namespace SwarmBot
 
 --  Add donated forma to a member's account [Officer +] (!addForma @Quantum-Nova <1-9>");
             }
-            Console.WriteLine("Sent help because of this message: " + e.MessageText);
+            Console.WriteLine("Sent help because of this message: " + e.Message.Text);
         }
-        public static void wiki(DiscordMessageEventArgs e, string wiki)
+        public static void wiki(MessageEventArgs e, string wiki)
         {
             string target = null;
             if (wiki == "wf")
             {
-                target = Regex.Match(e.MessageText,
+                target = Regex.Match(e.Message.RawText,
                     @"!wfwiki (.+)",
                     RegexOptions.Singleline)
                 .Groups[1].Value;
-                e.Channel.SendMessage("<@" + e.Message.Author.ID + "> http://warframe.wikia.com/wiki/" + target.Replace(" ", "_"));
+                e.Channel.SendMessage("<@" + e.User.Id + "> http://warframe.wikia.com/wiki/" + target.Replace(" ", "_"));
             }
             else if(wiki == "sk")
             {
-                target = Regex.Match(e.MessageText,
+                target = Regex.Match(e.Message.RawText,
                     @"!skwiki (.+)",
                     RegexOptions.Singleline)
                 .Groups[1].Value;
-                e.Channel.SendMessage("<@" + e.Message.Author.ID + "> http://wiki.spiralknights.com/" + target.Replace(" ", "_"));
+                e.Channel.SendMessage("<@" + e.User.Id + "> http://wiki.spiralknights.com/" + target.Replace(" ", "_"));
             }
-            Console.WriteLine("Sent " + target.Replace(" ", "_") + " to " + e.Author.ID + " because of this message: " + e.MessageText);
+            Console.WriteLine("Sent " + target.Replace(" ", "_") + " to " + e.User.Id + " because of this message: " + e.Message.Text);
         }
-        public static void invite(DiscordMessageEventArgs e, MatchCollection cmd, string inviteSubject, string[] inviteTargetKeys)
+        public static void invite(MessageEventArgs e, MatchCollection cmd, string inviteSubject, string[] inviteTargetKeys)
         {
             foreach(string inviteTargetKey in inviteTargetKeys)
             {
-                getDiscordMemberByID(inviteTargetKey, e.Channel.Parent).SendMessage(e.Author.Username + " has invited you to play " + inviteSubject);
+                getDiscordMemberByID(inviteTargetKey, e.Server).SendMessage(e.User.Name + " has invited you to play " + inviteSubject);
             }            
         }
-        public static void getMember(DiscordMember member, DiscordMessageEventArgs e, bool verbose)
+        public static void getMember(User member, MessageEventArgs e, bool verbose)
         {
             try
             {
                 XMLDocument memberDB = new XMLDocument(Path.Combine(configDir + "PersonellDB.xml"));
-                XMLMember xMember = memberDB.getMemberById(member.ID);
+                XMLMember xMember = memberDB.getMemberById(member.Id);
                 Console.WriteLine(xMember.name + " is a(n) " + xMember.rank);
                 trilean isReady = xMember.checkReadyForRankUp();
                 string message = "```xl\n";
@@ -216,19 +225,19 @@ namespace SwarmBot
               Console.WriteLine("Error: " + exception);
             }
         }
-        public static void promote(DiscordMember member, DiscordMessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
+        public static void promote(User member, MessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
         {
             if(help)
             {
                 e.Channel.SendMessage("Help text");
             } else
             {
-                Console.WriteLine(member.Username + " " + force + " " + help);
+                Console.WriteLine(member.Name + " " + force + " " + help);
                 XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-                XMLMember xMember = memberDB.getMemberById(member.ID);
-                XMLMember xAuthor = memberDB.getMemberById(e.Author.ID);
+                XMLMember xMember = memberDB.getMemberById(member.Id);
+                XMLMember xAuthor = memberDB.getMemberById(e.User.Id);
                 if(xAuthor.checkPermissions("Officer")) {
-                    if (long.Parse(e.Message.Author.ID) != xMember.discordId || memberDB.getMemberById(e.Author.ID).checkPermissions("Guild Master"))
+                    if (e.User.Id != (ulong)xMember.discordId || memberDB.getMemberById(e.User.Id).checkPermissions("Guild Master"))
                     {
                         trilean isRankMaxed;
                         if(!isForce)
@@ -269,7 +278,8 @@ namespace SwarmBot
                                         trilean trilean = xMember.promote(dateTime, xAuthor, force);
                                         if (trilean)
                                         {
-                                            e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                            member.AddRoles(e.Server.FindRoles((string)trilean.embedded).ToArray()[0]);
+                                            //e.Server.AssignRoleToMember(e.Server.Roles.Find(x => x.Name == (string)trilean.embedded), member);
                                             e.Channel.SendMessage("```xl\nSuccessfully promoted " + xMember.name + " to " + trilean.embedded + "\n```");
                                         }
                                         else if (trilean.table[1])
@@ -298,7 +308,8 @@ namespace SwarmBot
                                     trilean trilean = xMember.promote(DateTime.Now, xAuthor, force);
                                     if (trilean)
                                     {
-                                        e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                        member.AddRoles(e.Server.FindRoles((string)trilean.embedded).ToArray()[0]);
+                                        //e.Server.AssignRoleToMember(e.Server.Roles.Find(x => x.Name == (string)trilean.embedded), member);
                                         e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + force);
                                     }
                                     else if (trilean.table[1])
@@ -343,7 +354,8 @@ namespace SwarmBot
                                         trilean trilean = xMember.promote(dateTime, xAuthor);
                                         if (trilean)
                                         {
-                                            e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                            member.AddRoles(e.Server.FindRoles((string)trilean.embedded).ToArray()[0]);
+                                            //e.Server.AssignRoleToMember(e.Server.Roles.Find(x => x.Name == (string)trilean.embedded), member);
                                             e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
                                         }
                                         else if (trilean.table[1])
@@ -372,7 +384,8 @@ namespace SwarmBot
                                     trilean trilean = xMember.promote(DateTime.Now, xAuthor);
                                     if (trilean)
                                     {
-                                        e.Channel.Parent.AssignRoleToMember(e.Channel.Parent.Roles.Find(x => x.Name == (string)trilean.embedded), member);
+                                        member.AddRoles(e.Server.FindRoles((string)trilean.embedded).ToArray()[0]);
+                                        //e.Server.AssignRoleToMember(e.Server.Roles.Find(x => x.Name == (string)trilean.embedded), member);
                                         e.Channel.SendMessage("Successfully promoted " + xMember.name + " to " + trilean.embedded);
                                     }
                                     else if (trilean.table[1])
@@ -407,10 +420,10 @@ namespace SwarmBot
                 }
             }
         }
-        public static void createMember(DiscordMember member, DiscordMessageEventArgs e, bool isSettingSteam, bool isSteamNumerical, bool isSettingDate, string date, string steamId)
+        public static void createMember(User member, MessageEventArgs e, bool isSettingSteam, bool isSteamNumerical, bool isSettingDate, string date, string steamId)
         {
             XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Author.Username));
+            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.User.Name));
             foreach (XElement p in hasPermission)
             {
                 Console.WriteLine(p.Value);
@@ -422,27 +435,27 @@ namespace SwarmBot
                     {
                         Console.WriteLine(q.Value);
                         Console.WriteLine("Creating");
-                        Console.WriteLine(member.Username);
+                        Console.WriteLine(member.Name);
                         XDocument memberDBT = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
                         IEnumerable<XElement> doc = memberDBT.Descendants("Database");
                         foreach (XElement h in doc)
                         {
                             bool jExists = false;
-                            IEnumerable<XElement> exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.ID);
+                            IEnumerable<XElement> exists = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Id.ToString());
                             foreach (XElement j in exists)
                             {
                                 jExists = true;
                             }
                             if (!jExists)
                             {
-                                IEnumerable<XElement> existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Username);
+                                IEnumerable<XElement> existsBackup = memberDBT.Descendants("Discord").Where(x => x.Value == member.Name);
                                 foreach (XElement k in existsBackup)
                                 {
                                     jExists = true;
-                                    IEnumerable<XElement> setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Username);
+                                    IEnumerable<XElement> setId = memberDBT.Descendants("DiscordId").Where(x => x.Value == member.Name);
                                     foreach (XElement l in setId)
                                     {
-                                        k.SetValue(member.ID);
+                                        k.SetValue(member.Id);
                                         memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
                                     }
                                 }
@@ -452,7 +465,7 @@ namespace SwarmBot
                                     DateTime now = DateTime.Now;
                                     h.Add(
                                         new XElement("Member",
-                                            new XElement("Name", member.Username),
+                                            new XElement("Name", member.Name),
                                             new XElement("Rank", "Recruit"),
                                             new XElement("RankupHistory",
                                                 new XElement("Rankup", new XAttribute("name", "Recruit"), Regex.Match(now.ToString(), @"(.+) [0-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value),
@@ -465,15 +478,15 @@ namespace SwarmBot
                                             new XElement("Names",
                                                 new XElement("Warframe", ""),
                                                 new XElement("SpiralKnights", ""),
-                                                new XElement("Discord", member.Username),
-                                                new XElement("DiscordId", member.ID),
+                                                new XElement("Discord", member.Name),
+                                                new XElement("DiscordId", member.Id),
                                                 new XElement("Steam", steamId),
                                                 new XElement("SteamId", new XAttribute("numerical", isSteamNumerical.ToString()), steamId)),
                                             new XElement("FormaDonated", 0))
                                         );
                                     if (isSettingDate)
                                     {
-                                        IEnumerable<XElement> i = h.Descendants("Member").Where(x => x.Descendants("Name").Any(y => y.Value == member.Username));
+                                        IEnumerable<XElement> i = h.Descendants("Member").Where(x => x.Descendants("Name").Any(y => y.Value == member.Name));
                                         foreach (XElement ii in i)
                                         {
                                             IEnumerable<XElement> j = i.Descendants("Rankup").Where(y => y.Attribute("name").Value == "Recruit");
@@ -489,7 +502,7 @@ namespace SwarmBot
                                     Console.WriteLine(Regex.Match(now.ToString(), @"(.+) [0-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value);
                                     Console.WriteLine("Created");
                                     memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
-                                    e.Channel.SendMessage("Successfully created member " + member.Username);
+                                    e.Channel.SendMessage("Successfully created member " + member.Name);
                                 }
                                 else
                                 {
@@ -514,14 +527,14 @@ namespace SwarmBot
                 }
             }
         }
-        public static void updateMember(DiscordMember member, DiscordMessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
+        public static void updateMember(User member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
         {
             XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.Author.Username));
+            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.User.Name));
             foreach (XElement p in hasPermission)
             {
                 Console.WriteLine(p.Value);
-                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value);
+                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value).Where(x => x.Attribute("for").Value == "Promotion");
                 foreach (XElement q in hasPermissionNum)
                 {
                     if (Int32.Parse(q.Value) >= 5)
@@ -535,7 +548,7 @@ namespace SwarmBot
                             bool multiple = false;
                             bool multipleFound = false;
                             string successMessage = null;
-                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Username));
+                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Name));
                             foreach (XElement i in docMember)
                             {
                                 if (isGettingByAttribute)
@@ -548,7 +561,7 @@ namespace SwarmBot
                                         {
                                             multiple = true;
                                             j.Value = targetValue;
-                                            successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Username + " to " + targetValue;
+                                            successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Name + " to " + targetValue;
                                             Console.WriteLine(j.Value);
                                         }
                                         else
@@ -567,7 +580,7 @@ namespace SwarmBot
                                         if (!multiple)
                                         {
                                             j.Value = attributeValue;
-                                            successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Username + " to " + attributeValue;
+                                            successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Name + " to " + attributeValue;
                                             Console.WriteLine(j.Value);
                                             multiple = true;
                                         }
@@ -588,7 +601,7 @@ namespace SwarmBot
                                         {
                                             multiple = true;
                                             j.Value = targetValue;
-                                            successMessage = "Successfully set " + node + " of " + member.Username + " to " + targetValue;
+                                            successMessage = "Successfully set " + node + " of " + member.Name + " to " + targetValue;
                                         }
                                         else
                                         {
@@ -617,7 +630,7 @@ namespace SwarmBot
                 }
             }
         }
-        public static void news(DiscordMessageEventArgs e)
+        public static void news(MessageEventArgs e)
         {
             using (StreamReader sr = File.OpenText(Path.Combine(configDir, "news.txt")))
             {
@@ -625,22 +638,43 @@ namespace SwarmBot
                 e.Channel.SendMessage(s);
             }
         }
-        public static void updateNews(DiscordMessageEventArgs e)
+        public static void updateNews(MessageEventArgs e, string news, bool silent, string force = "general")
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-            XMLMember xMember = memberDB.getMemberById(e.Author.ID);
+            XMLMember xMember = memberDB.getMemberById(e.User.Id);
+            Console.WriteLine(force);
             if (xMember.checkPermissions("Officer"))
             {
-                string news = e.MessageText.Replace("!updateNews ", "");
-                File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
-                client.GetChannelByName("general").SendMessage("News Updated: " + news);
+                if (xMember.name != "Mardan")
+                {
+                    File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
+                    e.Channel.SendMessage("News Updated: " + news);
+                    if (!silent) { client.FindServers("Spawner Swarm").ToArray()[0].FindChannels(force, ChannelType.Text, true).ToArray()[0].SendMessage("News Updated: " + news); }
+                    //if (!silent) { client.Servers.Where(x => x.Name == "Spawner Swarm").ToArray()[0].Find(x => x.Name == force).SendMessage("News Updated: " + news); }
+                }
+                else
+                {
+                    if (Regex.IsMatch(news, @"SwarmBot [^ ]+ [^ ]+ patch notes are live: https:\/\/github\.com\/SpawnerSwarm\/SwarmBot\/commit\/.+", RegexOptions.IgnoreCase))
+                    {
+                        e.Channel.SendMessage("Patch notes updated");
+                        client.FindServers("Spawner Swarm").ToArray()[0].FindChannels("swarmbotpatchnotes").ToArray()[0].SendMessage(DateTime.Now + " -- " + news);
+                        //client.GetChannelByName("swarmbotpatchnotes").SendMessage(DateTime.Now + " -- " + news);
+                    }
+                    else
+                    {
+                        File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
+                        e.Channel.SendMessage("News Updated: " + news);
+                        if (!silent) { client.FindServers("Spawner Swarm").ToArray()[0].FindChannels(force, ChannelType.Text, true).ToArray()[0].SendMessage("News Updated: " + news); }
+                        //if (!silent) { client.GetServersList().Find(x => x.Name == "Spawner Swarm").Channels.Find(x => x.Name == force).SendMessage("News Updated: " + news); }
+                    }
+                }
             }
             else
             {
-                e.Author.SendMessage("Sorry, you don't have permission to perform that action.");
+                e.Channel.SendMessage("Sorry, you don't have permission to perform that action.");
             }
         }
-        public static void populate(DiscordMember member, DiscordMessageEventArgs e)
+        public static void populate(User member, MessageEventArgs e)
         {
             /*XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             XElement[] memberArray = memberDB.document.Descendants("Member").ToArray();
@@ -651,52 +685,21 @@ namespace SwarmBot
             Console.WriteLine(memberDB.document);
             memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));*/
         }
-        public static void pmUpdateNews( DiscordPrivateMessageEventArgs e, string news, bool silent, string force = "general")
+        /*public static void createChannel(MessageEventArgs e, string channelName, int numInvitees, string[] invitees)
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-            XMLMember xMember = memberDB.getMemberById(e.Author.ID);
-            Console.WriteLine(force);
-            if(xMember.checkPermissions("Officer"))
-            {
-                if (xMember.name != "Mardan")
-                {
-                    File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
-                    e.Author.SendMessage("News Updated: " + news);
-                    if (!silent) { client.GetServersList().Find(x => x.Name == "Spawner Swarm").Channels.Find(x => x.Name == force).SendMessage("News Updated: " + news); }
-                } else
-                {
-                    if(Regex.IsMatch(news, @"SwarmBot [^ ]+ [^ ]+ patch notes are live: https:\/\/github\.com\/SpawnerSwarm\/SwarmBot\/commit\/.+", RegexOptions.IgnoreCase))
-                    {
-                        e.Author.SendMessage("Patch notes updated");
-                        client.GetChannelByName("swarmbotpatchnotes").SendMessage(DateTime.Now + " -- " + news);
-                    }
-                    else
-                    {
-                        File.WriteAllText(Path.Combine(configDir, "news.txt"), DateTime.Now + " -- " + news);
-                        e.Author.SendMessage("News Updated: " + news);
-                        if (!silent) { client.GetServersList().Find(x => x.Name == "Spawner Swarm").Channels.Find(x => x.Name == force).SendMessage("News Updated: " + news); }
-                    }
-                }
-            } else
-            {
-                e.Author.SendMessage("Sorry, you don't have permission to perform that action.");
-            }
-        }
-        public static void createChannel(DiscordMessageEventArgs e, string channelName, int numInvitees, string[] invitees)
-        {
-            if(e.Channel.Parent.Channels.Where(x => x.Type == ChannelType.Voice).ToArray().Length >= 10)
+            if(e.Server.Channels.Where(x => x.Type == ChannelType.Voice).ToArray().Length >= 10)
             {
                 e.Channel.SendMessage("Sorry, we can't create another channel as there is no more room. Try again later or ask an admin to delete a channel");
             } else
             {
-                e.Channel.Parent.CreateChannel(channelName, true);
+                e.Server.CreateChannel(channelName, true);
                 e.Channel.SendMessage("Successfully created new voice channel " + channelName + "!");
             }
-        }
-        public static void getEmote(DiscordMessageEventArgs e, Emotes emotes, string cmd = "list")
+        }*/
+        public static void getEmote(MessageEventArgs e, Emotes emotes, string cmd = "list")
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-            XMLMember author = memberDB.getMemberById(e.Author.ID);
+            XMLMember author = memberDB.getMemberById(e.User.Id);
 
             if(cmd.StartsWith("list"))
             {
@@ -764,12 +767,12 @@ namespace SwarmBot
                 }
             }
         }
-        public static void createEmote(DiscordMessageEventArgs e, Emotes emotes, string name, string URL, string reference, short reqRank, string author = "Mardan")
+        public static void createEmote(MessageEventArgs e, Emotes emotes, string name, string URL, string reference, short reqRank, string author = "Mardan")
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             XMLMember xAuthor = memberDB.getMemberByUsername(author);
             Emote emote = new Emote(URL, name, reference, reqRank, xAuthor);
-            if (e.Message.Author.Username == "Mardan")
+            if (e.User.Name == "Mardan")
             {
                 trilean success = emotes.newEmote(emote);
 
@@ -787,11 +790,11 @@ namespace SwarmBot
                 e.Channel.SendMessage("Sorry, you don't have permissions to add emotes. Send an application to a Guild Master instead.");
             }
         }
-        public static void addForma(DiscordMessageEventArgs e, DiscordMember member, short formas)
+        public static void addForma(MessageEventArgs e, User member, short formas)
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-            XMLMember author = memberDB.getMemberById(e.Author.ID);
-            XMLMember xMember = memberDB.getMemberById(member.ID);
+            XMLMember author = memberDB.getMemberById(e.User.Id);
+            XMLMember xMember = memberDB.getMemberById(member.Id);
             if (author.checkPermissions(5))
             {
                 if (author.discordId != xMember.discordId || author.checkPermissions("Guild Master"))
@@ -824,7 +827,7 @@ namespace SwarmBot
                 }
             }
         }
-        public static void priceCheck(DiscordMessageEventArgs e, string id)
+        public static void priceCheck(MessageEventArgs e, string id)
         {
             trilean t = Program.nexus.getItemById(id);
             if (t.value == 0)
@@ -854,7 +857,7 @@ namespace SwarmBot
                 e.Channel.SendMessage("Sorry, could not find the item you requested.");
             }
         }
-        public static void getMemberCount(DiscordMessageEventArgs e)
+        public static void getMemberCount(MessageEventArgs e)
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             string message = "```xl\n";
@@ -867,13 +870,13 @@ namespace SwarmBot
             message += "\n```";
             e.Channel.SendMessage(message);
         }
-        public static void listEvents(DiscordMessageEventArgs e, Events events, int page = 0)
+        public static void listEvents(MessageEventArgs e, Events events, int page = 0)
         {
             XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
             string block = events.list(page, memberDB);
             e.Channel.SendMessage(block);
         }
-        public static void displayEvent(DiscordMessageEventArgs e, Events events, string _ref = "Latest")
+        public static void displayEvent(MessageEventArgs e, Events events, string _ref = "Latest")
         {
             Event _event = events.getLatestEvent();
             if(_ref != "Latest")
