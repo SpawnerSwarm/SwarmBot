@@ -338,14 +338,14 @@ namespace SwarmBot
 
                     //-------------------------------------END NEXUS-----------------------------------------
 
-                    else if(Regex.IsMatch(e.MessageText, @"!memberList", RegexOptions.IgnoreCase))
+                    else if(Regex.IsMatch(e.MessageText, @"^!memberList", RegexOptions.IgnoreCase))
                     {
                         Discord.getMemberCount(e);
                     }
-                    else if(Regex.IsMatch(e.MessageText, @"!event(?:s)?", RegexOptions.IgnoreCase))
+                    else if(Regex.IsMatch(e.MessageText, @"^!event(?:s)?", RegexOptions.IgnoreCase))
                     {
                         Events events = new Events(eventDir);
-                        string cmd = e.MessageText.Replace("!event", "").Replace(" ", "");//Regex.Match(e.MessageText, @"!event(?:s)?(.+)").Groups[1].Value;
+                        string cmd = e.MessageText.Replace("!events", "").Replace("!event", "").Replace(" ", "");//Regex.Match(e.MessageText, @"!event(?:s)?(.+)").Groups[1].Value;
                         if (cmd.StartsWith("list"))
                         {
                             if (cmd == "list")
