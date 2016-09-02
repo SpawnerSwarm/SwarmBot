@@ -87,7 +87,9 @@ namespace SwarmBot.Chat
         public string lotusText { get; }
         public string reference { get; }
         public Task[] tasks { get; }
+        public Task finalTask { get; }
         public Reward[] rewards { get; }
+        public string specialText { get; }
 
         public Event(XElement xE)
         {
@@ -101,12 +103,14 @@ namespace SwarmBot.Chat
             {
                 this.tasks[i] = new Task(tasks[i]);
             }
+            finalTask = new Task(xE.Descendants("FinalTask").ToArray()[0]);
             XElement[] rewards = xE.Descendants("Reward").ToArray();
             this.rewards = new Reward[rewards.Length];
             for (int i = 0; i < rewards.Length; i++)
             {
                 this.rewards[i] = new Reward(rewards[i]);
             }
+            specialText = xE.Descendants("SpecialText").ToArray()[0].Value;
         }
     }
     class Task

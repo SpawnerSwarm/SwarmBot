@@ -799,7 +799,7 @@ namespace SwarmBot
             {
                 if (author.discordId != xMember.discordId || author.checkPermissions("Guild Master"))
                 {
-                    if (memberDB.getDefine(author.rank, "Promotion") > memberDB.getDefine(xMember.rank, "Promotion"))
+                    if (memberDB.getDefine(author.rank, DefineType.Promotion) > memberDB.getDefine(xMember.rank, DefineType.Promotion))
                     {
                         trilean t = xMember.addForma(formas);
                         if (t.table[1])
@@ -863,9 +863,9 @@ namespace SwarmBot
             string message = "```xl\n";
             for (short i = 1; i <= 7; i++)
             {
-                string rankName = memberDB.getDefineName(i, "Promotion");
+                string rankName = memberDB.getDefineName(i, DefineType.Promotion);
                 int memberCount = memberDB.document.Descendants("Member").Where(x => x.Descendants("Rank").ToArray()[0].Value == rankName).ToArray().Count();
-                message += rankName + ": " + memberCount + "\n";
+                message += rankName + ": " + memberCount + " out of " + memberDB.getDefine(rankName, DefineType.RankCapacity) + "\n";
             }
             message += "\n```";
             e.Channel.SendMessage(message);
@@ -903,11 +903,13 @@ namespace SwarmBot
             {
                 block += "\t " + task.getTask() + "\n";
             }
+            block += "\t " + _event.finalTask.getTask();
             block += "\nRewards:\n\n";
             foreach(Reward reward in _event.rewards)
             {
                 block += "\t " + reward.getReward() + "\n";
             }
+            block += "\n" + _event.specialText;
             e.Channel.SendMessage(block);
         }
     }

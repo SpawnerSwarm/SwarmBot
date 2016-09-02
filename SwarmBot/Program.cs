@@ -52,12 +52,13 @@ namespace SwarmBot
             Discord.client.Ready += (sender, e) =>
             {
                 Console.WriteLine("Connected! User: " + Discord.client.CurrentUser.Name);
-                Discord.client.SetGame("Type !help for help", GameType.Twitch, "https://github.com/SpawnerSwarm/SwarmBot");
+                Discord.client.SetGame("Type !help for help");
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
                 if (!e.Message.IsAuthor)
                 {
+                    Discord.client.SetGame("Type !help for help");
                     if (e.Message.Text == "!help" || e.Message.Text == "!OHMAHGAWDHALPMEPLS" || e.Message.Text == "!ONOIAMNOTGOODWITHCOMPOOTERPLSTOHALP")
                     {
                         Discord.help(e);

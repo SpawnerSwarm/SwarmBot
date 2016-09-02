@@ -206,7 +206,7 @@ namespace SwarmBot.XML
             try
             {
                 //return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
-                return checkPermissions(x.getDefine(s, "Promotion"));
+                return checkPermissions(x.getDefine(s, DefineType.Promotion));
             }
             catch
             {
@@ -226,7 +226,7 @@ namespace SwarmBot.XML
                 return trilean;
             } else
             {
-                reqTime = x.getDefine(rank + "LastRankUp", "LastRankUp");
+                reqTime = x.getDefine(rank + "LastRankUp", DefineType.LastRankUp);
             }
             /*for(int i=0;i<rankupHistory.Length;i++)
             {
@@ -274,7 +274,7 @@ namespace SwarmBot.XML
             int rankInt;
             if (forceRank != null)
             {
-                rankInt = x.getDefine(forceRank, "Promotion");
+                rankInt = x.getDefine(forceRank, DefineType.Promotion);
                 rank = forceRank;
             }
             else
@@ -287,8 +287,8 @@ namespace SwarmBot.XML
                     }
                     else
                     {
-                        rankInt = x.getDefine(this.rank, "Promotion") + 1;
-                        rank = x.getDefineName(rankInt, "Promotion");
+                        rankInt = x.getDefine(this.rank, DefineType.Promotion) + 1;
+                        rank = x.getDefineName(rankInt, DefineType.Promotion);
                     }
                 }
                 catch (Exception exception)
@@ -296,7 +296,7 @@ namespace SwarmBot.XML
                     throw new Exception("Error: Invalid rank -- " + exception);
                 }
             }
-            if (x.getDefine(m.rank, "Promotion") > x.getDefine(rank, "Promotion"))
+            if (x.getDefine(m.rank, DefineType.Promotion) > x.getDefine(rank, DefineType.Promotion))
             {
                 return x.promote(this, rank, date);
             } else
@@ -389,9 +389,9 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Multiple members were found");
             }
         }
-        public int getDefine(string value, string _for)
+        public int getDefine(string value, DefineType _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for);
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for.ToString());
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(value);
             Console.WriteLine(defineArray[0]);
@@ -403,9 +403,9 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Multiple defines were found");
             }
         }
-        public string getDefineName(int value, string _for)
+        public string getDefineName(int value, DefineType _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for);
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for.ToString());
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(defineArray.Length);
             if(defineArray.Length == 1)
@@ -466,11 +466,11 @@ namespace SwarmBot.XML
         {
             if(toRank == null)
             {
-                toRank = getDefineName(getDefine(member.rank, "Promotion") + 1, "Promotion");
+                toRank = getDefineName(getDefine(member.rank, DefineType.Promotion) + 1, DefineType.Promotion);
             }
             try
             {
-                short capacity = (short)getDefine(toRank, "RankCapacity");
+                short capacity = (short)getDefine(toRank, DefineType.RankCapacity);
                 int memberCount = document.Descendants("Member").Where(x => x.Descendants("Rank").ToArray()[0].Value == toRank).ToArray().Length;
                 Console.WriteLine(capacity + "|" + memberCount);
                 if (memberCount >= capacity)
@@ -486,6 +486,26 @@ namespace SwarmBot.XML
             {
                 return new trilean(false, true, "Unknown");
             }
+        }
+    }
+    public sealed class DefineType
+    {
+        private readonly string name;
+        private readonly int value;
+
+        public static readonly DefineType Promotion = new DefineType(0, "Promotion");
+        public static readonly DefineType RankCapacity = new DefineType(1, "RankCapacity");
+        public static readonly DefineType LastRankUp = new DefineType(2, "LastRankUp");
+
+        private DefineType(int value, string name)
+        {
+            this.name = name;
+            this.value = value;
+        }
+
+        public override string ToString()
+        {
+            return name;
         }
     }
 }

@@ -97,11 +97,11 @@ namespace SwarmBot.Chat
                 {
                     block += "```xl\nName: " + emotes[i].name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
                     block += "\nReference: " + emotes[i].reference;
-                    block += "\nRequired Rank: " + db.getDefineName(emotes[i].requiredRank, "Promotion");
+                    block += "\nRequired Rank: " + db.getDefineName(emotes[i].requiredRank, DefineType.Promotion);
                     block += "\nCreator: " + emotes[i].creator + "\n```\n";
                 }
             }
-            if(block == "")
+            if(!block.Contains("Name"))
             {
                 block = "http://i.imgur.com/zdMAeE9.png";
             }
@@ -115,7 +115,7 @@ namespace SwarmBot.Chat
             block += @"
 Reference: " + emote.reference;
             block += @"
-Required Rank: " + db.getDefineName(emote.requiredRank, "Promotion");
+Required Rank: " + db.getDefineName(emote.requiredRank, DefineType.Promotion);
             block += @"
 Creator: " + emote.creator;
             if(hasPermission)
