@@ -38,10 +38,10 @@ namespace SwarmBot.Chat
                 return new trilean(true, JsonConvert.DeserializeObject<Item>(items[0].ToString()));
             } else if (items.Count < 1)
             {
-                return new trilean(false, "none");
+                return new trilean(false, NexusErrorCode.NotFound);
             } else
             {
-                return new trilean(false, "multiple");
+                return new trilean(false, NexusErrorCode.MultipleFound);
             }
         }
     }

@@ -41,7 +41,7 @@ namespace SwarmBot.Chat
             Event[] events = this.events.Where(x => x.reference == reference).ToArray();
             if(events.Length > 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             } else if (events.Length < 1)
             {
                 return false;

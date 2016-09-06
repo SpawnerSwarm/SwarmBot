@@ -48,7 +48,7 @@ namespace SwarmBot.Chat
             Emote[] emotes = this.emotes.Where(x => x.reference == reference).ToArray();
             if(emotes.Length > 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             } else if(emotes.Length < 1)
             {
                 return false;
@@ -60,7 +60,7 @@ namespace SwarmBot.Chat
             Emote emote = (Emote)getEmote(reference).embedded;
             if(emote == null)
             {
-                return new trilean(false, true, "multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             }
             return getEligibleForEmote(member, emote);
         }
