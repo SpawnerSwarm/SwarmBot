@@ -58,7 +58,7 @@ namespace SwarmBot
                 Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+);.+");
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
-                token = info.Groups[3].Value;
+                token = "Bot " + info.Groups[3].Value;
             }
 
             //client = new DiscordClient();
