@@ -178,6 +178,7 @@ namespace SwarmBot
                         message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
                     }*/
                     message += "He/she is not eligible for a rankup at this time.\n";
+                    message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
                 }
                 else if(isReady == 0)
                 {
