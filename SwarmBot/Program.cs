@@ -217,12 +217,6 @@ namespace SwarmBot
                         string news = cmd.Groups[3].Value;
                         Discord.updateNews(e, news, silent, force);
                     }
-                    else if (e.Message.Text.StartsWith("!populate"))
-                    {
-                        //User member = e.Server.GetMemberByKey(Regex.Match(e.Message.RawText.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value);
-                        User member = Discord.getDiscordMemberByID(Regex.Match(e.Message.RawText.Replace("!populate ", ""), @"<@(.+)>").Groups[1].Value, e.Server);
-                        Discord.populate(member, e);
-                    }
                     else if(e.Message.Text.StartsWith("!lenny"))
                     {
                         if(e.User.Name == "FoxTale")

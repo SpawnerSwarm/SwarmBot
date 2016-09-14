@@ -653,28 +653,6 @@ namespace SwarmBot
                 e.Channel.SendMessage("Sorry, you don't have permission to perform that action.");
             }
         }
-        public static void populate(User member, MessageEventArgs e)
-        {
-            /*XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
-            XElement[] memberArray = memberDB.document.Descendants("Member").ToArray();
-            for(int i = 0;i<memberArray.Length;i++)
-            {
-                memberArray[i].Add(new XElement("FormaDonated", 0));
-            }
-            Console.WriteLine(memberDB.document);
-            memberDB.Save(Path.Combine(configDir, "PersonellDB.xml"));*/
-        }
-        /*public static void createChannel(MessageEventArgs e, string channelName, int numInvitees, string[] invitees)
-        {
-            if(e.Server.Channels.Where(x => x.Type == ChannelType.Voice).ToArray().Length >= 10)
-            {
-                e.Channel.SendMessage("Sorry, we can't create another channel as there is no more room. Try again later or ask an admin to delete a channel");
-            } else
-            {
-                e.Server.CreateChannel(channelName, true);
-                e.Channel.SendMessage("Successfully created new voice channel " + channelName + "!");
-            }
-        }*/
         public static void getEmote(MessageEventArgs e, Emotes emotes, string cmd = "list")
         {
             XMLDocument memberDB = new XMLDocument(memberDBPath);
