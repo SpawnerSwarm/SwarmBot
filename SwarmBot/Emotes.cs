@@ -48,7 +48,7 @@ namespace SwarmBot.Chat
             Emote[] emotes = this.emotes.Where(x => x.reference == reference).ToArray();
             if(emotes.Length > 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             } else if(emotes.Length < 1)
             {
                 return false;
@@ -60,7 +60,7 @@ namespace SwarmBot.Chat
             Emote emote = (Emote)getEmote(reference).embedded;
             if(emote == null)
             {
-                return new trilean(false, true, "multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             }
             return getEligibleForEmote(member, emote);
         }
@@ -90,28 +90,22 @@ namespace SwarmBot.Chat
         {
             Emote[] emotes = this.emotes;
             if (page == 0) { page = 1; };
-            string block = @"Page " + page + ". To move to the next page, use \"!e list " + (page + 1) + "\". To view information about a specific emote, use \"!e list <emote_ref>\"." + @"
-
-";
+            string block = "Page " + page + ". To move to the next page, use \"!e list " + (page + 1) + "\". To view information about a specific emote, use \"!e list <emote_ref>\"." + "\n";
             for(int i = (page - 1) * 5;i < page * 5;i++)
             {
                 if (emotes.Length > i)
                 {
-                    block += @"Name: " + emotes[i].name;
-                    block += @"
-Reference: " + emotes[i].reference;
-                    block += @"
-Required Rank: " + db.getRankName(emotes[i].requiredRank);
-                    block += @"
-Creator: " + emotes[i].creator + @"
-
-";
+                    block += "```xl\nName: " + emotes[i].name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
+                    block += "\nReference: " + emotes[i].reference;
+                    block += "\nRequired Rank: " + db.getDefineName(emotes[i].requiredRank, DefineType.Promotion);
+                    block += "\nCreator: " + emotes[i].creator + "\n```\n";
                 }
             }
-            if(block == "")
+            if(!block.Contains("Name"))
             {
                 block = "http://i.imgur.com/zdMAeE9.png";
             }
+            Console.WriteLine(block);
             return block;
         }
         public string getEmoteData(Emote emote, XMLDocument db, bool hasPermission)
@@ -121,7 +115,7 @@ Creator: " + emotes[i].creator + @"
             block += @"
 Reference: " + emote.reference;
             block += @"
-Required Rank: " + db.getRankName(emote.requiredRank);
+Required Rank: " + db.getDefineName(emote.requiredRank, DefineType.Promotion);
             block += @"
 Creator: " + emote.creator;
             if(hasPermission)

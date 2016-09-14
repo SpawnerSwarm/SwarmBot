@@ -13,12 +13,12 @@ namespace SwarmBot.XML
     
     public class Rankup
     {
-        public string rank { get; internal set; }
+        public Rank rank { get; internal set; }
         public DateTime date { get; set; }
         public string placeHolderDate { get; set; }
         public bool usingPlaceHolder { get; set; }
 
-        public Rankup(string rank, string date = null, bool old = true, bool NaN = false)
+        public Rankup(Rank rank, string date = null, bool old = true, bool NaN = false)
         {
             this.rank = rank;
             usingPlaceHolder = true;
@@ -90,7 +90,7 @@ namespace SwarmBot.XML
     public class XMLMember
     {
         public string name { get; internal set; }
-        public string rank { get; internal set; }
+        public Rank rank { get; internal set; }
         /// <summary>
         /// The Rankup history of the member consisting of <see cref="Rankup"/> objects
         /// </summary>
@@ -176,7 +176,7 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Steam Id parsing failed");
             }
         }
-        public Rankup getRankup(string rank)
+        public Rankup getRankup(Rank rank)
         {
             bool hasReturned = false;
             int hasRNum = -1;
@@ -197,16 +197,11 @@ namespace SwarmBot.XML
                 return rankupHistory[hasRNum];
             }
         }
-        public bool checkPermissions(int i)
-        {
-            return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= i;
-        }
-        public bool checkPermissions(string s)
+        public bool checkPermissions(Rank s)
         {
             try
             {
-                //return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
-                return checkPermissions(x.getDefine(s));
+                return checkPermissions(x.getDefine(s, DefineType.Promotion));
             }
             catch
             {
@@ -214,19 +209,22 @@ namespace SwarmBot.XML
                 throw new Exception("Erorr: Invalid Permissions level");
             }
         }
+        public bool checkPermissions(int i)
+        {
+            return int.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= i;
+        }
         public trilean checkReadyForRankUp()
         {
             DateTime rankupDate = DateTime.Now;
             trilean isReady = 2;
             double reqTime = 0;
-            if(rank == "Guild Master")
+            if(rank == Rank.GuildMaster)
             {
-                trilean trilean = new trilean(false, false);
-                trilean.embedded = "Max";
+                trilean trilean = new trilean(false, true, XMLErrorCode.Maximum);
                 return trilean;
             } else
             {
-                reqTime = x.getDefine(rank + "LastRankUp");
+                reqTime = x.getDefine(rank + "LastRankUp", DefineType.LastRankUp);
             }
             /*for(int i=0;i<rankupHistory.Length;i++)
             {
@@ -252,7 +250,7 @@ namespace SwarmBot.XML
                         isReady.embedded = t.ToString();
                     } else
                     {
-                        isReady = new trilean(false, true);
+                        isReady = new trilean(false, true, XMLErrorCode.Old);
                     }
                     break;
                 }
@@ -268,27 +266,27 @@ namespace SwarmBot.XML
             }*/
             return isReady;
         }
-        public trilean promote(DateTime date, XMLMember m, string forceRank = null)
+        public trilean promote(DateTime date, XMLMember m, Rank forceRank = null)
         {
-            string rank;
+            Rank rank;
             int rankInt;
             if (forceRank != null)
             {
-                rankInt = x.getDefine(forceRank);
+                rankInt = x.getDefine(forceRank, DefineType.Promotion);
                 rank = forceRank;
             }
             else
             {
                 try
                 {
-                    if (this.rank == "Guild Master")
+                    if (this.rank == Rank.GuildMaster)
                     {
-                        return new trilean(false, true, "Max");
+                        return new trilean(false, true, XMLErrorCode.Maximum);
                     }
                     else
                     {
-                        rankInt = x.getDefine(this.rank) + 1;
-                        rank = x.getRankName(rankInt);
+                        rankInt = x.getDefine(this.rank, DefineType.Promotion) + 1;
+                        rank = x.getDefineName(rankInt, DefineType.Promotion);
                     }
                 }
                 catch (Exception exception)
@@ -296,15 +294,12 @@ namespace SwarmBot.XML
                     throw new Exception("Error: Invalid rank -- " + exception);
                 }
             }
-            if (x.getDefine(m.rank) > x.getDefine(rank))
+            if (x.getDefine(m.rank, DefineType.Promotion) > x.getDefine(rank, DefineType.Promotion) || m.rank == Rank.GuildMaster)
             {
                 return x.promote(this, rank, date);
             } else
             {
-                Console.WriteLine("FOO");
-                Console.WriteLine(x.getDefine(this.rank));
-                Console.WriteLine(x.getDefine(rank));
-                return new trilean(false, true, ">");
+                return new trilean(false, true, XMLErrorCode.Greater);
             }
         }
         public XElement toXElement()
@@ -372,8 +367,11 @@ namespace SwarmBot.XML
             } else
             {
                 throw new Exception("Error: Multiple members were found");
-                Console.WriteLine(memberArray.Length);
             }
+        }
+        public XMLMember getMemberById(ulong id)
+        {
+            return getMemberById(id.ToString());
         }
         public XMLMember getMemberByUsername(string username)
         {
@@ -388,9 +386,9 @@ namespace SwarmBot.XML
                 throw new Exception("Error: Multiple members were found");
             }
         }
-        public int getDefine(string value)
+        public int getDefine(string value, DefineType _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value);
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for);
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(value);
             Console.WriteLine(defineArray[0]);
@@ -399,12 +397,12 @@ namespace SwarmBot.XML
                 return Int32.Parse(defineArray[0].Value);
             } else
             {
-                throw new Exception("Error: Multiple defines were found");
+                throw new Exception("Error: Multiple defines were found: getDefine() ln 402");
             }
         }
-        public string getRankName(int value)
+        public string getDefineName(int value, DefineType _for)
         {
-            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == "Promotion");
+            IEnumerable<XElement> defineNum = document.Descendants("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for);
             XElement[] defineArray = defineNum.ToArray();
             Console.WriteLine(defineArray.Length);
             if(defineArray.Length == 1)
@@ -412,16 +410,16 @@ namespace SwarmBot.XML
                 return defineArray[0].Attribute("name").Value;
             } else
             {
-                throw new Exception("Error: Multiple defines were found");
+                throw new Exception("Error: Multiple defines were found: getDefineName() ln 415");
             }
         }
-        public trilean promote(XMLMember member, string rank, DateTime date)
+        public trilean promote(XMLMember member, Rank rank, DateTime date)
         {
             string name = member.name;
             XElement[] xMemberArray = document.Descendants("Member").Where(x => x.Descendants("Name").ToArray()[0].Value == name).ToArray();
             if(xMemberArray.Length != 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             } else
             {
                 XElement xMember = xMemberArray[0];
@@ -437,7 +435,7 @@ namespace SwarmBot.XML
             XElement[] xMemberArray = document.Descendants("Member").Where(x => x.Descendants("Name").ToArray()[0].Value == member).ToArray();
             if(xMemberArray.Length != 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             } else
             {
                 XElement xMember = xMemberArray[0];
@@ -451,7 +449,7 @@ namespace SwarmBot.XML
             XElement[] xMemberArray = document.Descendants("Member").Where(x => x.Descendants("Name").ToArray()[0].Value == member).ToArray();
             if (xMemberArray.Length != 1)
             {
-                return new trilean(false, true, "Multiple");
+                return new trilean(false, true, XMLErrorCode.MultipleFound);
             }
             else
             {
@@ -460,6 +458,92 @@ namespace SwarmBot.XML
                 Save(path);
                 return new trilean(true);
             }
+        }
+        public trilean checkRankMaxed(XMLMember member, Rank toRank = null)
+        {
+            if(toRank == null)
+            {
+                if (member.rank != Rank.GuildMaster) { toRank = getDefineName(getDefine(member.rank, DefineType.Promotion) + 1, DefineType.Promotion); } else { return true; }
+            }
+            try
+            {
+                short capacity = (short)getDefine(toRank, DefineType.RankCapacity);
+                int memberCount = document.Descendants("Member").Where(x => x.Descendants("Rank").ToArray()[0].Value == toRank).ToArray().Length;
+                Console.WriteLine(capacity + "|" + memberCount);
+                if (memberCount >= capacity)
+                {
+                    return new trilean(false, memberCount);
+                }
+                else
+                {
+                    return new trilean(true, memberCount);
+                }
+            }
+            catch
+            {
+                return new trilean(false, true, XMLErrorCode.Unknown);
+            }
+        }
+    }
+    public sealed class DefineType
+    {
+        private readonly string name;
+        private readonly int value;
+
+        public static readonly DefineType Promotion = new DefineType(0, "Promotion");
+        public static readonly DefineType RankCapacity = new DefineType(1, "RankCapacity");
+        public static readonly DefineType LastRankUp = new DefineType(2, "LastRankUp");
+
+        private DefineType(int value, string name)
+        {
+            this.name = name;
+            this.value = value;
+        }
+        public override string ToString()
+        {
+            return name;
+        }
+        public static implicit operator string(DefineType defineType)
+        {
+            return defineType.ToString();
+        }
+    }
+    public sealed class Rank
+    {
+        private readonly string name;
+        private readonly int value;
+        
+        private static readonly Dictionary<string, Rank> instance = new Dictionary<string, Rank>();
+
+        public static readonly Rank Recruit = new Rank(1, "Recruit");
+        public static readonly Rank Member = new Rank(2, "Member");
+        public static readonly Rank MemberII = new Rank(3, "Member II");
+        public static readonly Rank Veteran = new Rank(4, "Veteran");
+        public static readonly Rank Officer = new Rank(5, "Officer");
+        public static readonly Rank General = new Rank(6, "General");
+        public static readonly Rank GuildMaster = new Rank(7, "Guild Master");
+
+        private Rank(int value, string name)
+        {
+            this.name = name;
+            this.value = value;
+            instance[name] = this;
+        }
+        public override string ToString()
+        {
+            return name;
+        }
+        public static implicit operator Rank(string str)
+        {
+            Rank result;
+            if (instance.TryGetValue(str, out result))
+                return result;
+            else
+                throw new InvalidCastException();
+        }
+        public static implicit operator string(Rank rank)
+        {
+            return rank.ToString();
         }
     }
 }
