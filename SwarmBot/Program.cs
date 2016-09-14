@@ -18,8 +18,32 @@ namespace SwarmBot
     class Program
     {
         public static NexusStats nexus;
+        public static string configDir;
         public static System.Windows.Forms.NotifyIcon trayIcon;
 
+        static async Task createSystemTrayIcon()
+        {
+            trayIcon = new System.Windows.Forms.NotifyIcon();
+            trayIcon.Text = "SwarmBot";
+            trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
+
+            System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+
+            trayMenu.MenuItems.Add("Open Configuration Directory", (object sSender, EventArgs eE) =>
+            {
+                System.Diagnostics.Process.Start(configDir);
+            });
+            trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
+            {
+                Discord.client.Disconnect();
+                trayIcon.Dispose();
+                Environment.Exit(0);
+            });
+
+            trayIcon.ContextMenu = trayMenu;
+            trayIcon.Visible = true;
+            System.Windows.Forms.Application.Run();
+        }
         static void Main(string[] args)
         {
             Discord.client = new DiscordClient();
@@ -30,7 +54,7 @@ namespace SwarmBot
             nexus.Connect();
 
             //Emotes
-            string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+            configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
             string emoteDir = Path.Combine(configDir, "emotes.xml");
             string eventDir = Path.Combine(configDir, "events.xml");
             string restarterPath = "";
@@ -50,31 +74,11 @@ namespace SwarmBot
                 };
                 p.Start();
             };*/
-            Discord.client.Ready += (sender, e) =>
+            Discord.client.Ready += async (sender, e) =>
             {
                 Console.WriteLine("Connected! User: " + Discord.client.CurrentUser.Name);
                 Discord.client.SetGame("Type !help for help");
-
-                trayIcon = new System.Windows.Forms.NotifyIcon();
-                trayIcon.Text = "SwarmBot";
-                trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
-
-                System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
-
-                trayMenu.MenuItems.Add("Open Configuration Directory", (object sSender, EventArgs eE) =>
-                {
-                    System.Diagnostics.Process.Start(configDir);
-                });
-                trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
-                {
-                    Discord.client.Disconnect();
-                    trayIcon.Dispose();
-                    Environment.Exit(0);
-                });
-
-                trayIcon.ContextMenu = trayMenu;
-                trayIcon.Visible = true;
-                System.Windows.Forms.Application.Run();
+                await Task.Run(() => createSystemTrayIcon());
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
