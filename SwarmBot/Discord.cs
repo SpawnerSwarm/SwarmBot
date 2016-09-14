@@ -26,7 +26,9 @@ namespace SwarmBot
         private static string email;
         private static string password;
         private static string token;
+        private static ulong archiveServerID;
         public static Server Swarm;
+        public static string memberDBPath = Path.Combine(configDir + "PersonellDB.xml");
 
         public static bool SendInvite(string recipient, string Game, MessageEventArgs e)
         {
@@ -59,6 +61,7 @@ namespace SwarmBot
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
                 token = "Bot " + info.Groups[3].Value;
+                archiveServerID = ulong.Parse(info.Groups[4].Value);
             }
 
             //client = new DiscordClient();
@@ -143,7 +146,7 @@ namespace SwarmBot
         {
             try
             {
-                XMLDocument memberDB = new XMLDocument(Path.Combine(configDir + "PersonellDB.xml"));
+                XMLDocument memberDB = new XMLDocument(memberDBPath);
                 XMLMember xMember = memberDB.getMemberById(member.Id);
                 Console.WriteLine(xMember.name + " is a(n) " + xMember.rank);
                 trilean isReady = xMember.checkReadyForRankUp();
@@ -208,7 +211,7 @@ namespace SwarmBot
             } else
             {
                 Console.WriteLine(member.Name + " " + force + " " + help);
-                XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+                XMLDocument memberDB = new XMLDocument(memberDBPath);
                 XMLMember xMember = memberDB.getMemberById(member.Id);
                 XMLMember xAuthor = memberDB.getMemberById(e.User.Id);
                 if(xAuthor.checkPermissions(Rank.Officer)) {
@@ -616,7 +619,7 @@ namespace SwarmBot
         }
         public static void updateNews(MessageEventArgs e, string news, bool silent, string force = "general")
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember xMember = memberDB.getMemberById(e.User.Id);
             Console.WriteLine(force);
             if (xMember.checkPermissions("Officer"))
@@ -674,7 +677,7 @@ namespace SwarmBot
         }*/
         public static void getEmote(MessageEventArgs e, Emotes emotes, string cmd = "list")
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember author = memberDB.getMemberById(e.User.Id);
 
             if(cmd.StartsWith("list"))
@@ -745,7 +748,7 @@ namespace SwarmBot
         }
         public static void createEmote(MessageEventArgs e, Emotes emotes, string name, string URL, string reference, short reqRank, string author = "Mardan")
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember xAuthor = memberDB.getMemberByUsername(author);
             Emote emote = new Emote(URL, name, reference, reqRank, xAuthor);
             if (e.User.Name == "Mardan")
@@ -768,7 +771,7 @@ namespace SwarmBot
         }
         public static void addForma(MessageEventArgs e, User member, short formas)
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember author = memberDB.getMemberById(e.User.Id);
             XMLMember xMember = memberDB.getMemberById(member.Id);
             if (author.checkPermissions(5))
@@ -835,7 +838,7 @@ namespace SwarmBot
         }
         public static void getMemberCount(MessageEventArgs e)
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             string message = "```xl\n";
             for (short i = 1; i <= 7; i++)
             {
@@ -848,7 +851,7 @@ namespace SwarmBot
         }
         public static void listEvents(MessageEventArgs e, Events events, int page = 0)
         {
-            XMLDocument memberDB = new XMLDocument(Path.Combine(configDir, "PersonellDB.xml"));
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
             string block = events.list(page, memberDB);
             e.Channel.SendMessage(block);
         }
@@ -875,7 +878,7 @@ namespace SwarmBot
             block += _event.icon + " **" + _event.name + "** " + _event.icon + "\n\n";
             block += _event.lotusText;
             block += "\n\nTasks:\n\n";
-            foreach(Chat.Task task in _event.tasks)
+            foreach(eTask task in _event.tasks)
             {
                 block += "\t " + task.getTask() + "\n";
             }
@@ -888,5 +891,59 @@ namespace SwarmBot
             block += "\n" + _event.specialText;
             e.Channel.SendMessage(block);
         }
+        public static async Task archive(MessageEventArgs e, string tChannel)
+        {
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
+            if (memberDB.getMemberById(e.User.Id).checkPermissions(Rank.GuildMaster))
+            {
+                List<Channel> channelList = e.Server.FindChannels(tChannel, ChannelType.Text, true).ToList();
+                if(channelList.Count != 1) { await e.Channel.SendMessage("```xl\nError: Channel not found or multiple found.\n```"); return; }
+                Channel channel = channelList[0];
+                bool b = false;
+                Message[] messages = await channel.DownloadMessages();
+                //messages = messages.Reverse().ToArray();
+                while (!b)
+                {
+                    Message[] newMessages = await channel.DownloadMessages(100, messages[messages.Length - 2].Id);
+                    //Console.WriteLine(messages.Length);
+                    //Console.WriteLine(messages[0].Text + "  ||  " + newMessages[0].Text);
+                    if (messages.Length % 100 != 0 || newMessages.Last().Id == messages.Last().Id)
+                    {
+                        b = true;
+                    }
+                    else
+                    {
+                        Message[] tempMessages = messages;
+                        messages = new Message[tempMessages.Length + newMessages.Length - 1];
+                        //Array.Copy(tempMessages, 0, messages, 0, tempMessages.Length - 1);
+                        //Console.WriteLine(messages.Length);
+                        //Array.Copy(newMessages, 1, messages, tempMessages.Length, newMessages.Length - 1);
+                        for (int i = 0; i < tempMessages.Length; i++)
+                        {
+                            messages[i] = tempMessages[i];
+                            Console.WriteLine(i);
+                        }
+                        Console.WriteLine(newMessages.Length + " " + messages.Length);
+                        for (int i = 1; i < newMessages.Length; i++)
+                        {
+                            Console.WriteLine(i - 1 + tempMessages.Length);
+                            messages[i - 1 + tempMessages.Length] = newMessages[i];
+                        }
+                    }                 
+                }
+                messages = messages.Reverse().ToArray();
+                await e.Channel.SendMessage(messages.Length.ToString());
+                Channel destChannel = await client.GetServer(archiveServerID).CreateChannel(channel.Name, ChannelType.Text);
+                for(int i = 0; i < messages.Length; i++)
+                {
+                    await destChannel.SendMessage("(" + messages[i].Timestamp + ") " + messages[i].User.Name + ": " + messages[i].Text);
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+            else
+            {
+                await e.Channel.SendMessage("```xl\nError: You do not have permission to perform that action.\n```");
+            }
+        } 
     }
 }

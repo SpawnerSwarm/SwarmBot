@@ -86,8 +86,8 @@ namespace SwarmBot.Chat
         public string name { get; }
         public string lotusText { get; }
         public string reference { get; }
-        public Task[] tasks { get; }
-        public Task finalTask { get; }
+        public eTask[] tasks { get; }
+        public eTask finalTask { get; }
         public Reward[] rewards { get; }
         public string specialText { get; }
 
@@ -98,12 +98,12 @@ namespace SwarmBot.Chat
             lotusText = xE.Descendants("LotusText").ToArray()[0].Value;
             reference = xE.Descendants("Reference").ToArray()[0].Value;
             XElement[] tasks = xE.Descendants("Task").ToArray();
-            this.tasks = new Task[tasks.Length];
+            this.tasks = new eTask[tasks.Length];
             for(int i = 0; i < tasks.Length; i++)
             {
-                this.tasks[i] = new Task(tasks[i]);
+                this.tasks[i] = new eTask(tasks[i]);
             }
-            finalTask = new Task(xE.Descendants("FinalTask").ToArray()[0]);
+            finalTask = new eTask(xE.Descendants("FinalTask").ToArray()[0]);
             XElement[] rewards = xE.Descendants("Reward").ToArray();
             this.rewards = new Reward[rewards.Length];
             for (int i = 0; i < rewards.Length; i++)
@@ -113,7 +113,7 @@ namespace SwarmBot.Chat
             specialText = xE.Descendants("SpecialText").ToArray()[0].Value;
         }
     }
-    class Task
+    class eTask
     {
         public string icon { get; }
         public string description { get; }
@@ -121,7 +121,7 @@ namespace SwarmBot.Chat
         public string target { get; }
         public string location { get; }
 
-        public Task(XElement xE)
+        public eTask(XElement xE)
         {
             icon = xE.Descendants("Icon").ToArray()[0].Value;
             description = xE.Descendants("Description").ToArray()[0].Value;

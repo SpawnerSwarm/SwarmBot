@@ -378,6 +378,12 @@ namespace SwarmBot
                             Discord.displayEvent(e, events, cmd);
                         }
                     }
+                    else if(Regex.IsMatch(e.Message.Text, @"^!archive", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.Text, @"!archive #(.+)", RegexOptions.IgnoreCase);
+                        string channel = cmd.Groups[1].Value;
+                        await Discord.archive(e, channel);
+                    }
                 };
             };
             /*Discord.client.PrivateMessageReceived += (sender, e) =>

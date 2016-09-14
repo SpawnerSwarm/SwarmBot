@@ -197,15 +197,10 @@ namespace SwarmBot.XML
                 return rankupHistory[hasRNum];
             }
         }
-        public bool checkPermissions(int i)
-        {
-            return int.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= i;
-        }
         public bool checkPermissions(Rank s)
         {
             try
             {
-                //return Int32.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= x.getDefine(s);
                 return checkPermissions(x.getDefine(s, DefineType.Promotion));
             }
             catch
@@ -213,6 +208,10 @@ namespace SwarmBot.XML
                 Console.WriteLine("Error: Invalid permissions level");
                 throw new Exception("Erorr: Invalid Permissions level");
             }
+        }
+        public bool checkPermissions(int i)
+        {
+            return int.Parse(x.document.Descendants("Define").Where(y => y.Attribute("name").Value == rank).ToArray()[0].Value) >= i;
         }
         public trilean checkReadyForRankUp()
         {
@@ -368,7 +367,6 @@ namespace SwarmBot.XML
             } else
             {
                 throw new Exception("Error: Multiple members were found");
-                Console.WriteLine(memberArray.Length);
             }
         }
         public XMLMember getMemberById(ulong id)
