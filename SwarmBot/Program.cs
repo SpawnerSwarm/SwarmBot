@@ -18,6 +18,7 @@ namespace SwarmBot
     class Program
     {
         public static NexusStats nexus;
+        public static System.Windows.Forms.NotifyIcon trayIcon;
 
         static void Main(string[] args)
         {
@@ -53,19 +54,23 @@ namespace SwarmBot
             {
                 Console.WriteLine("Connected! User: " + Discord.client.CurrentUser.Name);
                 Discord.client.SetGame("Type !help for help");
-                using (System.Windows.Forms.NotifyIcon trayIcon = new System.Windows.Forms.NotifyIcon())
+
+                trayIcon = new System.Windows.Forms.NotifyIcon();
+                trayIcon.Text = "SwarmBot";
+                trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
+
+                System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+
+                trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
                 {
-                    trayIcon.Text = "SwarmBot";
-                    trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
+                    Discord.client.Disconnect();
+                    trayIcon.Dispose();
+                    Environment.Exit(0);
+                });
 
-                    System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
-
-                    trayMenu.MenuItems.Add("Test1");
-
-                    trayIcon.ContextMenu = trayMenu;
-                    trayIcon.Visible = true;
-                    System.Windows.Forms.Application.Run();
-                }
+                trayIcon.ContextMenu = trayMenu;
+                trayIcon.Visible = true;
+                System.Windows.Forms.Application.Run();
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
