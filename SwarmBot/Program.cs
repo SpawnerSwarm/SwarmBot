@@ -53,6 +53,19 @@ namespace SwarmBot
             {
                 Console.WriteLine("Connected! User: " + Discord.client.CurrentUser.Name);
                 Discord.client.SetGame("Type !help for help");
+                using (System.Windows.Forms.NotifyIcon trayIcon = new System.Windows.Forms.NotifyIcon())
+                {
+                    trayIcon.Text = "SwarmBot";
+                    trayIcon.Icon = new System.Drawing.Icon(System.Drawing.SystemIcons.Application, 40, 40);
+
+                    System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+
+                    trayMenu.MenuItems.Add("Test1");
+
+                    trayIcon.ContextMenu = trayMenu;
+                    trayIcon.Visible = true;
+                    System.Windows.Forms.Application.Run();
+                }
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
