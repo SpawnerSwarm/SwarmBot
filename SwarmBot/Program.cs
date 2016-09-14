@@ -56,7 +56,7 @@ namespace SwarmBot
                 using (System.Windows.Forms.NotifyIcon trayIcon = new System.Windows.Forms.NotifyIcon())
                 {
                     trayIcon.Text = "SwarmBot";
-                    trayIcon.Icon = new System.Drawing.Icon(System.Drawing.SystemIcons.Application, 40, 40);
+                    trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
 
                     System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
 
