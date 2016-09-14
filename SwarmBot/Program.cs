@@ -61,6 +61,10 @@ namespace SwarmBot
 
                 System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
 
+                trayMenu.MenuItems.Add("Open Configuration Directory", (object sSender, EventArgs eE) =>
+                {
+                    System.Diagnostics.Process.Start(configDir);
+                });
                 trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
                 {
                     Discord.client.Disconnect();
