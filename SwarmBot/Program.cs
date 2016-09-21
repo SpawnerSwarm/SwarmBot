@@ -192,38 +192,42 @@ namespace SwarmBot
                     {
                         try {
                             Match cmd = Regex.Match(e.Message.RawText, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
-                            User member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server);
-                            for (int i = 1; i <= 6; i++)
+                            if (cmd.Groups[1].Value != "")
                             {
-                                Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
-                            }
-                            string node = cmd.Groups[2].Value;
-                            string targetValue = null;
-                            string attribute = null;
-                            string attributeValue = null;
-                            bool isSettingAttribute = false;
-                            bool isGettingByAttribute = false;
-                            if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
-                            {
-                                isGettingByAttribute = true;
-                                attribute = cmd.Groups[3].Value;
-                                attributeValue = cmd.Groups[4].Value;
-                                targetValue = cmd.Groups[6].Value;
-                                Console.WriteLine("Getting");
-                            } else if (cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
-                            {
-                                isSettingAttribute = true;
-                                attribute = cmd.Groups[5].Value;
-                                attributeValue = cmd.Groups[6].Value;
-                                Console.WriteLine(cmd.Groups[5].Value);
-                                Console.WriteLine("Setting");
-                            } else //Neither (ex Name)
-                            {
-                                targetValue = cmd.Groups[6].Value;
-                                Console.WriteLine("else");
-                            }
+                                string node = cmd.Groups[2].Value;
+                                string targetValue = null;
+                                string attribute = null;
+                                string attributeValue = null;
+                                bool isSettingAttribute = false;
+                                bool isGettingByAttribute = false;
+                                if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
+                                {
+                                    isGettingByAttribute = true;
+                                    attribute = cmd.Groups[3].Value;
+                                    attributeValue = cmd.Groups[4].Value;
+                                    targetValue = cmd.Groups[6].Value;
+                                    Console.WriteLine("Getting");
+                                }
+                                else if (cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
+                                {
+                                    isSettingAttribute = true;
+                                    attribute = cmd.Groups[5].Value;
+                                    attributeValue = cmd.Groups[6].Value;
+                                    Console.WriteLine(cmd.Groups[5].Value);
+                                    Console.WriteLine("Setting");
+                                }
+                                else //Neither (ex Name)
+                                {
+                                    targetValue = cmd.Groups[6].Value;
+                                    Console.WriteLine("else");
+                                }
 
-                            Discord.updateMember(member, e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                                Discord.updateMember(cmd.Groups[1].Value, e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("```xl\nError: Incorrect Syntax\n```");
+                            }
                         } catch (Exception)
                         {
                             await e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
