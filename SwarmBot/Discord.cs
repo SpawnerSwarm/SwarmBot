@@ -509,7 +509,7 @@ namespace SwarmBot
         public static void updateMember(User member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
         {
             XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.User.Name));
+            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("DiscordId").Any(y => y.Value == e.User.Id.ToString()));
             foreach (XElement p in hasPermission)
             {
                 Console.WriteLine(p.Value);
@@ -527,7 +527,7 @@ namespace SwarmBot
                             bool multiple = false;
                             bool multipleFound = false;
                             string successMessage = null;
-                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Name));
+                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("DiscordId").Any(y => y.Value == member.Id.ToString()));
                             foreach (XElement i in docMember)
                             {
                                 if (isGettingByAttribute)
