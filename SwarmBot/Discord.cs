@@ -28,7 +28,7 @@ namespace SwarmBot
         private static string token;
         private static ulong archiveServerID;
         public static Server Swarm;
-        public static string memberDBPath = Path.Combine(configDir + "PersonellDB.xml");
+        public static string memberDBPath = Path.Combine(configDir, "PersonellDB.xml");
 
         public static bool SendInvite(string recipient, string Game, MessageEventArgs e)
         {
@@ -401,7 +401,7 @@ namespace SwarmBot
         }
         public static void createMember(User member, MessageEventArgs e, bool isSettingSteam, bool isSteamNumerical, bool isSettingDate, string date, string steamId)
         {
-            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
+            XDocument memberDB = XDocument.Load(memberDBPath);
             IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.User.Name));
             foreach (XElement p in hasPermission)
             {
@@ -415,7 +415,7 @@ namespace SwarmBot
                         Console.WriteLine(q.Value);
                         Console.WriteLine("Creating");
                         Console.WriteLine(member.Name);
-                        XDocument memberDBT = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
+                        XDocument memberDBT = XDocument.Load(memberDBPath);
                         IEnumerable<XElement> doc = memberDBT.Descendants("Database");
                         foreach (XElement h in doc)
                         {
@@ -435,7 +435,7 @@ namespace SwarmBot
                                     foreach (XElement l in setId)
                                     {
                                         k.SetValue(member.Id);
-                                        memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
+                                        memberDBT.Save(memberDBPath);
                                     }
                                 }
                                 if (!jExists)
@@ -480,7 +480,7 @@ namespace SwarmBot
                                     Console.WriteLine(now.ToString());
                                     Console.WriteLine(Regex.Match(now.ToString(), @"(.+) [0-9]+:[0-9]+:[0-9]+ .M").Groups[1].Value);
                                     Console.WriteLine("Created");
-                                    memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
+                                    memberDBT.Save(memberDBPath);
                                     e.Channel.SendMessage("Successfully created member " + member.Name);
                                 }
                                 else
