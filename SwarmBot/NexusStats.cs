@@ -12,7 +12,7 @@ namespace SwarmBot.Chat
 {
     public class NexusStats
     {
-        public static string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+		public static string configDir = File.ReadAllLines(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents/Projects/SwarmBot/SwarmBot/bin/Release/path.txt"))[0];
         private string url;
 
         public void Connect()

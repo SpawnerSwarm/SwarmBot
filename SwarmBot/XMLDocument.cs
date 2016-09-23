@@ -1,5 +1,5 @@
-﻿using DiscordSharp;
-using DiscordSharp.Objects;
+//﻿using DiscordSharp;
+//using DiscordSharp.Objects;
 using System;
 using System.Collections.Generic;
 using System.Linq;

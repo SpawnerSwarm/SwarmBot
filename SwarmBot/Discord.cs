@@ -1,6 +1,6 @@
 ﻿//using DiscordSharp;
 //using DiscordSharp.Objects;
-using DiscordSharp.Events;
+//using DiscordSharp.Events;
 using Discord;
 using Discord.API;
 using Discord.Commands;
@@ -21,7 +21,7 @@ namespace SwarmBot
 {
     class Discord
     {
-        public static string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+		public static string configDir = File.ReadAllLines(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Documents/Projects/SwarmBot/SwarmBot/bin/Release/path.txt"))[0];
         public static DiscordClient client/* = new DiscordClient(token, true)*/;
         private static string email;
         private static string password;
@@ -60,7 +60,7 @@ namespace SwarmBot
                 Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+);.+");
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
-                token = "Bot " + info.Groups[3].Value;
+                token = info.Groups[3].Value;
                 archiveServerID = ulong.Parse(info.Groups[4].Value);
             }
 
@@ -75,7 +75,7 @@ namespace SwarmBot
                 //client.SendLoginRequest();
                 client.ExecuteAndWait(async () =>
                 {
-                    await client.Connect(token);
+                    await client.Connect(token, TokenType.Bot);
                 });
                 //client.Connect(token);
 
