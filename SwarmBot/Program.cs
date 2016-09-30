@@ -33,9 +33,9 @@ namespace SwarmBot
             {
                 System.Diagnostics.Process.Start(configDir);
             });
-            trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
+            trayMenu.MenuItems.Add("Exit", async (object sSender, EventArgs eE) =>
             {
-                Discord.client.Disconnect();
+                await Discord.client.Disconnect();
                 trayIcon.Dispose();
                 Environment.Exit(0);
             });
