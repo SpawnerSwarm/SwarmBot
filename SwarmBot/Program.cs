@@ -222,7 +222,7 @@ namespace SwarmBot
                                     Console.WriteLine("else");
                                 }
 
-                                Discord.updateMember(cmd.Groups[1].Value, e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                                Discord.updateMember(Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server), e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
                             }
                             else
                             {

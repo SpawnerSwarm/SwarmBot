@@ -506,13 +506,13 @@ namespace SwarmBot
                 }
             }
         }
-        public static void updateMember(string member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
+        public static void updateMember(User member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
         {
             XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember xAuthor = memberDB.getMemberById(e.User.Id);
             if(xAuthor.checkPermissions(Rank.Officer))
             {
-                XMLMember xMember = memberDB.getMemberById(member);
+                XMLMember xMember = memberDB.getMemberById(member.Id);
                 if (isSettingAttribute)
                 {
                     xMember.xE.Descendants(node).First().Attribute(attribute).Value = attributeValue;
@@ -522,6 +522,7 @@ namespace SwarmBot
                     xMember.xE.Descendants(node).First().Value = targetValue;
                 }
                 xMember.x.Save(memberDBPath);
+                e.Channel.SendMessage("Successfully updated " + member.Name);
             } else
             {
                 e.Channel.SendMessage("```xl\nSorry, you don't seem to have permission to perform that action!\n```");
