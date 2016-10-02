@@ -31,9 +31,9 @@ namespace SwarmBot
             {
                 System.Diagnostics.Process.Start(configDir);
             });
-            trayMenu.MenuItems.Add("Exit", (object sSender, EventArgs eE) =>
+            trayMenu.MenuItems.Add("Exit", async (object sSender, EventArgs eE) =>
             {
-                Discord.client.Disconnect();
+                await Discord.client.Disconnect();
                 trayIcon.Dispose();
                 Environment.Exit(0);
             });
@@ -219,66 +219,65 @@ namespace SwarmBot
 									targetValue = cmd.Groups[6].Value;
 									Console.WriteLine("else");
 								}
-
-								Discord.updateMember(cmd.Groups[1].Value, e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
-							}
-							else
-							{
-								await e.Channel.SendMessage("```xl\nError: Incorrect Syntax\n```");
-							}
-						} catch (Exception)
-						{
-							await e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
-						}
-					}
-					else if (e.Message.Text == "!news")
-					{
-						Discord.news(e);
-					}
-					else if (e.Message.Text.StartsWith("!updateNews"))
-					{
-						Match cmd = Regex.Match(e.Message.RawText, @"!updateNews(?: (?:(--silent|-s)|(?:(?:--force|-f) (?:#)?([^ ]+))))* (.+)", RegexOptions.IgnoreCase);
-						bool silent = cmd.Groups[1].Value != "";
-						string force = cmd.Groups[2].Value;
-						if (force == "") { force = "general"; }
-						Console.WriteLine(force);
-						string news = cmd.Groups[3].Value;
-						Discord.updateNews(e, news, silent, force);
-					}
-					else if(e.Message.Text.StartsWith("!lenny"))
-					{
-						if(e.User.Name == "FoxTale")
-						{
-							await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv");
-						}
-						else if(e.User.Name == "Mardan")
-						{
-							await e.Channel.SendMessage("http://i.imgur.com/hLvfgHe.gif");
-						}
-						else
-						{
-							await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)");
-						}                        
-					}
-					else if(e.Message.Text.StartsWith("!brutal"))
-					{
-						if(e.User.Name == "FoxTale")
-						{
-							await e.Channel.SendMessage("http://i.imgur.com/Vw20PUI.png");
-						} else
-						{
-							await e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");
-						}
-					}
-					else if(e.Message.Text.StartsWith("(╯°□°）╯︵ ┻━┻"))
-					{
-						await e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)");
-					}
-					else if(e.Message.Text.StartsWith("!warframemarket") || e.Message.Text.StartsWith("!wfmarket") || e.Message.Text.StartsWith("!wfm"))
-					{
-						await e.Channel.SendMessage("http://warframe.market");
-					}
-					/*else if(e.Message.Text.StartsWith("!createChannel"))
+                                Discord.updateMember(Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server), e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("```xl\nError: Incorrect Syntax\n```");
+                            }
+                        } catch (Exception)
+                        {
+                            await e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
+                        }
+                    }
+                    else if (e.Message.Text == "!news")
+                    {
+                        Discord.news(e);
+                    }
+                    else if (e.Message.Text.StartsWith("!updateNews"))
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!updateNews(?: (?:(--silent|-s)|(?:(?:--force|-f) (?:#)?([^ ]+))))* (.+)", RegexOptions.IgnoreCase);
+                        bool silent = cmd.Groups[1].Value != "";
+                        string force = cmd.Groups[2].Value;
+                        if (force == "") { force = "general"; }
+                        Console.WriteLine(force);
+                        string news = cmd.Groups[3].Value;
+                        Discord.updateNews(e, news, silent, force);
+                    }
+                    else if(e.Message.Text.StartsWith("!lenny"))
+                    {
+                        if(e.User.Name == "FoxTale")
+                        {
+                            await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv");
+                        }
+                        else if(e.User.Name == "Mardan")
+                        {
+                            await e.Channel.SendMessage("http://i.imgur.com/hLvfgHe.gif");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)");
+                        }                        
+                    }
+                    else if(e.Message.Text.StartsWith("!brutal"))
+                    {
+                        if(e.User.Name == "FoxTale")
+                        {
+                            await e.Channel.SendMessage("http://i.imgur.com/Vw20PUI.png");
+                        } else
+                        {
+                            await e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");
+                        }
+                    }
+                    else if(e.Message.Text.StartsWith("(╯°□°）╯︵ ┻━┻"))
+                    {
+                        await e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)");
+                    }
+                    else if(e.Message.Text.StartsWith("!warframemarket") || e.Message.Text.StartsWith("!wfmarket") || e.Message.Text.StartsWith("!wfm"))
+                    {
+                        await e.Channel.SendMessage("http://warframe.market");
+                    }
+                    /*else if(e.Message.Text.StartsWith("!createChannel"))
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!createChannel ([^< ]+)(?: <@([^>]+)>)?(?: <@([^>]+)>)?(?: <@([^>]+)>)?");
                         string channelName = cmd.Groups[1].Value;

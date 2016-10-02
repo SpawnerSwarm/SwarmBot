@@ -216,7 +216,7 @@ namespace SwarmBot.XML
         public trilean checkReadyForRankUp()
         {
             DateTime rankupDate = DateTime.Now;
-            trilean isReady = 2;
+            trilean isReady = false;
             double reqTime = 0;
             if(rank == Rank.GuildMaster)
             {

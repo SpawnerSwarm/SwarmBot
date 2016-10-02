@@ -63,7 +63,7 @@
       <HintPath>..\packages\Discord.Net.Audio.0.9.4\lib\net45\Discord.Net.Audio.dll</HintPath>
     </Reference>
     <Reference Include="Trileans">
-      <HintPath>..\packages\Trileans_CS.1.2.0\lib\Trileans.dll</HintPath>
+      <HintPath>..\packages\Trileans.1.5.1\lib\Trileans.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />

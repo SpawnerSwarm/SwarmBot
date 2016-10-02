@@ -152,7 +152,7 @@ namespace SwarmBot
                 trilean isReady = xMember.checkReadyForRankUp();
                 string message = "```xl\n";
                 message += xMember.name + " is a(n) " + xMember.rank + "\n";
-                if (isReady == 1)
+                if (isReady.table[1])
                 {
                     if ((XMLErrorCode)isReady.embedded == XMLErrorCode.Old)
                     {
@@ -162,7 +162,7 @@ namespace SwarmBot
                         message += "He/She has reached the maximum possible rank.\n";
                     }
                 }
-                else if(isReady == 2)
+                else if(isReady == false)
                 {
                     /*if (isReady.table[0])
                     {
@@ -183,7 +183,7 @@ namespace SwarmBot
                     message += "He/she is not eligible for a rankup at this time.\n";
                     message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
                 }
-                else if(isReady == 0)
+                else if(isReady == true)
                 {
                     message += "He/she is eligible for a rankup.\n";
                     message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
@@ -225,15 +225,15 @@ namespace SwarmBot
                         {
                             isRankMaxed = memberDB.checkRankMaxed(xMember, force);
                         }
-                        if (isRankMaxed.value == 2 && (!ignoreCapacity || !xAuthor.checkPermissions(Rank.GuildMaster)))
+                        if (isRankMaxed == false && (!ignoreCapacity || !xAuthor.checkPermissions(Rank.GuildMaster)))
                         {
                             e.Channel.SendMessage("```xl\nError: The rank you have requested to be promoted to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error.\n```");
                         }
-                        else if (isRankMaxed.value == 1)
+                        else if (isRankMaxed.table[1])
                         {
                             e.Channel.SendMessage("```xl\nAn unexpected error occured fetching Rank Capacity\n```");
                         }
-                        else if (isRankMaxed.value == 0 || (ignoreCapacity && xAuthor.checkPermissions(Rank.General)))
+                        else if (isRankMaxed == true || (ignoreCapacity && xAuthor.checkPermissions(Rank.General)))
                         {
                             if (isForce)
                             {
@@ -506,13 +506,13 @@ namespace SwarmBot
                 }
             }
         }
-        public static void updateMember(string member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
+        public static void updateMember(User member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
         {
             XMLDocument memberDB = new XMLDocument(memberDBPath);
             XMLMember xAuthor = memberDB.getMemberById(e.User.Id);
             if(xAuthor.checkPermissions(Rank.Officer))
             {
-                XMLMember xMember = memberDB.getMemberById(member);
+                XMLMember xMember = memberDB.getMemberById(member.Id);
                 if (isSettingAttribute)
                 {
                     xMember.xE.Descendants(node).First().Attribute(attribute).Value = attributeValue;
@@ -522,6 +522,7 @@ namespace SwarmBot
                     xMember.xE.Descendants(node).First().Value = targetValue;
                 }
                 xMember.x.Save(memberDBPath);
+                e.Channel.SendMessage("Successfully updated " + member.Name);
             } else
             {
                 e.Channel.SendMessage("```xl\nSorry, you don't seem to have permission to perform that action!\n```");
@@ -599,10 +600,10 @@ namespace SwarmBot
                             Emote emote = (Emote)t.embedded;
                             bool hasPermission = emote.getEligible(author);
                             e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB, hasPermission));
-                        } else if (t.value == 1 && (XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
+                        } else if (t.value == TrileanValue.Tri && (XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
                         {
                             e.Channel.SendMessage("```xl\nError: Multiple emotes found.\n```");
-                        } else if (t.value == 2)
+                        } else if (t)
                         {
                             e.Channel.SendMessage("```xl\nError: Requested emote was not found.\n```");
                         } else
@@ -616,7 +617,7 @@ namespace SwarmBot
             {
                 //Emote emote = (Emote)emotes.getEmote(cmd).embedded;
                 trilean t = emotes.getEmote(cmd);
-                if (t.value == 0)
+                if (t == true)
                 {
                     Emote emote = (Emote)t.embedded;
                     if (emote.getEligible(author))
@@ -630,7 +631,7 @@ namespace SwarmBot
                 } else if(t == false)
                 {
                     e.Channel.SendMessage("Could not find emote " + cmd);
-                } else if(t.value == 1)
+                } else if(t.value == TrileanValue.Tri)
                 {
                     if((XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
                     {
@@ -651,7 +652,7 @@ namespace SwarmBot
             {
                 trilean success = emotes.newEmote(emote);
 
-                if (success.table[1] == true)
+                if (success.value == TrileanValue.Tri)
                 {
                     e.Channel.SendMessage("There was an error creating a new emote; an emote with the same " + success.embedded + " already exists");
                 }
@@ -705,7 +706,7 @@ namespace SwarmBot
         public static void priceCheck(MessageEventArgs e, string id)
         {
             trilean t = Program.nexus.getItemById(id);
-            if (t.value == 0)
+            if (t == true)
             {
                 Item i = (Item)t.embedded;
                 //e.Channel.SendMessage(i.Title);
@@ -757,14 +758,14 @@ namespace SwarmBot
             if(_ref != "Latest")
             {
                 trilean t = events.getEvent(_ref);
-                if(t.value == 0)
+                if(t == true)
                 {
                     _event = (Event)t.embedded;
-                } else if(t.value == 1)
+                } else if(t.value == TrileanValue.Tri)
                 {
                     e.Channel.SendMessage("```xl\nSorry, multiple events were found by that ref.\n```");
                     return;
-                } else if(t.value == 2)
+                } else if(t == false)
                 {
                     e.Channel.SendMessage("```xl\nSorry, that event could not be found.\n```");
                     return;
