@@ -266,7 +266,7 @@ namespace SwarmBot
                     {
                         if(e.User.Name == "FoxTale")
                         {
-                            await e.Channel.SendMessage("http://i.imgur.com/Vw20PUI.png");
+                            await e.Channel.SendMessage("http://i.imgur.com/1xzQkSo.png");
                         } else
                         {
                             await e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");

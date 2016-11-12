@@ -198,9 +198,15 @@ namespace SwarmBot
                 message += "```";
                 Console.WriteLine(message);
                 e.Channel.SendMessage(message);
-            } catch(Exception exception)
+            } catch(XMLException exception)
             {
-              Console.WriteLine("Error: " + exception);
+                if(exception.errorCode == XMLErrorCode.MultipleFound)
+                {
+                    e.Channel.SendMessage("`Error: Multiple members found`");
+                } else if (exception.errorCode == XMLErrorCode.NotFound)
+                {
+                    e.Channel.SendMessage("`Error: No matching member found`");
+                }
             }
         }
         public static void promote(User member, MessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
