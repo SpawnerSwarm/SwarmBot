@@ -216,7 +216,7 @@ namespace SwarmBot.XML
         public trilean checkReadyForRankUp()
         {
             DateTime rankupDate = DateTime.Now;
-            trilean isReady = 2;
+            trilean isReady = false;
             double reqTime = 0;
             if(rank == Rank.GuildMaster)
             {
@@ -364,9 +364,15 @@ namespace SwarmBot.XML
             {
                 XElement member = memberArray[0];
                 return new XMLMember(member, this);
+            } else if(memberArray.Length < 1)
+            {
+                throw new XMLException(XMLErrorCode.NotFound);
+            } else if(memberArray.Length > 1)
+            {
+                throw new XMLException(XMLErrorCode.MultipleFound);
             } else
             {
-                throw new Exception("Error: Multiple members were found");
+                throw new Exception();
             }
         }
         public XMLMember getMemberById(ulong id)

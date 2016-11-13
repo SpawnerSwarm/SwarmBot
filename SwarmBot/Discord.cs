@@ -60,7 +60,7 @@ namespace SwarmBot
                 Match info = Regex.Match(sr.ReadToEnd(), @"(.+);(.+);(.+);(.+);.+");
                 email = info.Groups[1].Value;
                 password = info.Groups[2].Value;
-                token = "Bot " + info.Groups[3].Value;
+                token = info.Groups[3].Value;
                 archiveServerID = ulong.Parse(info.Groups[4].Value);
             }
 
@@ -75,7 +75,7 @@ namespace SwarmBot
                 //client.SendLoginRequest();
                 client.ExecuteAndWait(async () =>
                 {
-                    await client.Connect(token);
+                    await client.Connect(token, TokenType.Bot);
                 });
                 //client.Connect(token);
 
@@ -152,7 +152,7 @@ namespace SwarmBot
                 trilean isReady = xMember.checkReadyForRankUp();
                 string message = "```xl\n";
                 message += xMember.name + " is a(n) " + xMember.rank + "\n";
-                if (isReady == 1)
+                if (isReady.table[1])
                 {
                     if ((XMLErrorCode)isReady.embedded == XMLErrorCode.Old)
                     {
@@ -162,7 +162,7 @@ namespace SwarmBot
                         message += "He/She has reached the maximum possible rank.\n";
                     }
                 }
-                else if(isReady == 2)
+                else if(isReady == false)
                 {
                     /*if (isReady.table[0])
                     {
@@ -183,7 +183,7 @@ namespace SwarmBot
                     message += "He/she is not eligible for a rankup at this time.\n";
                     message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
                 }
-                else if(isReady == 0)
+                else if(isReady == true)
                 {
                     message += "He/she is eligible for a rankup.\n";
                     message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
@@ -198,9 +198,15 @@ namespace SwarmBot
                 message += "```";
                 Console.WriteLine(message);
                 e.Channel.SendMessage(message);
-            } catch(Exception exception)
+            } catch(XMLException exception)
             {
-              Console.WriteLine("Error: " + exception);
+                if(exception.errorCode == XMLErrorCode.MultipleFound)
+                {
+                    e.Channel.SendMessage("`Error: Multiple members found`");
+                } else if (exception.errorCode == XMLErrorCode.NotFound)
+                {
+                    e.Channel.SendMessage("`Error: No matching member found`");
+                }
             }
         }
         public static void promote(User member, MessageEventArgs e, string force, string date, bool isForce, bool help, bool ignoreCapacity)
@@ -225,15 +231,15 @@ namespace SwarmBot
                         {
                             isRankMaxed = memberDB.checkRankMaxed(xMember, force);
                         }
-                        if (isRankMaxed.value == 2 && (!ignoreCapacity || !xAuthor.checkPermissions(Rank.GuildMaster)))
+                        if (isRankMaxed == false && (!ignoreCapacity || !xAuthor.checkPermissions(Rank.GuildMaster)))
                         {
                             e.Channel.SendMessage("```xl\nError: The rank you have requested to be promoted to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error.\n```");
                         }
-                        else if (isRankMaxed.value == 1)
+                        else if (isRankMaxed.table[1])
                         {
                             e.Channel.SendMessage("```xl\nAn unexpected error occured fetching Rank Capacity\n```");
                         }
-                        else if (isRankMaxed.value == 0 || (ignoreCapacity && xAuthor.checkPermissions(Rank.General)))
+                        else if (isRankMaxed == true || (ignoreCapacity && xAuthor.checkPermissions(Rank.General)))
                         {
                             if (isForce)
                             {
@@ -508,105 +514,24 @@ namespace SwarmBot
         }
         public static void updateMember(User member, MessageEventArgs e, string node, string targetValue, string attribute, string attributeValue, bool isSettingAttribute, bool isGettingByAttribute)
         {
-            XDocument memberDB = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-            IEnumerable<XElement> hasPermission = memberDB.Descendants("Rank").Where(x => x.Parent.Descendants("Names").Descendants("Discord").Any(y => y.Value == e.User.Name));
-            foreach (XElement p in hasPermission)
+            XMLDocument memberDB = new XMLDocument(memberDBPath);
+            XMLMember xAuthor = memberDB.getMemberById(e.User.Id);
+            if(xAuthor.checkPermissions(Rank.Officer))
             {
-                Console.WriteLine(p.Value);
-                IEnumerable<XElement> hasPermissionNum = memberDB.Descendants("Define").Where(x => x.Attribute("name").Value == p.Value).Where(x => x.Attribute("for").Value == "Promotion");
-                foreach (XElement q in hasPermissionNum)
+                XMLMember xMember = memberDB.getMemberById(member.Id);
+                if (isSettingAttribute)
                 {
-                    if (Int32.Parse(q.Value) >= 5)
-                    {
-                        Console.WriteLine(q.Value);
-                        XDocument memberDBT = XDocument.Load(Path.Combine(configDir, "PersonellDB.xml"));
-                        IEnumerable<XElement> doc = memberDBT.Descendants("Database");
-                        foreach (XElement h in doc)
-                        {
-                            Console.WriteLine("Loaded Document");
-                            bool multiple = false;
-                            bool multipleFound = false;
-                            string successMessage = null;
-                            IEnumerable<XElement> docMember = h.Descendants("Member").Where(x => x.Descendants("Discord").Any(y => y.Value == member.Name));
-                            foreach (XElement i in docMember)
-                            {
-                                if (isGettingByAttribute)
-                                {
-                                    IEnumerable<XElement> iNode = i.Descendants(node).Where(x => x.Attribute(attribute).Value == attributeValue);
-                                    foreach (XElement j in iNode)
-                                    {
-                                        Console.WriteLine("Found node");
-                                        if (!multiple)
-                                        {
-                                            multiple = true;
-                                            j.Value = targetValue;
-                                            successMessage = "Successfully set " + node + " of type " + attributeValue + " of " + member.Name + " to " + targetValue;
-                                            Console.WriteLine(j.Value);
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("multiple");
-                                            multipleFound = true;
-                                        }
-                                    }
-                                }
-                                else if (isSettingAttribute)
-                                {
-                                    IEnumerable<XAttribute> iAttribute = i.Descendants(node).Attributes(attribute);
-                                    foreach (XAttribute j in iAttribute)
-                                    {
-                                        Console.WriteLine("Found node");
-                                        if (!multiple)
-                                        {
-                                            j.Value = attributeValue;
-                                            successMessage = "Successfully set " + attribute + " of " + node + " of " + member.Name + " to " + attributeValue;
-                                            Console.WriteLine(j.Value);
-                                            multiple = true;
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("multiple");
-                                            multipleFound = true;
-                                        }
-                                    }
-                                }
-                                else if (!isGettingByAttribute && !isSettingAttribute)
-                                {
-                                    IEnumerable<XElement> iNode = i.Descendants(node);
-                                    foreach (XElement j in iNode)
-                                    {
-                                        Console.WriteLine("Found node");
-                                        if (!multiple)
-                                        {
-                                            multiple = true;
-                                            j.Value = targetValue;
-                                            successMessage = "Successfully set " + node + " of " + member.Name + " to " + targetValue;
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("multiple");
-                                            multipleFound = true;
-                                        }
-                                    }
-                                }
-                                //
-                                if (multipleFound)
-                                {
-                                    e.Channel.SendMessage("An error occured. Multiple nodes were found; please try being more specific.");
-                                }
-                                else
-                                {
-                                    e.Channel.SendMessage(successMessage);
-                                    memberDBT.Save(Path.Combine(configDir, "PersonellDB.xml"));
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        e.Channel.SendMessage("Sorry, you don't seem to have permission to perform that action!");
-                    }
+                    xMember.xE.Descendants(node).First().Attribute(attribute).Value = attributeValue;
+                } else if (isGettingByAttribute) {
+                    xMember.xE.Descendants(node).Where(x => x.Attribute(attribute).Value == attributeValue).First().Value = targetValue;
+                } else if (!isGettingByAttribute && !isSettingAttribute) {
+                    xMember.xE.Descendants(node).First().Value = targetValue;
                 }
+                xMember.x.Save(memberDBPath);
+                e.Channel.SendMessage("Successfully updated " + member.Name);
+            } else
+            {
+                e.Channel.SendMessage("```xl\nSorry, you don't seem to have permission to perform that action!\n```");
             }
         }
         public static void news(MessageEventArgs e)
@@ -681,10 +606,10 @@ namespace SwarmBot
                             Emote emote = (Emote)t.embedded;
                             bool hasPermission = emote.getEligible(author);
                             e.Channel.SendMessage(emotes.getEmoteData((Emote)t.embedded, memberDB, hasPermission));
-                        } else if (t.value == 1 && (XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
+                        } else if (t.value == TrileanValue.Tri && (XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
                         {
                             e.Channel.SendMessage("```xl\nError: Multiple emotes found.\n```");
-                        } else if (t.value == 2)
+                        } else if (t)
                         {
                             e.Channel.SendMessage("```xl\nError: Requested emote was not found.\n```");
                         } else
@@ -698,7 +623,7 @@ namespace SwarmBot
             {
                 //Emote emote = (Emote)emotes.getEmote(cmd).embedded;
                 trilean t = emotes.getEmote(cmd);
-                if (t.value == 0)
+                if (t == true)
                 {
                     Emote emote = (Emote)t.embedded;
                     if (emote.getEligible(author))
@@ -712,7 +637,7 @@ namespace SwarmBot
                 } else if(t == false)
                 {
                     e.Channel.SendMessage("Could not find emote " + cmd);
-                } else if(t.value == 1)
+                } else if(t.value == TrileanValue.Tri)
                 {
                     if((XMLErrorCode)t.embedded == XMLErrorCode.MultipleFound)
                     {
@@ -733,7 +658,7 @@ namespace SwarmBot
             {
                 trilean success = emotes.newEmote(emote);
 
-                if (success.table[1] == true)
+                if (success.value == TrileanValue.Tri)
                 {
                     e.Channel.SendMessage("There was an error creating a new emote; an emote with the same " + success.embedded + " already exists");
                 }
@@ -787,7 +712,7 @@ namespace SwarmBot
         public static void priceCheck(MessageEventArgs e, string id)
         {
             trilean t = Program.nexus.getItemById(id);
-            if (t.value == 0)
+            if (t == true)
             {
                 Item i = (Item)t.embedded;
                 //e.Channel.SendMessage(i.Title);
@@ -839,14 +764,14 @@ namespace SwarmBot
             if(_ref != "Latest")
             {
                 trilean t = events.getEvent(_ref);
-                if(t.value == 0)
+                if(t == true)
                 {
                     _event = (Event)t.embedded;
-                } else if(t.value == 1)
+                } else if(t.value == TrileanValue.Tri)
                 {
                     e.Channel.SendMessage("```xl\nSorry, multiple events were found by that ref.\n```");
                     return;
-                } else if(t.value == 2)
+                } else if(t == false)
                 {
                     e.Channel.SendMessage("```xl\nSorry, that event could not be found.\n```");
                     return;

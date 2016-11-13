@@ -18,7 +18,32 @@ namespace SwarmBot
     class Program
     {
         public static NexusStats nexus;
+        public static string configDir;
+        public static System.Windows.Forms.NotifyIcon trayIcon;
 
+        static async Task createSystemTrayIcon()
+        {
+            trayIcon = new System.Windows.Forms.NotifyIcon();
+            trayIcon.Text = "SwarmBot";
+            trayIcon.Icon = new System.Drawing.Icon(Path.Combine(configDir, "Swarm.ico"), 40, 40);
+
+            System.Windows.Forms.ContextMenu trayMenu = new System.Windows.Forms.ContextMenu();
+
+            trayMenu.MenuItems.Add("Open Configuration Directory", (object sSender, EventArgs eE) =>
+            {
+                System.Diagnostics.Process.Start(configDir);
+            });
+            trayMenu.MenuItems.Add("Exit", async (object sSender, EventArgs eE) =>
+            {
+                await Discord.client.Disconnect();
+                trayIcon.Dispose();
+                Environment.Exit(0);
+            });
+
+            trayIcon.ContextMenu = trayMenu;
+            trayIcon.Visible = true;
+            System.Windows.Forms.Application.Run();
+        }
         static void Main(string[] args)
         {
             Discord.client = new DiscordClient();
@@ -29,7 +54,7 @@ namespace SwarmBot
             nexus.Connect();
 
             //Emotes
-            string configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
+            configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SwarmBot\\");
             string emoteDir = Path.Combine(configDir, "emotes.xml");
             string eventDir = Path.Combine(configDir, "events.xml");
             string restarterPath = "";
@@ -49,10 +74,11 @@ namespace SwarmBot
                 };
                 p.Start();
             };*/
-            Discord.client.Ready += (sender, e) =>
+            Discord.client.Ready += async (sender, e) =>
             {
                 Console.WriteLine("Connected! User: " + Discord.client.CurrentUser.Name);
                 Discord.client.SetGame("Type !help for help");
+                await Task.Run(() => createSystemTrayIcon());
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
@@ -166,38 +192,42 @@ namespace SwarmBot
                     {
                         try {
                             Match cmd = Regex.Match(e.Message.RawText, @"!updateMember <@(.+)>(?: ([^ .:]+)(?:\.([^ ]+) \((.+)\))?(?:\:([^ ]+))? (?:\((.+)\)))?");
-                            User member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server);
-                            for (int i = 1; i <= 6; i++)
+                            if (cmd.Groups[1].Value != "")
                             {
-                                Console.WriteLine(i.ToString() + ": " + cmd.Groups[i].Value);
-                            }
-                            string node = cmd.Groups[2].Value;
-                            string targetValue = null;
-                            string attribute = null;
-                            string attributeValue = null;
-                            bool isSettingAttribute = false;
-                            bool isGettingByAttribute = false;
-                            if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
-                            {
-                                isGettingByAttribute = true;
-                                attribute = cmd.Groups[3].Value;
-                                attributeValue = cmd.Groups[4].Value;
-                                targetValue = cmd.Groups[6].Value;
-                                Console.WriteLine("Getting");
-                            } else if (cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
-                            {
-                                isSettingAttribute = true;
-                                attribute = cmd.Groups[5].Value;
-                                attributeValue = cmd.Groups[6].Value;
-                                Console.WriteLine(cmd.Groups[5].Value);
-                                Console.WriteLine("Setting");
-                            } else //Neither (ex Name)
-                            {
-                                targetValue = cmd.Groups[6].Value;
-                                Console.WriteLine("else");
-                            }
+                                string node = cmd.Groups[2].Value;
+                                string targetValue = null;
+                                string attribute = null;
+                                string attributeValue = null;
+                                bool isSettingAttribute = false;
+                                bool isGettingByAttribute = false;
+                                if (cmd.Groups[3].Value != "") //Getting by Attribute (ex Rankup)
+                                {
+                                    isGettingByAttribute = true;
+                                    attribute = cmd.Groups[3].Value;
+                                    attributeValue = cmd.Groups[4].Value;
+                                    targetValue = cmd.Groups[6].Value;
+                                    Console.WriteLine("Getting");
+                                }
+                                else if (cmd.Groups[5].Value != "") //Setting an Attribute (ex SteamId numerical)
+                                {
+                                    isSettingAttribute = true;
+                                    attribute = cmd.Groups[5].Value;
+                                    attributeValue = cmd.Groups[6].Value;
+                                    Console.WriteLine(cmd.Groups[5].Value);
+                                    Console.WriteLine("Setting");
+                                }
+                                else //Neither (ex Name)
+                                {
+                                    targetValue = cmd.Groups[6].Value;
+                                    Console.WriteLine("else");
+                                }
 
-                            Discord.updateMember(member, e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                                Discord.updateMember(Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server), e, node, targetValue, attribute, attributeValue, isSettingAttribute, isGettingByAttribute);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("```xl\nError: Incorrect Syntax\n```");
+                            }
                         } catch (Exception)
                         {
                             await e.Channel.SendMessage("Something went wrong. Make sure you're tagging the member and using correct syntax.");
@@ -236,7 +266,7 @@ namespace SwarmBot
                     {
                         if(e.User.Name == "FoxTale")
                         {
-                            await e.Channel.SendMessage("http://i.imgur.com/Vw20PUI.png");
+                            await e.Channel.SendMessage("http://i.imgur.com/1xzQkSo.png");
                         } else
                         {
                             await e.Channel.SendMessage("http://i.imgur.com/0eMrMLd.jpg");

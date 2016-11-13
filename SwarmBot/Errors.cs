@@ -21,4 +21,15 @@ namespace SwarmBot
         NotFound = 404,
         MultipleFound = 405
     }
+
+    class XMLException : Exception
+    {
+        public XMLErrorCode errorCode { get; }
+
+        public XMLException(XMLErrorCode errorCode)
+            : base("XML Exception was thrown. Catch expected.")
+        {
+            this.errorCode = errorCode;
+        }
+    }
 }
