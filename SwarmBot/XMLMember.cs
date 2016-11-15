@@ -92,7 +92,7 @@ namespace SwarmBot.XML
         {
             xE.Element("Rank").SetValue(rank);
             xE.Element("RankupHistory").Elements().Where(x => x.Attribute("name").Value == rank).First().SetValue(date.ToString());
-            //x.resetForma(this);
+            xE.Element("FormaDonated").SetValue(0);
             x.Save(x.path);
             return new trilean(true, rank);
         }

@@ -104,7 +104,7 @@ namespace SwarmBot
             XMLMember author = memberDB.getMemberById(e.e.User.Id);
             if(!author.checkPermissions(Rank.Officer)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
             if(e.e.User.Id == (ulong)member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await e.e.Channel.SendMessage("```xl\nSorry, you can't promote yourself!\n```"); return; }
-            if(member.rank == Rank.GuildMaster && e.force != "") { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
+            if(member.rank == Rank.GuildMaster && e.force == "") { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
 
             Rank targetRank = e.force == "" ? (Rank)(member.rank + 1) : (Rank)e.force;
             if(targetRank >= author.rank && author.rank != Rank.GuildMaster) { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); return; } 
