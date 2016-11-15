@@ -57,11 +57,7 @@ namespace SwarmBot
                     Discord.client.SetGame("Type !help for help");
                     if (e.Message.Text == "!help") { await Discord.help(new DiscordCommandArgs { e = e }); }
                     if (e.Message.Text.StartsWith("!wfwiki") || e.Message.Text.StartsWith("!skwiki")) { await Discord.wiki(new DiscordCommandArgs { e = e }); }
-                    else if (e.Message.Text.StartsWith("!guildmail"))
-                    {
-                        string guildmail = "https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy";
-                        await e.Channel.SendMessage(guildmail);
-                    }
+                    else if (e.Message.Text.StartsWith("!guildmail")) { await e.Channel.SendMessage("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
                     if (Regex.IsMatch(e.Message.Text, "^!getMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
@@ -71,6 +67,19 @@ namespace SwarmBot
                             e = e,
                             verbose = cmd.Groups[2].Value != "",
                             member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server)
+                        });
+                    }
+                    else if (Regex.IsMatch(e.Message.Text, "^!promote", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*");
+                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        await Discord.promote(new DiscordCommandArgs
+                        {
+                            e = e,
+                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server),
+                            force = cmd.Groups[2].Value,
+                            date = cmd.Groups[3].Value,
+                            ignore = cmd.Groups[5].Value != ""
                         });
                     }
                 }

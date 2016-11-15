@@ -36,9 +36,23 @@ namespace SwarmBot
             else
                 throw new InvalidCastException();
         }
+        public static implicit operator Rank(int i)
+        {
+            Rank[] arr = new Rank[7];
+
+            if(i <= 7) {
+                instance.Values.CopyTo(arr, 0);
+                return arr[i - 1];
+            }
+            else { throw new InvalidCastException(); }
+        }
         public static implicit operator string(Rank rank)
         {
-            return rank.ToString();
+            return rank.name;
+        }
+        public static implicit operator int(Rank rank)
+        {
+            return rank.value;
         }
     }
     public sealed class DefineType

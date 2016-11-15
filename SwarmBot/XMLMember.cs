@@ -41,7 +41,7 @@ namespace SwarmBot.XML
             discordId = Int64.Parse(names.Element("DiscordId").Value);
             steamName = names.Element("Steam").Value;
 
-            string steamId = names.Element("Steam").Value;
+            string steamId = names.Element("SteamId").Value;
             bool isNumerical = true;
             foreach(char c in steamId.ToCharArray())
             {
@@ -50,6 +50,7 @@ namespace SwarmBot.XML
                     isNumerical = false;
                 }
             }
+            if(steamId == "") { isNumerical = false; }
             switch(isNumerical)
             {
                 case true:
@@ -78,6 +79,22 @@ namespace SwarmBot.XML
                 return new trilean(reqTime <= t, t.ToString());
             }
             else { return new trilean(false, true, XMLErrorCode.Old); }
+        }
+
+        public bool checkPermissions(Rank s)
+        {
+            try
+            { return x.getDefine(rank, DefineType.Promotion) >= x.getDefine(s, DefineType.Promotion); }
+            catch(Exception e) { throw new XMLException(XMLErrorCode.Unknown, "Unknown rank"); }
+        }
+
+        public trilean Promote(DateTime date, Rank rank)
+        {
+            xE.Element("Rank").SetValue(rank);
+            xE.Element("RankupHistory").Elements().Where(x => x.Attribute("name").Value == rank).First().SetValue(date.ToString());
+            //x.resetForma(this);
+            x.Save(x.path);
+            return new trilean(true, rank);
         }
     }
 }

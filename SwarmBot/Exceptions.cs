@@ -18,7 +18,7 @@ namespace SwarmBot
         public string message;
 
         public XMLException(XMLErrorCode errorCode, string message = null)
-            :base("XML Exception was thrown. Catch expected.")
+            :base("XML Exception was thrown. Catch expected. " + message + " " + (int)errorCode + " ")
         {
             this.errorCode = errorCode;
             this.message = message;

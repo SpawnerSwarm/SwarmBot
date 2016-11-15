@@ -82,6 +82,11 @@ namespace SwarmBot
                 message += "He/she is not eligible for a rankup at this time.\n";
                 message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
             }
+            else if (isReady.value == TrileanValue.True)
+            {
+                message += "He/she is eligible for a rankup.\n";
+                message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+            }
             message += member.name + " has donated " + member.forma + " Forma\n";
             if(e.verbose)
             {
@@ -91,6 +96,54 @@ namespace SwarmBot
             }
             message += "```";
             await e.e.Channel.SendMessage(message);
+        }
+        public static async Task promote(DiscordCommandArgs e)
+        {
+            XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+            XMLMember member = memberDB.getMemberById(e.member.Id);
+            XMLMember author = memberDB.getMemberById(e.e.User.Id);
+            if(!author.checkPermissions(Rank.Officer)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
+            if(e.e.User.Id == (ulong)member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await e.e.Channel.SendMessage("```xl\nSorry, you can't promote yourself!\n```"); return; }
+            if(member.rank == Rank.GuildMaster && e.force != "") { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
+
+            Rank targetRank = e.force == "" ? (Rank)(member.rank + 1) : (Rank)e.force;
+            if(targetRank >= author.rank && author.rank != Rank.GuildMaster) { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); return; } 
+
+            trilean isRankMaxed;
+            try
+            {
+                isRankMaxed = memberDB.checkRankMaxed(targetRank);
+                if (isRankMaxed && (!e.ignore || !author.checkPermissions(Rank.GuildMaster))) { await e.e.Channel.SendMessage("```xl\nError: The Rank you have requested to promote to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error"); return; }
+
+                DateTime targetDate;
+                if (e.date == "") { targetDate = DateTime.Today; }
+                else
+                {
+                    try { targetDate = DateTime.Parse(e.date); }
+                    catch { await e.e.Channel.SendMessage("```xl\nError: Invalid Date. Must be in MM/DD/YYYY format.\n```"); return; }
+                }
+                
+                try {
+                    trilean trilean = member.Promote(targetDate, targetRank);
+                    await e.member.AddRoles(e.e.Server.FindRoles((Rank)trilean.embedded).First());
+                    await e.e.Channel.SendMessage("```xl\nSuccessfully promoted " + member.name + " to " + trilean.embedded + "\n```");
+                }
+                catch(XMLException x)
+                {
+                    switch(x.errorCode)
+                    {
+                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("```xl\nError: Multiple Members found\n```"); break;
+                        case XMLErrorCode.Maximum: await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); break;
+                        case XMLErrorCode.Greater: await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); break;
+                        case XMLErrorCode.Unknown: await e.e.Channel.SendMessage("```xl\nAn error occured\n```"); break;
+                    }
+                }
+            }
+            catch(Exception x)
+            {
+                await e.e.Channel.SendMessage("An error occured: " + x.Message);
+                await Program.Log("ERROR: " + author.name + " tried to promote " + member.name + " to " + targetRank + " but encountered an exception. " + x.Message);
+            }
         }
     }
 
@@ -106,7 +159,6 @@ namespace SwarmBot
         public bool verbose;
         public string date;
         public string force;
-        public bool isForce;
         public bool ignore;
 
         /*public DiscordCommandArgs(MessageEventArgs e, User member = null, string name = null, string steam = null, string discord = null, string id = null, string reference = null, bool verbose = false, string date = null, string force = null, bool isForce = false, bool ignore = false)

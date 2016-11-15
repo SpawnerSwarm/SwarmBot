@@ -33,14 +33,11 @@ namespace SwarmBot.XML
         public XMLMember getMemberById(string id)
         {
             XElement[] memberArr = document.Descendants("Member").Where(x => x.Element("Names").Element("DiscordId").Value == id).ToArray();
-
-            switch(memberArr.Length)
-            {
-                case 1: return new XMLMember(memberArr[0], this);
-                case 2: return null;//insert exception here
-                case 3: return null;//insert exception here
-                default: throw new Exception();
-            }
+            
+            if(memberArr.Length == 1) { return new XMLMember(memberArr[0], this); }
+            else if(memberArr.Length < 1) { throw new XMLException(XMLErrorCode.NotFound); }
+            else if(memberArr.Length > 1) { throw new XMLException(XMLErrorCode.MultipleFound); }
+            else { throw new Exception(); }
         }
         public XMLMember getMemberById(ulong id)
         {
@@ -49,15 +46,24 @@ namespace SwarmBot.XML
 
         public int getDefine(string value, DefineType _for)
         {
-            List<XElement> defines = document.Elements("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for).ToList();
+            List<XElement> defines = document.Element("Database").Elements("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for).ToList();
             if(defines.Count == 1) { return Int32.Parse(defines[0].Value); }
             else { throw new XMLException((defines.Count > 1 ? XMLErrorCode.MultipleFound : XMLErrorCode.NotFound)); }
         }
         public string getDefineName(string value, DefineType _for)
         {
-            List<XElement> defines = document.Elements("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for).ToList();
+            List<XElement> defines = document.Element("Database").Elements("Define").Where(x => x.Value == value.ToString()).Where(x => x.Attribute("for").Value == _for).ToList();
             if(defines.Count == 1) { return defines[0].Attribute("name").Value; }
             else { throw new XMLException((defines.Count > 1 ? XMLErrorCode.MultipleFound : XMLErrorCode.NotFound)); }
+        }
+        public trilean checkRankMaxed(Rank rank)
+        {
+            try
+            {
+                short memberCount = (short)document.Elements("Member").Where(x => x.Element("Rank").Value == rank).Count();
+                return new trilean(memberCount >= (short)getDefine(rank, DefineType.RankCapacity), memberCount);
+            }
+            catch { throw new XMLException(XMLErrorCode.Unknown, "An error occured while checking availible member capacity."); }
         }
     }
 }
