@@ -57,7 +57,7 @@ namespace SwarmBot
                     Discord.client.SetGame("Type !help for help");
                     if (e.Message.Text == "!help") { await Discord.help(new DiscordCommandArgs { e = e }); }
                     if (e.Message.Text.StartsWith("!wfwiki") || e.Message.Text.StartsWith("!skwiki")) { await Discord.wiki(new DiscordCommandArgs { e = e }); }
-                    else if (e.Message.Text.StartsWith("!guildmail")) { await e.Channel.SendMessage("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
+                    else if (Regex.IsMatch(e.Message.Text, "!guildmail", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
                     if (Regex.IsMatch(e.Message.Text, "^!getMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
@@ -71,7 +71,7 @@ namespace SwarmBot
                     }
                     else if (Regex.IsMatch(e.Message.Text, "^!promote", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*");
+                        Match cmd = Regex.Match(e.Message.RawText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*", RegexOptions.IgnoreCase);
                         if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
                         await Discord.promote(new DiscordCommandArgs
                         {
@@ -80,6 +80,19 @@ namespace SwarmBot
                             force = cmd.Groups[2].Value,
                             date = cmd.Groups[3].Value,
                             ignore = cmd.Groups[5].Value != ""
+                        });
+                    }
+                    else if (Regex.IsMatch(e.Message.Text, "^!createMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!createMember <@([^ ]+)>(?: (?:(?:(?:--date |-d )([^ ]+))|(?:(?:--steam-id |-s |--steam )(\d+))))*", RegexOptions.IgnoreCase);
+                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        if (Regex.IsMatch(e.Message.RawText, "!createMember <@([^ ]+)> (?:(?:--steam-id |-s )((?:.+)?[^0-9]+(?:.+)?))", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("Steam ID must be numeric"); return; }
+                        await Discord.createMember(new DiscordCommandArgs
+                        {
+                            e = e,
+                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server),
+                            date = cmd.Groups[2].Value,
+                            steam = cmd.Groups[3].Value
                         });
                     }
                 }

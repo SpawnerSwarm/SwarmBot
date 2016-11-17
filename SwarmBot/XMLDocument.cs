@@ -65,5 +65,41 @@ namespace SwarmBot.XML
             }
             catch { throw new XMLException(XMLErrorCode.Unknown, "An error occured while checking availible member capacity."); }
         }
+        public async Task<trilean> createMember(string name, DateTime date, long steamId, ulong discordId)
+        {
+            try
+            {
+                XElement xE = new XElement("Member",
+                    new XElement("Name", name),
+                    new XElement("Rank", Rank.Recruit.ToString()),
+                    new XElement("RankupHistory",
+                        new XElement("Rankup", new XAttribute("name", "Recruit"), date),
+                        new XElement("Rankup", new XAttribute("name", "Member"), "NaN"),
+                        new XElement("Rankup", new XAttribute("name", "Member II"), "NaN"),
+                        new XElement("Rankup", new XAttribute("name", "Veteran"), "NaN"),
+                        new XElement("Rankup", new XAttribute("name", "Officer"), "NaN"),
+                        new XElement("Rankup", new XAttribute("name", "General"), "NaN"),
+                        new XElement("Rankup", new XAttribute("name", "Guild Master"), "NaN")
+                    ),
+                    new XElement("Names",
+                        new XElement("Warframe", ""),
+                        new XElement("SpiralKnights", ""),
+                        new XElement("Discord", name),
+                        new XElement("DiscordId", discordId),
+                        new XElement("Steam"),
+                        new XElement("SteamId", steamId)
+                    ),
+                    new XElement("FailedTrial", false),
+                    new XElement("FormaDonated", 0)
+                );
+                document.Element("Database").Add(xE);
+            }
+            catch (Exception x)
+            {
+                await Program.Log("An error occured in XMLDocument.cs, unable to create member. \n\n" + x.Message);
+                return new trilean(false, x);
+            }
+            return new trilean(true);
+        }
     }
 }

@@ -13,8 +13,7 @@ namespace SwarmBot.XML
         public string name, WFName, SKName, discordName, steamName;
         public long discordId;
         public short forma;
-        private string steamIdAlpha;
-        private long steamIdNum;
+        private long steamId;
 
         public Rank rank;
         public List<Rankup> rankupHistory = new List<Rankup>();
@@ -41,7 +40,7 @@ namespace SwarmBot.XML
             discordId = Int64.Parse(names.Element("DiscordId").Value);
             steamName = names.Element("Steam").Value;
 
-            string steamId = names.Element("SteamId").Value;
+            /*string steamId = names.Element("SteamId").Value;
             bool isNumerical = true;
             foreach(char c in steamId.ToCharArray())
             {
@@ -61,7 +60,9 @@ namespace SwarmBot.XML
                     steamIdAlpha = steamId;
                     steamIdNum = 0;
                     break;
-            }
+            }*/
+            string steamIdStr = names.Element("SteamId").Value;
+            steamId = steamIdStr == "" ? 0 : Int64.Parse(steamIdStr);
 
             forma = short.Parse(xE.Element("FormaDonated").Value);
         }
