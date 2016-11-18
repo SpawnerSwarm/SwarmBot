@@ -229,6 +229,60 @@ namespace SwarmBot
                 return;
             }
         }
+
+        //Emotes
+        public static async Task getEmote(DiscordCommandArgs e)
+        {
+            Emotes emotes = new Emotes(Config.EmoteDBPath);
+            if(e.reference.StartsWith("list"))
+            {
+                short page;
+                try { page = (e.reference == "list" ? (short)0 : Int16.Parse(e.reference.Replace("list", "").Replace("-", ""))); }
+                catch(Exception x)
+                {
+                    await Program.Log("Expected emote list page number. Received " + e.reference + " instead: " + x.Message);
+                    await e.e.Channel.SendMessage("Error: Invalid page number");
+                    return;
+                }
+
+                string message = "";
+                try
+                {
+                    message += "Page " + (page == 0 ? 1 : page) + ". To move to the next page, use \"!e list " + (page == 0 ? 2 : page + 1) + "\". To view information about a specific emote, use \"!e list <emote_ref>\".\n";
+                    List<Emote> eList = emotes.getBatchEmotes(page, 5);
+                    foreach(Emote emote in eList)
+                    {
+                        message += "```xl\nName: " + emote.name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
+                        message += "\nReference: " + emote.reference;
+                        message += "\nRequired Rank: " + emote.requiredRank;
+                        message += "\nCreator: " + emote.creator + "\n```\n";
+                    }
+                    if(!message.Contains("Name")) { message = "http://i.imgur.com/zdMAeE9.png"; }
+                }
+                catch(XMLException x)
+                {
+                    if(x.errorCode == XMLErrorCode.NotFound) { await e.e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png"); }
+                }
+                await e.e.Channel.SendMessage(message);
+                return;
+            }
+            else
+            {
+                Emote emote;
+                try { emote = emotes.getEmote(e.reference); }
+                catch(XMLException x)
+                {
+                    switch(x.errorCode)
+                    {
+                        case XMLErrorCode.NotFound: await e.e.Channel.SendMessage("Error: Could not find requested emote."); await Program.Log("Error: No emotes found for ref " + e.reference); break;
+                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("Error: Found multiple emotes."); await Program.Log("Error: Multiple emotes found for ref " + e.reference); break;
+                    }
+                    return;
+                }
+                await e.e.Channel.SendMessage(emote.content);
+                return;
+            }
+        }
     }
 
     public class DiscordCommandArgs

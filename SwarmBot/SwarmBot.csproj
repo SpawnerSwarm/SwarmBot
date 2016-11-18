@@ -94,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Discord.cs" />
+    <Compile Include="Emotes.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="FormUI.cs">
       <SubType>Form</SubType>

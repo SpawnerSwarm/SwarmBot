@@ -61,7 +61,7 @@ namespace SwarmBot
                     if (Regex.IsMatch(e.Message.Text, "^!getMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
-                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
                         await Discord.getMember(new DiscordCommandArgs
                         {
                             e = e,
@@ -72,7 +72,7 @@ namespace SwarmBot
                     else if (Regex.IsMatch(e.Message.Text, "^!promote", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*", RegexOptions.IgnoreCase);
-                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
                         await Discord.promote(new DiscordCommandArgs
                         {
                             e = e,
@@ -85,7 +85,7 @@ namespace SwarmBot
                     else if (Regex.IsMatch(e.Message.Text, "^!createMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!createMember <@([^ ]+)>(?: (?:(?:(?:--date |-d )([^ ]+))|(?:(?:--steam-id |-s |--steam )(\d+))))*", RegexOptions.IgnoreCase);
-                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
                         if (Regex.IsMatch(e.Message.RawText, "!createMember <@([^ ]+)> (?:(?:--steam-id |-s )((?:.+)?[^0-9]+(?:.+)?))", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("Steam ID must be numeric"); return; }
                         await Discord.createMember(new DiscordCommandArgs
                         {
@@ -94,6 +94,42 @@ namespace SwarmBot
                             date = cmd.Groups[2].Value,
                             steam = cmd.Groups[3].Value
                         });
+                    }
+                    else if (Regex.IsMatch(e.Message.Text, "^!updateMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    {
+                        await e.Channel.SendMessage("!updateMember to be re-added at a later date. Please contact Mardan to manually update database entries");
+                    }
+
+                    //Text Stuff
+                    else if (e.Message.Text.StartsWith("!lenny"))
+                    {
+                        switch (e.User.Name)
+                        {
+                            case "FoxTale": await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv"); break;
+                            case "Mardan": await e.Channel.SendMessage("http://i.imgur.com/hLvfgHe.gif"); break;
+                            default: await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)"); break;
+                        }
+                    }
+                    else if (e.Message.Text.StartsWith("!brutal")) { await e.Channel.SendMessage("http://i.imgur.com/1xzQkSo.png"); }
+                    else if (e.Message.Text.StartsWith("(╯°□°）╯︵ ┻━┻")) { await e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)"); }
+                    else if (e.Message.Text.StartsWith("!warframemarket") || e.Message.Text.StartsWith("!wfmarket") || e.Message.Text.StartsWith("!wfm")) { await e.Channel.SendMessage("http://warframe.market"); }
+
+                    //Emotes
+                    else if (e.Message.Text.StartsWith("!emote") || e.Message.Text.StartsWith("!e ") || e.Message.Text == "!e" || e.Message.Text == "!emote")
+                    {
+                        string cmd = e.Message.Text.Replace("!emotes", "").Replace("!e", "").Replace(" ", "");
+                        if(cmd == "")
+                        {
+                            await e.Channel.SendMessage("Welcome to the Spawner Swarm Emotes system (beta)! To send an emote, send a message like this '!e <emote_ref>'. To see a list of emotes, send '!emotes list' or '!e list'");
+                        }
+                        else
+                        {
+                            await Discord.getEmote(new DiscordCommandArgs
+                            {
+                                e = e,
+                                reference = cmd
+                            });
+                        }
                     }
                 }
             };
