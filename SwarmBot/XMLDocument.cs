@@ -65,7 +65,7 @@ namespace SwarmBot.XML
             }
             catch { throw new XMLException(XMLErrorCode.Unknown, "An error occured while checking availible member capacity."); }
         }
-        public async Task<trilean> createMember(string name, DateTime date, long steamId, ulong discordId)
+        public trilean createMember(string name, DateTime date, long steamId, ulong discordId)
         {
             try
             {
@@ -96,7 +96,7 @@ namespace SwarmBot.XML
             }
             catch (Exception x)
             {
-                await Program.Log("An error occured in XMLDocument.cs, unable to create member. \n\n" + x.Message);
+                Program.Log("An error occured in XMLDocument.cs, unable to create member. \n\n" + x.Message);
                 return new trilean(false, x);
             }
             return new trilean(true);

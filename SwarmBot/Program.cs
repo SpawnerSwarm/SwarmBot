@@ -18,7 +18,7 @@ namespace SwarmBot
         public delegate void StringDelegate(string string1);
         public static event StringDelegate logHandler;
 
-        public static async Task Log(string text)
+        public static void Log(string text)
         {
             if (Application.OpenForms.Count < 1) { return; }
             logHandler?.Invoke(text);
@@ -35,6 +35,7 @@ namespace SwarmBot
                 Config.EmoteDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.discordToken = sr.ReadLine();
                 Config.discordArchiveServerId = sr.ReadLine();
+                Config.debugModeActive = false;
             }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -45,9 +46,9 @@ namespace SwarmBot
         {
             await Task.Run(() => Log("SwarmBot UI Loaded"));
             Discord.client = new DiscordClient();
-            Discord.client.Ready += async (sender, e) =>
+            Discord.client.Ready += (sender, e) =>
             {
-                await Log("Connected to Discord! User: " + Discord.client.CurrentUser.Name);
+                Log("Connected to Discord! User: " + Discord.client.CurrentUser.Name);
                 Discord.client.SetGame("Type !help for help");
             };
             Discord.client.MessageReceived += async (sender, e) =>
@@ -136,15 +137,44 @@ namespace SwarmBot
 
             Discord.initializeDiscordClient();
         }
+
+        public static void toggleDebug()
+        {
+            if(!Config.debugModeActive)
+            {
+                Config.debugModeActive = true;
+                string memberDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.MemberDBPath).Name.Replace(".xml", ".debug.xml"));
+                string emoteDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.EmoteDBPath).Name.Replace(".xml", ".debug.xml"));
+                File.Copy(Config.MemberDBPath, memberDestPath);
+                File.Copy(Config.EmoteDBPath, emoteDestPath);
+                Config.oldMemberDBPath = Config.MemberDBPath;
+                Config.MemberDBPath = memberDestPath;
+                Config.oldEmoteDBPath = Config.EmoteDBPath;
+                Config.EmoteDBPath = emoteDestPath;
+                Log("Enabled Debug Mode");
+            }
+            else
+            {
+                Config.debugModeActive = false;
+                File.Delete(Config.MemberDBPath);
+                File.Delete(Config.EmoteDBPath);
+                Config.MemberDBPath = Config.oldMemberDBPath;
+                Config.EmoteDBPath = Config.oldEmoteDBPath;
+                Config.oldMemberDBPath = null;
+                Config.oldEmoteDBPath = null;
+                Log("Disabled Debug Mode");
+            }
+        }
     }
 
     struct Config
     {
         public static string AppDataPath;
-        public static string MemberDBPath;
-        public static string EmoteDBPath;
+        public static string MemberDBPath, oldMemberDBPath;
+        public static string EmoteDBPath, oldEmoteDBPath;
         public static DirectoryInfo ExePath;
         public static string discordToken;
         public static string discordArchiveServerId;
+        public static bool debugModeActive;
     }
 }

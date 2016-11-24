@@ -32,7 +32,9 @@ namespace SwarmBot.UI
 
         private void debugEnableButton_Click(object sender, EventArgs e)
         {
-
+            Program.toggleDebug();
+            if(Config.debugModeActive) { debugEnableButton.Text = "Disable Debug Mode"; }
+            else { debugEnableButton.Text = "Enable Debug Mode"; }
         }
 
         public void writeLineToConsole(string text)
@@ -46,6 +48,39 @@ namespace SwarmBot.UI
                 writeLineToConsoleCallback d = new writeLineToConsoleCallback(writeLineToConsole);
                 Invoke(d, new object[] { text });
             }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if(Config.debugModeActive) { debugEnableButton.PerformClick(); }
+        }
+
+        private void FormUI_Resize(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                notifyIcon.Visible = true;
+                Hide();
+            }
+
+            else if (WindowState == FormWindowState.Normal)
+            {
+                notifyIcon.Visible = false;
+            }
+        }
+
+        private void showMenuItem_Click(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false;
+            Show();
+            if(WindowState == FormWindowState.Minimized) { WindowState = FormWindowState.Normal; }
+        }
+
+        private void exitMenuItem_Click(object sender, EventArgs e)
+        {
+            if(Config.debugModeActive) { debugEnableButton.PerformClick(); }
+            Close();
         }
     }
 }

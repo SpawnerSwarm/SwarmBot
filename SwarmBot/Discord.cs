@@ -19,7 +19,7 @@ namespace SwarmBot
         public static DiscordClient client;
         public static async void initializeDiscordClient()
         {
-            await Program.Log("Initializing SwarmBot Discord...");
+            Program.Log("Initializing SwarmBot Discord...");
             try
             {
                 /*client.ExecuteAndWait(async () =>
@@ -30,7 +30,7 @@ namespace SwarmBot
             }
             catch
             {
-                await Program.Log("Discord connection failed.");
+                Program.Log("Discord connection failed.");
             }
         }
         public static User getDiscordMemberByID(string ID, Server server)
@@ -39,7 +39,7 @@ namespace SwarmBot
         }
         public static async Task help(DiscordCommandArgs e)
         {
-            await Program.Log("test");
+            Program.Log("test");
             #region helptext
             await e.e.Channel.SendMessage(@"I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:
 --   Search the Warframe Wiki (!wfwiki <page name>)
@@ -59,8 +59,8 @@ namespace SwarmBot
         public static async Task wiki(DiscordCommandArgs e)
         {
             Match cmd = Regex.Match(e.e.Message.Text, "!([^ ]+) (.+)");
-            if(cmd.Groups[1].Value == "wfwiki") { await e.e.Channel.SendMessage("http://warframe.wikia.com/wiki/" + cmd.Groups[2].Value); }
-            else if(cmd.Groups[1].Value == "skwiki") { await e.e.Channel.SendMessage("http://wiki.spiralknights.com/" + cmd.Groups[2].Value); }
+            if(cmd.Groups[1].Value == "wfwiki") { await e.e.Channel.SendMessage("http://warframe.wikia.com/wiki/" + cmd.Groups[2].Value.Replace(" ", "_")); }
+            else if(cmd.Groups[1].Value == "skwiki") { await e.e.Channel.SendMessage("http://wiki.spiralknights.com/" + cmd.Groups[2].Value.Replace(" ", "_")); }
         }
         public static async Task getMember(DiscordCommandArgs e)
         {
@@ -110,7 +110,7 @@ namespace SwarmBot
                     case XMLErrorCode.Unknown:
                         await e.e.Channel.SendMessage("`An unknown error occured`"); break;
                 }
-                await Program.Log("An error occured while retreiving data for member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while retreiving data for member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
@@ -162,7 +162,7 @@ namespace SwarmBot
                 catch (Exception x)
                 {
                     await e.e.Channel.SendMessage("An error occured: " + x.Message);
-                    await Program.Log("ERROR: " + author.name + " tried to promote " + member.name + " to " + targetRank + " but encountered an exception. " + x.Message);
+                    Program.Log("ERROR: " + author.name + " tried to promote " + member.name + " to " + targetRank + " but encountered an exception. " + x.Message);
                 }
             }
             catch (XMLException x)
@@ -176,7 +176,7 @@ namespace SwarmBot
                     case XMLErrorCode.Unknown:
                         await e.e.Channel.SendMessage("`An unknown error occured`"); break;
                 }
-                await Program.Log("An error occured while promoting member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while promoting member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
@@ -204,13 +204,13 @@ namespace SwarmBot
                 if (e.steam != "") { try { steamId = Int64.Parse(e.steam); } catch { await e.e.Channel.SendMessage("Steam ID must be numeric"); return; } }
                 else { steamId = 0; }
 
-                await Program.Log("Creating member " + e.member.Name + "...");
-                trilean t = await memberDB.createMember(e.member.Name, date, steamId, e.member.Id);
+                Program.Log("Creating member " + e.member.Name + "...");
+                trilean t = memberDB.createMember(e.member.Name, date, steamId, e.member.Id);
                 if (t.value == TrileanValue.False) { await e.e.Channel.SendMessage("An unexpected error occured. Could not create member."); return; }
                 else
                 {
                     await e.e.Channel.SendMessage("Success! Created member " + e.member.Name + "!");
-                    await Program.Log("Successfully created member " + e.member.Name);
+                    Program.Log("Successfully created member " + e.member.Name);
                 }
                 memberDB.Save(Config.MemberDBPath);
             }
@@ -225,7 +225,7 @@ namespace SwarmBot
                     case XMLErrorCode.Unknown:
                         await e.e.Channel.SendMessage("`An unknown error occured`"); break;
                 }
-                await Program.Log("An error occured while creating member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while creating member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
@@ -240,7 +240,7 @@ namespace SwarmBot
                 try { page = (e.reference == "list" ? (short)0 : Int16.Parse(e.reference.Replace("list", "").Replace("-", ""))); }
                 catch(Exception x)
                 {
-                    await Program.Log("Expected emote list page number. Received " + e.reference + " instead: " + x.Message);
+                    Program.Log("Expected emote list page number. Received " + e.reference + " instead: " + x.Message);
                     await e.e.Channel.SendMessage("Error: Invalid page number");
                     return;
                 }
@@ -274,8 +274,8 @@ namespace SwarmBot
                 {
                     switch(x.errorCode)
                     {
-                        case XMLErrorCode.NotFound: await e.e.Channel.SendMessage("Error: Could not find requested emote."); await Program.Log("Error: No emotes found for ref " + e.reference); break;
-                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("Error: Found multiple emotes."); await Program.Log("Error: Multiple emotes found for ref " + e.reference); break;
+                        case XMLErrorCode.NotFound: await e.e.Channel.SendMessage("Error: Could not find requested emote."); Program.Log("Error: No emotes found for ref " + e.reference); break;
+                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("Error: Found multiple emotes."); Program.Log("Error: Multiple emotes found for ref " + e.reference); break;
                     }
                     return;
                 }

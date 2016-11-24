@@ -86,7 +86,7 @@ namespace SwarmBot.XML
         {
             try
             { return x.getDefine(rank, DefineType.Promotion) >= x.getDefine(s, DefineType.Promotion); }
-            catch(Exception e) { throw new XMLException(XMLErrorCode.Unknown, "Unknown rank"); }
+            catch(Exception) { throw new XMLException(XMLErrorCode.Unknown, "Unknown rank"); }
         }
 
         public trilean Promote(DateTime date, Rank rank)
