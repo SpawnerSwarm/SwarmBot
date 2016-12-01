@@ -27,6 +27,7 @@ namespace SwarmBot
         [STAThread]
         static void Main()
         {
+            if (System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Length > 1) { return; }
             Config.ExePath = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location).Directory;
             using (StreamReader sr = File.OpenText(Path.Combine(Config.ExePath.FullName, "config.txt")))
             {
@@ -55,7 +56,8 @@ namespace SwarmBot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    Discord.client.SetGame("Type !help for help");
+                    if (!Config.debugModeActive) { Discord.client.SetGame("Type !help for help"); }
+                    else { Discord.client.SetGame("DEBUG MODE"); }
                     if (e.Message.Text == "!help") { await Discord.help(new DiscordCommandArgs { e = e }); }
                     if (e.Message.Text.StartsWith("!wfwiki") || e.Message.Text.StartsWith("!skwiki")) { await Discord.wiki(new DiscordCommandArgs { e = e }); }
                     else if (Regex.IsMatch(e.Message.Text, "^!guildmail", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
@@ -107,7 +109,8 @@ namespace SwarmBot
                         switch (e.User.Name)
                         {
                             case "FoxTale": await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv"); break;
-                            case "Mardan": await e.Channel.SendMessage("http://i.imgur.com/hLvfgHe.gif"); break;
+                            case "Mardan": await e.Channel.SendMessage("https://cdn.discordapp.com/attachments/137991656547811328/251548637966893067/IMG_20161125_012327_967.jpg"); break;
+                            case "Quantum-Nova": await e.Channel.SendMessage("http://i.imgur.com/LUfk3HX.gifv"); break;
                             default: await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)"); break;
                         }
                     }
@@ -132,6 +135,18 @@ namespace SwarmBot
                             });
                         }
                     }
+                    else if(e.Message.Text.StartsWith("!newEmote") && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!newEmote \((.+)\) ([^ ]+) ([^ ]+) ([^ ]+)");
+                        await Discord.createEmote(new DiscordCommandArgs
+                        {
+                            e = e,
+                            name = cmd.Groups[1].Value,
+                            reference = cmd.Groups[2].Value,
+                            force = cmd.Groups[3].Value, //Required Rank
+                            id = cmd.Groups[4].Value, //Content
+                        });
+                    }
                 }
             };
 
@@ -145,12 +160,15 @@ namespace SwarmBot
                 Config.debugModeActive = true;
                 string memberDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.MemberDBPath).Name.Replace(".xml", ".debug.xml"));
                 string emoteDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.EmoteDBPath).Name.Replace(".xml", ".debug.xml"));
+                if (File.Exists(memberDestPath)) { File.Delete(memberDestPath); }
+                if (File.Exists(emoteDestPath)) { File.Delete(emoteDestPath); }
                 File.Copy(Config.MemberDBPath, memberDestPath);
                 File.Copy(Config.EmoteDBPath, emoteDestPath);
                 Config.oldMemberDBPath = Config.MemberDBPath;
                 Config.MemberDBPath = memberDestPath;
                 Config.oldEmoteDBPath = Config.EmoteDBPath;
                 Config.EmoteDBPath = emoteDestPath;
+                Discord.client.SetGame("DEBUG MODE");
                 Log("Enabled Debug Mode");
             }
             else
@@ -162,6 +180,7 @@ namespace SwarmBot
                 Config.EmoteDBPath = Config.oldEmoteDBPath;
                 Config.oldMemberDBPath = null;
                 Config.oldEmoteDBPath = null;
+                Discord.client.SetGame("Type !help for help.");
                 Log("Disabled Debug Mode");
             }
         }

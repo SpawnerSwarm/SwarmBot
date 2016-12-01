@@ -34,9 +34,20 @@ namespace SwarmBot
         public static bool getEligibleForEmote(XMLMember member, Emote emote) { return member.checkPermissions(emote.requiredRank); }
         public List<Emote> getBatchEmotes(short index, short count)
         {
-            List<XElement> xEList = x.Element("Emotes").Elements("Emote").ToList().GetRange((index == 0 ? index : (index - 1) * 5), count);
+            List<XElement> xEList;
+            try { xEList = x.Element("Emotes").Elements("Emote").ToList().GetRange((index == 0 ? index : (index - 1) * 5), count); } catch { throw new XMLException(XMLErrorCode.NotFound); }
             if(xEList.Count == 0) { throw new XMLException(XMLErrorCode.NotFound); }
             return xEList.ConvertAll(new Converter<XElement, Emote>(Emote.XElementToEmote));
+        }
+        public void addEmote(Emote emote)
+        {
+            XElement xE = x.Element("Emotes");
+            if(xE.Elements("Emote").Where(x => x.Element("Name").Value == emote.name).Count() > 0) { throw new XMLException(XMLErrorCode.MultipleFound, "name"); }
+            if(xE.Elements("Emote").Where(x => x.Element("Reference").Value == emote.reference).Count() > 0) { throw new XMLException(XMLErrorCode.MultipleFound, "reference"); }
+            if(xE.Elements("Emote").Where(x => x.Element("Content").Value == emote.content).Count() > 0) { throw new XMLException(XMLErrorCode.MultipleFound, "content"); }
+
+            xE.Add(emote.EmoteToXElement());
+            x.Save(path);
         }
     }
 
@@ -57,7 +68,7 @@ namespace SwarmBot
             creator = xE.Element("Creator").Value;
         }
 
-        public Emote(string name, string reference, string content, Rank requiredRank, string creator)
+        public Emote(string name, string reference, string content, Rank requiredRank, string creator = "Empty")
         {
             this.name = name;
             this.content = content;
@@ -82,7 +93,7 @@ namespace SwarmBot
                 new XElement("Name", name),
                 new XElement("Content", content),
                 new XElement("Reference", reference),
-                new XElement("Rank", requiredRank),
+                new XElement("Rank", (short)requiredRank),
                 new XElement("Creator", creator));
             return xE;
         }

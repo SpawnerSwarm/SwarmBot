@@ -261,7 +261,7 @@ namespace SwarmBot
                 }
                 catch(XMLException x)
                 {
-                    if(x.errorCode == XMLErrorCode.NotFound) { await e.e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png"); }
+                    if(x.errorCode == XMLErrorCode.NotFound) { await e.e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png"); return; }
                 }
                 await e.e.Channel.SendMessage(message);
                 return;
@@ -282,6 +282,27 @@ namespace SwarmBot
                 await e.e.Channel.SendMessage(emote.content);
                 return;
             }
+        }
+
+        public static async Task createEmote(DiscordCommandArgs e)
+        {
+            XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+            if (!memberDB.getMemberById(e.e.User.Id).checkPermissions(Rank.Veteran)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
+
+            Rank rank;
+            try { rank = short.Parse(e.force); }
+            catch { await e.e.Channel.SendMessage("Error: Invalid Rank"); return; }
+
+            Emote emote = new Emote(e.name, e.reference, e.id, rank);
+            Emotes emotes = new Emotes(Config.EmoteDBPath);
+            try { emotes.addEmote(emote); }
+            catch(XMLException x)
+            {
+                await e.e.Channel.SendMessage("`An error occurred while creating the emote. An emote with the same " + x.message + " already exists");
+                Program.Log("Unable to create emote. An emote with the same " + x.message + " already exists");
+                return;
+            }
+            await e.e.Channel.SendMessage("Successfully created emote " + emote.name + "!");
         }
     }
 
