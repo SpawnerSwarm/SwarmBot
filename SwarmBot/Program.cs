@@ -109,7 +109,7 @@ namespace SwarmBot
                         switch (e.User.Name)
                         {
                             case "FoxTale": await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv"); break;
-                            case "Mardan": await e.Channel.SendMessage("https://cdn.discordapp.com/attachments/137991656547811328/251548637966893067/IMG_20161125_012327_967.jpg"); break;
+                            case "Mardan": await e.Channel.SendMessage("http://i.imgur.com/H0aG47G.gifv"); break;
                             case "Quantum-Nova": await e.Channel.SendMessage("http://i.imgur.com/LUfk3HX.gifv"); break;
                             default: await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)"); break;
                         }
@@ -145,6 +145,30 @@ namespace SwarmBot
                             reference = cmd.Groups[2].Value,
                             force = cmd.Groups[3].Value, //Required Rank
                             id = cmd.Groups[4].Value, //Content
+                        });
+                    }
+                    else if(e.Message.Text.StartsWith("!tagme") && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!tagme (.+)", RegexOptions.IgnoreCase);
+                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!tagme (overwatch/warframe/sk/rank)\""); return; }
+                        if(cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "rank" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
+                        await Discord.tagMember(new DiscordCommandArgs
+                        {
+                            e = e,
+                            member = e.User,
+                            force = cmd.Groups[1].Value
+                        });
+                    }
+                    else if (e.Message.Text.StartsWith("!untagme") && !e.Channel.IsPrivate)
+                    {
+                        Match cmd = Regex.Match(e.Message.RawText, @"!untagme (.+)", RegexOptions.IgnoreCase);
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!untagme (overwatch/warframe/sk)\""); return; }
+                        if (cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
+                        await Discord.untagMember(new DiscordCommandArgs
+                        {
+                            e = e,
+                            member = e.User,
+                            force = cmd.Groups[1].Value
                         });
                     }
                 }

@@ -304,6 +304,47 @@ namespace SwarmBot
             }
             await e.e.Channel.SendMessage("Successfully created emote " + emote.name + "!");
         }
+
+        public static async Task tagMember(DiscordCommandArgs e)
+        {
+            if(e.force == "rank")
+            {
+                XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+                XMLMember member = memberDB.getMemberById(e.member.Id);
+                
+                for(int i = 1; i <= member.rank; i++)
+                {
+                    await e.member.AddRoles(e.e.Server.FindRoles(((Rank)i).ToString(), true).First());
+                }
+                await e.e.Channel.SendMessage("Successfully gave you the rank tags!");
+                Program.Log("Added rank tags through " + member.rank.ToString() + " to member " + member.name);
+                return;
+            }
+            switch(e.force)
+            {
+                case "overwatch": await e.member.AddRoles(e.e.Server.FindRoles("Overwatch", true).First()); break;
+                case "warframe": await e.member.AddRoles(e.e.Server.FindRoles("Warframe", true).First()); break;
+                case "sk": await e.member.AddRoles(e.e.Server.FindRoles("Spiral Knights", true).First()); break;
+                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;
+            }
+            await e.e.Channel.SendMessage("Successfully gave you the " + e.force + " tag!");
+            Program.Log("Added " + e.force + " tag to member " + e.member.Name);
+            return;
+        }
+
+        public static async Task untagMember(DiscordCommandArgs e)
+        {
+            switch (e.force)
+            {
+                case "overwatch": await e.member.RemoveRoles(e.e.Server.FindRoles("Overwatch", true).First()); break;
+                case "warframe": await e.member.AddRoles(e.e.Server.FindRoles("Warframe", true).First()); break;
+                case "sk": await e.member.AddRoles(e.e.Server.FindRoles("Spiral Knights", true).First()); break;
+                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;
+            }
+            await e.e.Channel.SendMessage("Successfully removed the " + e.force + " tag!");
+            Program.Log("Removed " + e.force + " tag from member " + e.member.Name);
+            return;
+        }
     }
 
     public class DiscordCommandArgs
