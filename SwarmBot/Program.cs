@@ -150,7 +150,7 @@ namespace SwarmBot
                     else if(e.Message.Text.StartsWith("!tagme") && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!tagme (.+)", RegexOptions.IgnoreCase);
-                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!tagme (overwatch/warframe/sk/rank)\""); return; }
+                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
                         if(cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "rank" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
                         await Discord.tagMember(new DiscordCommandArgs
                         {
@@ -162,7 +162,7 @@ namespace SwarmBot
                     else if (e.Message.Text.StartsWith("!untagme") && !e.Channel.IsPrivate)
                     {
                         Match cmd = Regex.Match(e.Message.RawText, @"!untagme (.+)", RegexOptions.IgnoreCase);
-                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!untagme (overwatch/warframe/sk)\""); return; }
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
                         if (cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
                         await Discord.untagMember(new DiscordCommandArgs
                         {
