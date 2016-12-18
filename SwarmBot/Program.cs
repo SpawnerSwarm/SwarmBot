@@ -114,6 +114,7 @@ namespace SwarmBot
                             default: await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)"); break;
                         }
                     }
+                    else if (e.Message.Text.StartsWith("!holdup")) { if(e.User.Name == "Quantum-Nova") { await e.Channel.SendMessage("http://i.imgur.com/ACoUhAW.gifv"); } }
                     else if (e.Message.Text.StartsWith("!brutal")) { await e.Channel.SendMessage("http://i.imgur.com/1xzQkSo.png"); }
                     else if (e.Message.Text.StartsWith("(╯°□°）╯︵ ┻━┻")) { await e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)"); }
                     else if (e.Message.Text.StartsWith("!warframemarket") || e.Message.Text.StartsWith("!wfmarket") || e.Message.Text.StartsWith("!wfm")) { await e.Channel.SendMessage("http://warframe.market"); }
@@ -169,6 +170,13 @@ namespace SwarmBot
                             e = e,
                             member = e.User,
                             force = cmd.Groups[1].Value
+                        });
+                    }
+                    else if (Regex.IsMatch(e.Message.Text, @"^!memberList", RegexOptions.IgnoreCase))
+                    {
+                        await Discord.getMemberCount(new DiscordCommandArgs
+                        {
+                            e = e
                         });
                     }
                 }

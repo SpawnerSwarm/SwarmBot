@@ -345,6 +345,20 @@ namespace SwarmBot
             Program.Log("Removed " + e.force + " tag from member " + e.member.Name);
             return;
         }
+
+        public static async Task getMemberCount(DiscordCommandArgs e)
+        {
+            XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+            string message = "```xl\n";
+            for (short i = 1; i <= 7; i++)
+            {
+                Rank rank = i;
+                int memberCount = memberDB.document.Element("Database").Elements("Member").Where(x => x.Element("Rank").Value == rank.ToString()).Count();
+                message += rank.ToString() + ": " + memberCount + " out of " + memberDB.getDefine(rank.ToString(), DefineType.RankCapacity) + "\n";
+            }
+            message += "\n```";
+            await e.e.Channel.SendMessage(message);
+        }
     }
 
     public class DiscordCommandArgs

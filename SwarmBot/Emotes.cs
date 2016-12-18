@@ -32,10 +32,12 @@ namespace SwarmBot
             else { throw new XMLException(XMLErrorCode.NotFound, "Could not find Emote"); }
         }
         public static bool getEligibleForEmote(XMLMember member, Emote emote) { return member.checkPermissions(emote.requiredRank); }
-        public List<Emote> getBatchEmotes(short index, short count)
+        public List<Emote> getBatchEmotes(short page, short count)
         {
+            short index = (short)(page == 0 ? page : (page - 1) * 5);
             List<XElement> xEList;
-            try { xEList = x.Element("Emotes").Elements("Emote").ToList().GetRange((index == 0 ? index : (index - 1) * 5), count); } catch { throw new XMLException(XMLErrorCode.NotFound); }
+            try { xEList = x.Element("Emotes").Elements("Emote").ToList();
+                xEList = xEList.GetRange(index, (xEList.Count - index - count >= 0 ? count : xEList.Count - index)); } catch { throw new XMLException(XMLErrorCode.NotFound); }
             if(xEList.Count == 0) { throw new XMLException(XMLErrorCode.NotFound); }
             return xEList.ConvertAll(new Converter<XElement, Emote>(Emote.XElementToEmote));
         }
