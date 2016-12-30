@@ -315,6 +315,7 @@ namespace SwarmBot
                 for(int i = 1; i <= member.rank; i++)
                 {
                     await e.member.AddRoles(e.e.Server.FindRoles(((Rank)i).ToString(), true).First());
+                    await Task.Delay(300);
                 }
                 await e.e.Channel.SendMessage("Successfully gave you the rank tags!");
                 Program.Log("Added rank tags through " + member.rank.ToString() + " to member " + member.name);
