@@ -17,6 +17,7 @@ namespace SwarmBot
     class Discord
     {
         public static DiscordClient client;
+
         public static async void initializeDiscordClient()
         {
             Program.Log("Initializing SwarmBot Discord...");

@@ -7,6 +7,7 @@ using System.IO;
 using SwarmBot.UI;
 using Discord;
 using System.Text.RegularExpressions;
+using SwarmBot.Warframe;
 
 namespace SwarmBot
 {
@@ -34,8 +35,10 @@ namespace SwarmBot
                 Config.AppDataPath = sr.ReadLine();
                 Config.MemberDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.EmoteDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
+                Config.AlertsDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.discordToken = sr.ReadLine();
                 Config.discordArchiveServerId = sr.ReadLine();
+                Config.discordSwarmServerId = sr.ReadLine();
                 Config.debugModeActive = false;
             }
             Application.EnableVisualStyles();
@@ -54,6 +57,10 @@ namespace SwarmBot
             };
             Discord.client.MessageReceived += async (sender, e) =>
             {
+                if (e.Channel.Id == 264287324710371328)
+                {
+                    WarframeAlerts.newAlertReceived(e);
+                }
                 if (!e.Message.IsAuthor)
                 {
                     if (!Config.debugModeActive) { Discord.client.SetGame("Type !help for help"); }
@@ -190,28 +197,47 @@ namespace SwarmBot
             if(!Config.debugModeActive)
             {
                 Config.debugModeActive = true;
+
                 string memberDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.MemberDBPath).Name.Replace(".xml", ".debug.xml"));
                 string emoteDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.EmoteDBPath).Name.Replace(".xml", ".debug.xml"));
+                string alertsDestPath = Path.Combine(Config.AppDataPath, new FileInfo(Config.AlertsDBPath).Name.Replace(".xml", ".debug.xml"));
+
                 if (File.Exists(memberDestPath)) { File.Delete(memberDestPath); }
                 if (File.Exists(emoteDestPath)) { File.Delete(emoteDestPath); }
+                if (File.Exists(alertsDestPath)) { File.Delete(alertsDestPath); }
+
                 File.Copy(Config.MemberDBPath, memberDestPath);
                 File.Copy(Config.EmoteDBPath, emoteDestPath);
+                File.Copy(Config.AlertsDBPath, alertsDestPath);
+
                 Config.oldMemberDBPath = Config.MemberDBPath;
                 Config.MemberDBPath = memberDestPath;
+
                 Config.oldEmoteDBPath = Config.EmoteDBPath;
                 Config.EmoteDBPath = emoteDestPath;
+
+                Config.oldAlertsDBPath = Config.AlertsDBPath;
+                Config.AlertsDBPath = alertsDestPath;
+
                 Discord.client.SetGame("DEBUG MODE");
                 Log("Enabled Debug Mode");
             }
             else
             {
                 Config.debugModeActive = false;
+
                 File.Delete(Config.MemberDBPath);
                 File.Delete(Config.EmoteDBPath);
+                File.Delete(Config.AlertsDBPath);
+
                 Config.MemberDBPath = Config.oldMemberDBPath;
                 Config.EmoteDBPath = Config.oldEmoteDBPath;
+                Config.EmoteDBPath = Config.oldAlertsDBPath;
+
                 Config.oldMemberDBPath = null;
                 Config.oldEmoteDBPath = null;
+                Config.oldAlertsDBPath = null;
+
                 Discord.client.SetGame("Type !help for help.");
                 Log("Disabled Debug Mode");
             }
@@ -223,9 +249,11 @@ namespace SwarmBot
         public static string AppDataPath;
         public static string MemberDBPath, oldMemberDBPath;
         public static string EmoteDBPath, oldEmoteDBPath;
+        public static string AlertsDBPath, oldAlertsDBPath;
         public static DirectoryInfo ExePath;
         public static string discordToken;
         public static string discordArchiveServerId;
+        public static string discordSwarmServerId;
         public static bool debugModeActive;
     }
 }
