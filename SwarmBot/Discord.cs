@@ -7,16 +7,61 @@ using Discord;
 using Discord.Net;
 using Discord.Modules;
 using Discord.Commands;
+using Discord.WebSocket;
 using SwarmBot.UI;
 using SwarmBot.XML;
 using System.Text.RegularExpressions;
 using Trileans;
+using System.Reflection;
+
+namespace SwarmBot.TypeReaders
+{
+    public class BooleanTypeReader : TypeReader
+    {
+        public override Task<TypeReaderResult> Read(ICommandContext context, string input)
+        {
+            bool result;
+            if (bool.TryParse(input, out result))
+                return Task.FromResult(TypeReaderResult.FromSuccess(result));
+
+            return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, "Input could not be parsed as a boolean."));
+        }
+    }
+
+    public class RankTypeReader : TypeReader
+    {
+        public override Task<TypeReaderResult> Read(ICommandContext context, string input)
+        {
+            Rank result;
+            try
+            {
+                result = (Rank)input;
+                return Task.FromResult(TypeReaderResult.FromSuccess(result));
+            }
+            catch(Exception e)
+            {
+                return Task.FromResult(TypeReaderResult.FromError(CommandError.ParseFailed, e.Message));
+            }
+        }
+    }
+}
 
 namespace SwarmBot
 {
     class Discord
     {
-        public static DiscordClient client;
+        public static DiscordSocketClient client;
+        public static CommandHandler handler;
+
+        public static async Task applyRoleToMember(IUser member, IUserMessage e, string roleName)
+        {
+            await (member as IGuildUser).AddRolesAsync(((e.Channel as IGuildChannel)?.Guild as IGuild).Roles.Where(x => x.Name == roleName).First());
+        }
+
+        public static async Task removeRoleFromMember(IUser member, IUserMessage e, string roleName)
+        {
+            await (member as IGuildUser).RemoveRolesAsync(((e.Channel as IGuildChannel)?.Guild as IGuild).Roles.Where(x => x.Name == roleName).First());
+        }
 
         public static async void initializeDiscordClient()
         {
@@ -27,14 +72,21 @@ namespace SwarmBot
                 {
                     await Task.Run(() => client.Connect(Config.discordToken, TokenType.Bot));
                 });*/
-                await Task.Run(() => client.Connect(Config.discordToken, TokenType.Bot));
+                await client.LoginAsync(TokenType.Bot, Config.discordToken);
+                await Task.Run(() => client.ConnectAsync());
+
+                var map = new DependencyMap();
+                map.Add(client);
+
+                handler = new CommandHandler();
+                await handler.Install(map);
             }
-            catch
+            catch(Exception e)
             {
-                Program.Log("Discord connection failed.");
+                Program.Log("Discord connection failed." + e.Message + " | " + e.Source);
             }
         }
-        public static User getDiscordMemberByID(string ID, Server server)
+        public static IUser getDiscordMemberByID(string ID, SocketGuild server)
         {
             return server.GetUser(ulong.Parse(ID.Replace("!", "")));
         }
@@ -42,7 +94,7 @@ namespace SwarmBot
         {
             Program.Log("test");
             #region helptext
-            await e.e.Channel.SendMessage(@"I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:
+            await e.e.Channel.SendMessageAsync(@"I am the SwarmBot created by @Mardan. View my source code: https://github.com/SpawnerSwarm/SwarmBot. I can:
 --   Search the Warframe Wiki (!wfwiki <page name>)
 --   Search the Spiral Knights Wiki (!skwiki <page name>)
 --   Link you to the Guild Mail(!guildmail)
@@ -59,9 +111,9 @@ namespace SwarmBot
         }
         public static async Task wiki(DiscordCommandArgs e)
         {
-            Match cmd = Regex.Match(e.e.Message.Text, "!([^ ]+) (.+)");
-            if(cmd.Groups[1].Value == "wfwiki") { await e.e.Channel.SendMessage("http://warframe.wikia.com/wiki/" + cmd.Groups[2].Value.Replace(" ", "_")); }
-            else if(cmd.Groups[1].Value == "skwiki") { await e.e.Channel.SendMessage("http://wiki.spiralknights.com/" + cmd.Groups[2].Value.Replace(" ", "_")); }
+            Match cmd = Regex.Match(e.e.Content, "!([^ ]+) (.+)");
+            if(cmd.Groups[1].Value == "wfwiki") { await e.e.Channel.SendMessageAsync("http://warframe.wikia.com/wiki/" + cmd.Groups[2].Value.Replace(" ", "_")); }
+            else if(cmd.Groups[1].Value == "skwiki") { await e.e.Channel.SendMessageAsync("http://wiki.spiralknights.com/" + cmd.Groups[2].Value.Replace(" ", "_")); }
         }
         public static async Task getMember(DiscordCommandArgs e)
         {
@@ -98,20 +150,20 @@ namespace SwarmBot
                     if (member.steamName != "" && member.steamName != "NaN") { message += "\nSteam name is " + member.steamName; }
                 }
                 message += "```";
-                await e.e.Channel.SendMessage(message);
+                await e.e.Channel.SendMessageAsync(message);
             }
             catch(XMLException x)
             {
                 switch(x.errorCode)
                 {
                     case XMLErrorCode.MultipleFound:
-                        await e.e.Channel.SendMessage("`An error occured: Multiple members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: Multiple members were found`"); break;
                     case XMLErrorCode.NotFound:
-                        await e.e.Channel.SendMessage("`An error occured: No members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: No members were found`"); break;
                     case XMLErrorCode.Unknown:
-                        await e.e.Channel.SendMessage("`An unknown error occured`"); break;
+                        await e.e.Channel.SendMessageAsync("`An unknown error occured`"); break;
                 }
-                Program.Log("An error occured while retreiving data for member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while retreiving data for member " + e.member.Username + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
@@ -121,48 +173,48 @@ namespace SwarmBot
             {
                 XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
                 XMLMember member = memberDB.getMemberById(e.member.Id);
-                XMLMember author = memberDB.getMemberById(e.e.User.Id);
-                if (!author.checkPermissions(Rank.Officer)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
-                if (e.e.User.Id == (ulong)member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await e.e.Channel.SendMessage("```xl\nSorry, you can't promote yourself!\n```"); return; }
-                if (member.rank == Rank.GuildMaster && e.force == "") { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
+                XMLMember author = memberDB.getMemberById(e.e.Author.Id);
+                if (!author.checkPermissions(Rank.Officer)) { await e.e.Channel.SendMessageAsync("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
+                if (e.e.Author.Id == (ulong)member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await e.e.Channel.SendMessageAsync("```xl\nSorry, you can't promote yourself!\n```"); return; }
+                if (member.rank == Rank.GuildMaster && e.force == "") { await e.e.Channel.SendMessageAsync("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
 
                 Rank targetRank = e.force == "" ? (Rank)(member.rank + 1) : (Rank)e.force;
-                if (targetRank >= author.rank && author.rank != Rank.GuildMaster) { await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); return; }
+                if (targetRank >= author.rank && author.rank != Rank.GuildMaster) { await e.e.Channel.SendMessageAsync("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); return; }
 
                 trilean isRankMaxed;
                 try
                 {
                     isRankMaxed = memberDB.checkRankMaxed(targetRank);
-                    if (isRankMaxed && (!e.ignore || !author.checkPermissions(Rank.GuildMaster))) { await e.e.Channel.SendMessage("```xl\nError: The Rank you have requested to promote to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error"); return; }
+                    if (isRankMaxed && (!e.ignore || !author.checkPermissions(Rank.GuildMaster))) { await e.e.Channel.SendMessageAsync("```xl\nError: The Rank you have requested to promote to is currently at maximum capacity.\nPlease contact a Guild Master if you believe this is in error"); return; }
 
                     DateTime targetDate;
                     if (e.date == "") { targetDate = DateTime.Today; }
                     else
                     {
                         try { targetDate = DateTime.Parse(e.date); }
-                        catch { await e.e.Channel.SendMessage("```xl\nError: Invalid Date. Must be in MM/DD/YYYY format.\n```"); return; }
+                        catch { await e.e.Channel.SendMessageAsync("```xl\nError: Invalid Date. Must be in MM/DD/YYYY format.\n```"); return; }
                     }
 
                     try
                     {
                         trilean trilean = member.Promote(targetDate, targetRank);
-                        await e.member.AddRoles(e.e.Server.FindRoles((Rank)trilean.embedded).First());
-                        await e.e.Channel.SendMessage("```xl\nSuccessfully promoted " + member.name + " to " + trilean.embedded + "\n```");
+                        await (e.member as IGuildUser).AddRolesAsync(((e.e.Channel as IGuildChannel)?.Guild as SocketGuild).Roles.Where(x => x.Name == (Rank)trilean.embedded).First());
+                        await e.e.Channel.SendMessageAsync("```xl\nSuccessfully promoted " + member.name + " to " + trilean.embedded + "\n```");
                     }
                     catch (XMLException x)
                     {
                         switch (x.errorCode)
                         {
-                            case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("```xl\nError: Multiple Members found\n```"); break;
-                            case XMLErrorCode.Maximum: await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); break;
-                            case XMLErrorCode.Greater: await e.e.Channel.SendMessage("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); break;
-                            case XMLErrorCode.Unknown: await e.e.Channel.SendMessage("```xl\nAn error occured\n```"); break;
+                            case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessageAsync("```xl\nError: Multiple Members found\n```"); break;
+                            case XMLErrorCode.Maximum: await e.e.Channel.SendMessageAsync("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); break;
+                            case XMLErrorCode.Greater: await e.e.Channel.SendMessageAsync("```xl\nCan't promote " + member.name + " because the destination rank is higher than your rank!\n```"); break;
+                            case XMLErrorCode.Unknown: await e.e.Channel.SendMessageAsync("```xl\nAn error occured\n```"); break;
                         }
                     }
                 }
                 catch (Exception x)
                 {
-                    await e.e.Channel.SendMessage("An error occured: " + x.Message);
+                    await e.e.Channel.SendMessageAsync("An error occured: " + x.Message);
                     Program.Log("ERROR: " + author.name + " tried to promote " + member.name + " to " + targetRank + " but encountered an exception. " + x.Message);
                 }
             }
@@ -171,47 +223,46 @@ namespace SwarmBot
                 switch (x.errorCode)
                 {
                     case XMLErrorCode.MultipleFound:
-                        await e.e.Channel.SendMessage("`An error occured: Multiple members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: Multiple members were found`"); break;
                     case XMLErrorCode.NotFound:
-                        await e.e.Channel.SendMessage("`An error occured: No members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: No members were found`"); break;
                     case XMLErrorCode.Unknown:
-                        await e.e.Channel.SendMessage("`An unknown error occured`"); break;
+                        await e.e.Channel.SendMessageAsync("`An unknown error occured`"); break;
                 }
-                Program.Log("An error occured while promoting member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while promoting member " + e.member.Username + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
-
         public static async Task createMember(DiscordCommandArgs e)
         {
             try
             {
                 XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
-                XMLMember author = memberDB.getMemberById(e.e.User.Id);
-                if (!author.checkPermissions(Rank.Veteran)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
+                XMLMember author = memberDB.getMemberById(e.e.Author.Id);
+                if (!author.checkPermissions(Rank.Veteran)) { await e.e.Channel.SendMessageAsync("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
 
                 try { memberDB.getMemberById(e.member.Id); }
                 catch (XMLException x)
                 {
-                    if (x.errorCode == XMLErrorCode.MultipleFound) { await e.e.Channel.SendMessage("`An error occured. Multiple members were found for the provided ID.`"); return; }
-                    else if (x.errorCode != XMLErrorCode.NotFound) { await e.e.Channel.SendMessage("`An unexpected error occured. " + x.message + "`"); return; }
+                    if (x.errorCode == XMLErrorCode.MultipleFound) { await e.e.Channel.SendMessageAsync("`An error occured. Multiple members were found for the provided ID.`"); return; }
+                    else if (x.errorCode != XMLErrorCode.NotFound) { await e.e.Channel.SendMessageAsync("`An unexpected error occured. " + x.message + "`"); return; }
                 }
 
                 DateTime date;
-                if (e.date != "") { try { date = DateTime.Parse(e.date); } catch { await e.e.Channel.SendMessage("Invalid Date"); return; } }
+                if (e.date != "") { try { date = DateTime.Parse(e.date); } catch { await e.e.Channel.SendMessageAsync("Invalid Date"); return; } }
                 else { date = DateTime.Today; }
 
                 long steamId;
-                if (e.steam != "") { try { steamId = Int64.Parse(e.steam); } catch { await e.e.Channel.SendMessage("Steam ID must be numeric"); return; } }
+                if (e.steam != "") { try { steamId = Int64.Parse(e.steam); } catch { await e.e.Channel.SendMessageAsync("Steam ID must be numeric"); return; } }
                 else { steamId = 0; }
 
-                Program.Log("Creating member " + e.member.Name + "...");
-                trilean t = memberDB.createMember(e.member.Name, date, steamId, e.member.Id);
-                if (t.value == TrileanValue.False) { await e.e.Channel.SendMessage("An unexpected error occured. Could not create member."); return; }
+                Program.Log("Creating member " + e.member.Username + "...");
+                trilean t = memberDB.createMember(e.member.Username, date, e.member.Id);
+                if (t.value == TrileanValue.False) { await e.e.Channel.SendMessageAsync("An unexpected error occured. Could not create member."); return; }
                 else
                 {
-                    await e.e.Channel.SendMessage("Success! Created member " + e.member.Name + "!");
-                    Program.Log("Successfully created member " + e.member.Name);
+                    await e.e.Channel.SendMessageAsync("Success! Created member " + e.member.Username + "!");
+                    Program.Log("Successfully created member " + e.member.Username);
                 }
                 memberDB.Save(Config.MemberDBPath);
             }
@@ -220,29 +271,28 @@ namespace SwarmBot
                 switch (x.errorCode)
                 {
                     case XMLErrorCode.MultipleFound:
-                        await e.e.Channel.SendMessage("`An error occured: Multiple members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: Multiple members were found`"); break;
                     case XMLErrorCode.NotFound:
-                        await e.e.Channel.SendMessage("`An error occured: No members were found`"); break;
+                        await e.e.Channel.SendMessageAsync("`An error occured: No members were found`"); break;
                     case XMLErrorCode.Unknown:
-                        await e.e.Channel.SendMessage("`An unknown error occured`"); break;
+                        await e.e.Channel.SendMessageAsync("`An unknown error occured`"); break;
                 }
-                Program.Log("An error occured while creating member " + e.member.Name + ", " + x.message + ": " + x.errorCode);
+                Program.Log("An error occured while creating member " + e.member.Username + ", " + x.message + ": " + x.errorCode);
                 return;
             }
         }
-
         //Emotes
         public static async Task getEmote(DiscordCommandArgs e)
         {
             Emotes emotes = new Emotes(Config.EmoteDBPath);
-            if(e.reference.StartsWith("list"))
+            /*if(e.reference.StartsWith("list"))
             {
                 short page;
                 try { page = (e.reference == "list" ? (short)0 : Int16.Parse(e.reference.Replace("list", "").Replace("-", ""))); }
                 catch(Exception x)
                 {
                     Program.Log("Expected emote list page number. Received " + e.reference + " instead: " + x.Message);
-                    await e.e.Channel.SendMessage("Error: Invalid page number");
+                    await e.e.Channel.SendMessageAsync("Error: Invalid page number");
                     return;
                 }
 
@@ -262,50 +312,48 @@ namespace SwarmBot
                 }
                 catch(XMLException x)
                 {
-                    if(x.errorCode == XMLErrorCode.NotFound) { await e.e.Channel.SendMessage("http://i.imgur.com/zdMAeE9.png"); return; }
+                    if(x.errorCode == XMLErrorCode.NotFound) { await e.e.Channel.SendMessageAsync("http://i.imgur.com/zdMAeE9.png"); return; }
                 }
-                await e.e.Channel.SendMessage(message);
+                await e.e.Channel.SendMessageAsync(message);
                 return;
             }
             else
-            {
+            {*/
                 Emote emote;
                 try { emote = emotes.getEmote(e.reference); }
                 catch(XMLException x)
                 {
                     switch(x.errorCode)
                     {
-                        case XMLErrorCode.NotFound: await e.e.Channel.SendMessage("Error: Could not find requested emote."); Program.Log("Error: No emotes found for ref " + e.reference); break;
-                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessage("Error: Found multiple emotes."); Program.Log("Error: Multiple emotes found for ref " + e.reference); break;
+                        case XMLErrorCode.NotFound: await e.e.Channel.SendMessageAsync("Error: Could not find requested emote."); Program.Log("Error: No emotes found for ref " + e.reference); break;
+                        case XMLErrorCode.MultipleFound: await e.e.Channel.SendMessageAsync("Error: Found multiple emotes."); Program.Log("Error: Multiple emotes found for ref " + e.reference); break;
                     }
                     return;
                 }
-                await e.e.Channel.SendMessage(emote.content);
+                await e.e.Channel.SendMessageAsync(emote.content);
                 return;
-            }
+            //}
         }
-
         public static async Task createEmote(DiscordCommandArgs e)
         {
             XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
-            if (!memberDB.getMemberById(e.e.User.Id).checkPermissions(Rank.Veteran)) { await e.e.Channel.SendMessage("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
+            if (!memberDB.getMemberById(e.e.Author.Id).checkPermissions(Rank.Veteran)) { await e.e.Channel.SendMessageAsync("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
 
             Rank rank;
             try { rank = short.Parse(e.force); }
-            catch { await e.e.Channel.SendMessage("Error: Invalid Rank"); return; }
+            catch { await e.e.Channel.SendMessageAsync("Error: Invalid Rank"); return; }
 
             Emote emote = new Emote(e.name, e.reference, e.id, rank);
             Emotes emotes = new Emotes(Config.EmoteDBPath);
             try { emotes.addEmote(emote); }
             catch(XMLException x)
             {
-                await e.e.Channel.SendMessage("`An error occurred while creating the emote. An emote with the same " + x.message + " already exists");
+                await e.e.Channel.SendMessageAsync("`An error occurred while creating the emote. An emote with the same " + x.message + " already exists");
                 Program.Log("Unable to create emote. An emote with the same " + x.message + " already exists");
                 return;
             }
-            await e.e.Channel.SendMessage("Successfully created emote " + emote.name + "!");
+            await e.e.Channel.SendMessageAsync("Successfully created emote " + emote.name + "!");
         }
-
         public static async Task tagMember(DiscordCommandArgs e)
         {
             if(e.force == "rank")
@@ -315,39 +363,37 @@ namespace SwarmBot
                 
                 for(int i = 1; i <= member.rank; i++)
                 {
-                    await e.member.AddRoles(e.e.Server.FindRoles(((Rank)i).ToString(), true).First());
+                    await (e.member as IGuildUser).AddRolesAsync(((e.e.Channel as IGuildChannel)?.Guild as IGuild).Roles.Where(x => x.Name == ((Rank)i).ToString()).First());
                     await Task.Delay(300);
                 }
-                await e.e.Channel.SendMessage("Successfully gave you the rank tags!");
+                await e.e.Channel.SendMessageAsync("Successfully gave you the rank tags!");
                 Program.Log("Added rank tags through " + member.rank.ToString() + " to member " + member.name);
                 return;
             }
             switch(e.force)
             {
-                case "overwatch": await e.member.AddRoles(e.e.Server.FindRoles("Overwatch", true).First()); break;
-                case "warframe": await e.member.AddRoles(e.e.Server.FindRoles("Warframe", true).First()); break;
+                /*case "overwatch": await e.member.AddRolesAsync(e.e.Server.FindRoles("Overwatch", true).First()); break;
+                case "warframe": await e.member.AddRolesAsync(e.e.Server.FindRoles("Warframe", true).First()); break;
                 case "sk": await e.member.AddRoles(e.e.Server.FindRoles("Spiral Knights", true).First()); break;
-                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;
+                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;*/
             }
-            await e.e.Channel.SendMessage("Successfully gave you the " + e.force + " tag!");
-            Program.Log("Added " + e.force + " tag to member " + e.member.Name);
+            await e.e.Channel.SendMessageAsync("Successfully gave you the " + e.force + " tag!");
+            Program.Log("Added " + e.force + " tag to member " + e.member.Username);
             return;
         }
-
         public static async Task untagMember(DiscordCommandArgs e)
         {
             switch (e.force)
             {
-                case "overwatch": await e.member.RemoveRoles(e.e.Server.FindRoles("Overwatch", true).First()); break;
+                /*case "overwatch": await e.member.RemoveRoles(e.e.Server.FindRoles("Overwatch", true).First()); break;
                 case "warframe": await e.member.AddRoles(e.e.Server.FindRoles("Warframe", true).First()); break;
                 case "sk": await e.member.AddRoles(e.e.Server.FindRoles("Spiral Knights", true).First()); break;
-                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;
+                case "bot": await e.member.AddRoles(e.e.Server.FindRoles("Bot Notifications", true).First()); break;*/
             }
-            await e.e.Channel.SendMessage("Successfully removed the " + e.force + " tag!");
-            Program.Log("Removed " + e.force + " tag from member " + e.member.Name);
+            await e.e.Channel.SendMessageAsync("Successfully removed the " + e.force + " tag!");
+            Program.Log("Removed " + e.force + " tag from member " + e.member.Username);
             return;
         }
-
         public static async Task getMemberCount(DiscordCommandArgs e)
         {
             XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
@@ -359,14 +405,14 @@ namespace SwarmBot
                 message += rank.ToString() + ": " + memberCount + " out of " + memberDB.getDefine(rank.ToString(), DefineType.RankCapacity) + "\n";
             }
             message += "\n```";
-            await e.e.Channel.SendMessage(message);
+            await e.e.Channel.SendMessageAsync(message);
         }
     }
 
     public class DiscordCommandArgs
     {
-        public MessageEventArgs e;
-        public User member;
+        public IUserMessage e;
+        public IUser member;
         public string name;
         public string steam;
         public string discord;
@@ -376,6 +422,7 @@ namespace SwarmBot
         public string date;
         public string force;
         public bool ignore;
+        public Rank requiredRank;
 
         /*public DiscordCommandArgs(MessageEventArgs e, User member = null, string name = null, string steam = null, string discord = null, string id = null, string reference = null, bool verbose = false, string date = null, string force = null, bool isForce = false, bool ignore = false)
         {
@@ -392,5 +439,47 @@ namespace SwarmBot
             this.isForce = isForce;
             this.ignore = ignore;
         }*/
+    }
+
+    public class CommandHandler
+    {
+        private CommandService commands;
+        private DiscordSocketClient client;
+        private IDependencyMap map;
+
+        public async Task Install(IDependencyMap _map)
+        {
+            client = _map.Get<DiscordSocketClient>();
+            commands = new CommandService();
+            _map.Add(commands);
+            map = _map;
+
+            commands.AddTypeReader<Rank>(new TypeReaders.RankTypeReader());
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            await commands.AddModuleAsync<Modules.EmoteModule>();
+            await commands.AddModuleAsync<Modules.RandomCommandsModule>();
+            await commands.AddModuleAsync<Modules.TaggingModule>();
+            //await commands.AddModuleAsync<Warframe.WarframeAlertsModule>();
+            //await commands.AddTypeReader<bool>(new TypeReaders.BooleanTypeReader);
+
+            client.MessageReceived += HandleCommand;
+        }
+
+        public async Task HandleCommand(SocketMessage parameterMessage)
+        {
+            var message = parameterMessage as SocketUserMessage;
+            if (message == null) return;
+
+            int argPos = 0;
+            if (!(message.HasMentionPrefix(client.CurrentUser, ref argPos) || message.HasCharPrefix('!', ref argPos))) return;
+
+            var context = new CommandContext(client, message);
+            var result = await commands.ExecuteAsync(context, argPos, map);
+
+            if(!result.IsSuccess)
+            {
+                await message.Channel.SendMessageAsync($"**Error:** {result.ErrorReason}");
+            }
+        }
     }
 }

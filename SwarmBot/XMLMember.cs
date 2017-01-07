@@ -11,7 +11,7 @@ namespace SwarmBot.XML
     class XMLMember
     {
         public string name, WFName, SKName, discordName, steamName;
-        public long discordId;
+        public ulong discordId;
         public short forma;
         //private long steamId;
 
@@ -37,7 +37,7 @@ namespace SwarmBot.XML
             WFName = names.Element("Warframe").Value;
             SKName = names.Element("SpiralKnights").Value;
             discordName = names.Element("Discord").Value;
-            discordId = Int64.Parse(names.Element("DiscordId").Value);
+            discordId = UInt64.Parse(names.Element("DiscordId").Value);
             steamName = names.Element("Steam").Value;
 
             /*string steamId = names.Element("SteamId").Value;

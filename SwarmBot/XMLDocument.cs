@@ -65,7 +65,7 @@ namespace SwarmBot.XML
             }
             catch { throw new XMLException(XMLErrorCode.Unknown, "An error occured while checking availible member capacity."); }
         }
-        public trilean createMember(string name, DateTime date, long steamId, ulong discordId)
+        public trilean createMember(string name, DateTime date, ulong discordId)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace SwarmBot.XML
                         new XElement("Discord", name),
                         new XElement("DiscordId", discordId),
                         new XElement("Steam"),
-                        new XElement("SteamId", steamId)
+                        new XElement("SteamId")
                     ),
                     new XElement("FailedTrial", false),
                     new XElement("FormaDonated", 0)

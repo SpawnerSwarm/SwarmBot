@@ -5,9 +5,14 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using SwarmBot.UI;
-using Discord;
-using System.Text.RegularExpressions;
 using SwarmBot.Warframe;
+using Discord;
+using Discord.Commands;
+using Discord.Modules;
+using Discord.Net;
+using Discord.WebSocket;
+using Discord.Audio;
+using System.Text.RegularExpressions;
 
 namespace SwarmBot
 {
@@ -49,90 +54,95 @@ namespace SwarmBot
         public static async void onUIReadyCallback()
         {
             await Task.Run(() => Log("SwarmBot UI Loaded"));
-            Discord.client = new DiscordClient();
-            Discord.client.Ready += (sender, e) =>
+            
+            Discord.client = new DiscordSocketClient();
+            Discord.client.Ready += async () =>
             {
-                Log("Connected to Discord! User: " + Discord.client.CurrentUser.Name);
-                Discord.client.SetGame("Type !help for help");
+                Log("Connected to Discord! User: " + Discord.client.CurrentUser.Username);
+                await Discord.client.SetGameAsync("Type !help for help");
             };
-            Discord.client.MessageReceived += async (sender, e) =>
+            Discord.client.MessageReceived += async (e) =>
             {
                 if (e.Channel.Id == 264287324710371328)
                 {
-                    WarframeAlerts.newAlertReceived(e);
+                    if (!Config.debugModeActive) { await Discord.client.SetGameAsync("Type !help for help"); }
+                    else { await Discord.client.SetGameAsync("DEBUG MODE"); }
+                    await WarframeAlertsModule.newAlertReceived(e);
                 }
-                if (!e.Message.IsAuthor)
+            };
+            /*
+                if (!e.Author.IsBot)
                 {
-                    if (!Config.debugModeActive) { Discord.client.SetGame("Type !help for help"); }
-                    else { Discord.client.SetGame("DEBUG MODE"); }
-                    if (e.Message.Text == "!help") { await Discord.help(new DiscordCommandArgs { e = e }); }
-                    if (e.Message.Text.StartsWith("!wfwiki") || e.Message.Text.StartsWith("!skwiki")) { await Discord.wiki(new DiscordCommandArgs { e = e }); }
-                    else if (Regex.IsMatch(e.Message.Text, "^!guildmail", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
-                    if (Regex.IsMatch(e.Message.Text, "^!getMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    if (!Config.debugModeActive) { await Discord.client.SetGameAsync("Type !help for help"); }
+                    else { await Discord.client.SetGameAsync("DEBUG MODE"); }
+                    if (e.Content == "!help") { await Discord.help(new DiscordCommandArgs { e = e }); }
+                    if (e.Content.StartsWith("!wfwiki") || e.Content.StartsWith("!skwiki")) { await Discord.wiki(new DiscordCommandArgs { e = e }); }
+                    else if (Regex.IsMatch(e.Content, "^!guildmail", RegexOptions.IgnoreCase)) { await e.Channel.SendMessageAsync("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy"); }
+                    if (Regex.IsMatch(e.Content, "^!getMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
-                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        Match cmd = Regex.Match(e.Content, @"!getMember (?:<@(.+)>)?(?: (--verbose|-v))?", RegexOptions.IgnoreCase);
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessageAsync("`Error: Incorrect Syntax`"); return; }
                         await Discord.getMember(new DiscordCommandArgs
                         {
                             e = e,
                             verbose = cmd.Groups[2].Value != "",
-                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server)
+                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Channel.)
                         });
                     }
-                    else if (Regex.IsMatch(e.Message.Text, "^!promote", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    else if (Regex.IsMatch(e.Content, "^!promote", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*", RegexOptions.IgnoreCase);
-                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
+                        Match cmd = Regex.Match(e.Content, @"!promote <@([^ ]+)>(?: (?:(?:(?:--force |-f )\((.+)\))|(?:(?:--date |-d )([^ ]+))|(?:(-h))|((?:--ignore-capacity|--ignore-max-capacity|-i))))*", RegexOptions.IgnoreCase);
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessageAsync("`Error: Incorrect Syntax`"); return; }
                         await Discord.promote(new DiscordCommandArgs
                         {
                             e = e,
-                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server),
+                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, (e.Channel as IGuildChannel)?.Guild as SocketGuild),
                             force = cmd.Groups[2].Value,
                             date = cmd.Groups[3].Value,
                             ignore = cmd.Groups[5].Value != ""
                         });
                     }
-                    else if (Regex.IsMatch(e.Message.Text, "^!createMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    else if (Regex.IsMatch(e.Content, "^!createMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!createMember <@([^ ]+)>(?: (?:(?:(?:--date |-d )([^ ]+))|(?:(?:--steam-id |-s |--steam )(\d+))))*", RegexOptions.IgnoreCase);
-                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("`Error: Incorrect Syntax`"); return; }
-                        if (Regex.IsMatch(e.Message.RawText, "!createMember <@([^ ]+)> (?:(?:--steam-id |-s )((?:.+)?[^0-9]+(?:.+)?))", RegexOptions.IgnoreCase)) { await e.Channel.SendMessage("Steam ID must be numeric"); return; }
+                        Match cmd = Regex.Match(e.Content, @"!createMember <@([^ ]+)>(?: (?:(?:(?:--date |-d )([^ ]+))|(?:(?:--steam-id |-s |--steam )(\d+))))*", RegexOptions.IgnoreCase);
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessageAsync("`Error: Incorrect Syntax`"); return; }
+                        if (Regex.IsMatch(e.Content, "!createMember <@([^ ]+)> (?:(?:--steam-id |-s )((?:.+)?[^0-9]+(?:.+)?))", RegexOptions.IgnoreCase)) { await e.Channel.SendMessageAsync("Steam ID must be numeric"); return; }
                         await Discord.createMember(new DiscordCommandArgs
                         {
                             e = e,
-                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, e.Server),
+                            member = Discord.getDiscordMemberByID(cmd.Groups[1].Value, (e.Channel as IGuildChannel)?.Guild as SocketGuild),
                             date = cmd.Groups[2].Value,
                             steam = cmd.Groups[3].Value
                         });
                     }
-                    else if (Regex.IsMatch(e.Message.Text, "^!updateMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
+                    else if (Regex.IsMatch(e.Content, "^!updateMember", RegexOptions.IgnoreCase) && !e.Channel.IsPrivate)
                     {
-                        await e.Channel.SendMessage("!updateMember to be re-added at a later date. Please contact Mardan to manually update database entries");
+                        await e.Channel.SendMessageAsync("!updateMember to be re-added at a later date. Please contact Mardan to manually update database entries");
                     }
 
                     //Text Stuff
-                    else if (e.Message.Text.StartsWith("!lenny"))
+                    else if (e.Content.StartsWith("!lenny"))
                     {
                         switch (e.User.Name)
                         {
-                            case "FoxTale": await e.Channel.SendMessage("http://i.imgur.com/MXeL1Jh.gifv"); break;
-                            case "Mardan": await e.Channel.SendMessage("http://i.imgur.com/H0aG47G.gifv"); break;
-                            case "Quantum-Nova": await e.Channel.SendMessage("http://i.imgur.com/LUfk3HX.gifv"); break;
-                            default: await e.Channel.SendMessage("( ͡° ͜ʖ ͡°)"); break;
+                            case "FoxTale": await e.Channel.SendMessageAsync("http://i.imgur.com/MXeL1Jh.gifv"); break;
+                            case "Mardan": await e.Channel.SendMessageAsync("http://i.imgur.com/H0aG47G.gifv"); break;
+                            case "Quantum-Nova": await e.Channel.SendMessageAsync("http://i.imgur.com/LUfk3HX.gifv"); break;
+                            default: await e.Channel.SendMessageAsync("( ͡° ͜ʖ ͡°)"); break;
                         }
                     }
-                    else if (e.Message.Text.StartsWith("!holdup")) { if(e.User.Name == "Quantum-Nova") { await e.Channel.SendMessage("http://i.imgur.com/ACoUhAW.gifv"); } }
-                    else if (e.Message.Text.StartsWith("!brutal")) { await e.Channel.SendMessage("http://i.imgur.com/1xzQkSo.png"); }
-                    else if (e.Message.Text.StartsWith("(╯°□°）╯︵ ┻━┻")) { await e.Channel.SendMessage("┬─┬﻿ ノ( ゜-゜ノ)"); }
-                    else if (e.Message.Text.StartsWith("!warframemarket") || e.Message.Text.StartsWith("!wfmarket") || e.Message.Text.StartsWith("!wfm")) { await e.Channel.SendMessage("http://warframe.market"); }
+                    else if (e.Content.StartsWith("!holdup")) { if(e.User.Name == "Quantum-Nova") { await e.Channel.SendMessageAsync("http://i.imgur.com/ACoUhAW.gifv"); } }
+                    else if (e.Content.StartsWith("!brutal")) { await e.Channel.SendMessageAsync("http://i.imgur.com/1xzQkSo.png"); }
+                    else if (e.Content.StartsWith("(╯°□°）╯︵ ┻━┻")) { await e.Channel.SendMessageAsync("┬─┬﻿ ノ( ゜-゜ノ)"); }
+                    else if (e.Content.StartsWith("!warframemarket") || e.Content.StartsWith("!wfmarket") || e.Content.StartsWith("!wfm")) { await e.Channel.SendMessageAsync("http://warframe.market"); }
 
                     //Emotes
-                    else if (e.Message.Text.StartsWith("!emote") || e.Message.Text.StartsWith("!e ") || e.Message.Text == "!e" || e.Message.Text == "!emote")
+                    else if (e.Content.StartsWith("!emote") || e.Content.StartsWith("!e ") || e.Content == "!e" || e.Content == "!emote")
                     {
-                        string cmd = e.Message.Text.Replace("!emotes", "").Replace("!e", "").Replace(" ", "");
+                        string cmd = e.Content.Replace("!emotes", "").Replace("!e", "").Replace(" ", "");
                         if(cmd == "")
                         {
-                            await e.Channel.SendMessage("Welcome to the Spawner Swarm Emotes system (beta)! To send an emote, send a message like this '!e <emote_ref>'. To see a list of emotes, send '!emotes list' or '!e list'");
+                            await e.Channel.SendMessageAsync("Welcome to the Spawner Swarm Emotes system (beta)! To send an emote, send a message like this '!e <emote_ref>'. To see a list of emotes, send '!emotes list' or '!e list'");
                         }
                         else
                         {
@@ -143,9 +153,9 @@ namespace SwarmBot
                             });
                         }
                     }
-                    else if(e.Message.Text.StartsWith("!newEmote") && !e.Channel.IsPrivate)
+                    else if(e.Content.StartsWith("!newEmote") && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!newEmote \((.+)\) ([^ ]+) ([^ ]+) ([^ ]+)");
+                        Match cmd = Regex.Match(e.Content, @"!newEmote \((.+)\) ([^ ]+) ([^ ]+) ([^ ]+)");
                         await Discord.createEmote(new DiscordCommandArgs
                         {
                             e = e,
@@ -155,11 +165,11 @@ namespace SwarmBot
                             id = cmd.Groups[4].Value, //Content
                         });
                     }
-                    else if(e.Message.Text.StartsWith("!tagme") && !e.Channel.IsPrivate)
+                    else if(e.Content.StartsWith("!tagme") && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!tagme (.+)", RegexOptions.IgnoreCase);
-                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
-                        if(cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "rank" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
+                        Match cmd = Regex.Match(e.Content, @"!tagme (.+)", RegexOptions.IgnoreCase);
+                        if(cmd.Groups[1].Value == "") { await e.Channel.SendMessageAsync("Error: Argument blank. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
+                        if(cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "rank" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessageAsync("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
                         await Discord.tagMember(new DiscordCommandArgs
                         {
                             e = e,
@@ -167,11 +177,11 @@ namespace SwarmBot
                             force = cmd.Groups[1].Value
                         });
                     }
-                    else if (e.Message.Text.StartsWith("!untagme") && !e.Channel.IsPrivate)
+                    else if (e.Content.StartsWith("!untagme") && !e.Channel.IsPrivate)
                     {
-                        Match cmd = Regex.Match(e.Message.RawText, @"!untagme (.+)", RegexOptions.IgnoreCase);
-                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessage("Error: Argument blank. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
-                        if (cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessage("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
+                        Match cmd = Regex.Match(e.Content, @"!untagme (.+)", RegexOptions.IgnoreCase);
+                        if (cmd.Groups[1].Value == "") { await e.Channel.SendMessageAsync("Error: Argument blank. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
+                        if (cmd.Groups[1].Value != "overwatch" && cmd.Groups[1].Value != "warframe" && cmd.Groups[1].Value != "sk" && cmd.Groups[1].Value != "bot") { await e.Channel.SendMessageAsync("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
                         await Discord.untagMember(new DiscordCommandArgs
                         {
                             e = e,
@@ -179,7 +189,7 @@ namespace SwarmBot
                             force = cmd.Groups[1].Value
                         });
                     }
-                    else if (Regex.IsMatch(e.Message.Text, @"^!memberList", RegexOptions.IgnoreCase))
+                    else if (Regex.IsMatch(e.Content, @"^!memberList", RegexOptions.IgnoreCase))
                     {
                         await Discord.getMemberCount(new DiscordCommandArgs
                         {
@@ -187,7 +197,7 @@ namespace SwarmBot
                         });
                     }
                 }
-            };
+            };*/
 
             Discord.initializeDiscordClient();
         }
@@ -219,7 +229,7 @@ namespace SwarmBot
                 Config.oldAlertsDBPath = Config.AlertsDBPath;
                 Config.AlertsDBPath = alertsDestPath;
 
-                Discord.client.SetGame("DEBUG MODE");
+                Discord.client.SetGameAsync("DEBUG MODE");
                 Log("Enabled Debug Mode");
             }
             else
@@ -232,13 +242,13 @@ namespace SwarmBot
 
                 Config.MemberDBPath = Config.oldMemberDBPath;
                 Config.EmoteDBPath = Config.oldEmoteDBPath;
-                Config.EmoteDBPath = Config.oldAlertsDBPath;
+                Config.AlertsDBPath = Config.oldAlertsDBPath;
 
                 Config.oldMemberDBPath = null;
                 Config.oldEmoteDBPath = null;
                 Config.oldAlertsDBPath = null;
 
-                Discord.client.SetGame("Type !help for help.");
+                Discord.client.SetGameAsync("Type !help for help.");
                 Log("Disabled Debug Mode");
             }
         }
@@ -247,9 +257,10 @@ namespace SwarmBot
     struct Config
     {
         public static string AppDataPath;
-        public static string MemberDBPath, oldMemberDBPath;
-        public static string EmoteDBPath, oldEmoteDBPath;
-        public static string AlertsDBPath, oldAlertsDBPath;
+        public static string MemberDBPath;
+        public static string EmoteDBPath;
+        public static string AlertsDBPath;
+        internal static string oldMemberDBPath, oldEmoteDBPath, oldAlertsDBPath;
         public static DirectoryInfo ExePath;
         public static string discordToken;
         public static string discordArchiveServerId;
