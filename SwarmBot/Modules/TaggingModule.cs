@@ -17,7 +17,8 @@ namespace SwarmBot.Modules
         [Command("tagme"), Alias("tag"), Summary("Applies a discord notification tag for a specific group"), RequireContext(ContextType.Guild)]
         public async Task tagme([Summary("The tag to be applied")] string tag)
         {
-            if (tag != "overwatch" && tag != "warframe" && tag != "sk" && tag != "rank" && tag != "bot") { await ReplyAsync("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
+            if (!Regex.IsMatch(tag, "overwatch|warframe|sk|rank|bot", RegexOptions.IgnoreCase)) { await ReplyAsync("Error: Argument invalid. Correct format is \"!tagme (overwatch/warframe/sk/bot/rank)\""); return; }
+            tag = tag.ToLower();
             DiscordCommandArgs e = new DiscordCommandArgs
             {
                 e = Context.Message,
@@ -61,7 +62,7 @@ namespace SwarmBot.Modules
         [Command("untagme"), Alias("untag"), Summary("Removes a discord notification tag for a specific group"), RequireContext(ContextType.Guild)]
         public async Task untagme([Summary("The tag to be removed")] string tag)
         {
-            if (tag != "overwatch" && tag != "warframe" && tag != "sk" && tag != "bot") { await ReplyAsync("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
+            if (!Regex.IsMatch(tag, "overwatch|warframe|sk|bot", RegexOptions.IgnoreCase)) { await ReplyAsync("Error: Argument invalid. Correct format is \"!untagme (overwatch/warframe/sk/bot)\""); return; }
             DiscordCommandArgs e = new DiscordCommandArgs
             {
                 e = Context.Message,
