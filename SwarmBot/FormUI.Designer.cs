@@ -48,7 +48,7 @@
             this.SwConsole.Location = new System.Drawing.Point(13, 13);
             this.SwConsole.Name = "SwConsole";
             this.SwConsole.ReadOnly = true;
-            this.SwConsole.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
+            this.SwConsole.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.SwConsole.Size = new System.Drawing.Size(560, 337);
             this.SwConsole.TabIndex = 0;
             this.SwConsole.TabStop = false;
@@ -86,19 +86,19 @@
             this.showMenuItem,
             this.exitMenuItem});
             this.notifyIconMenu.Name = "notifyIconMenu";
-            this.notifyIconMenu.Size = new System.Drawing.Size(153, 70);
+            this.notifyIconMenu.Size = new System.Drawing.Size(104, 48);
             // 
             // showMenuItem
             // 
             this.showMenuItem.Name = "showMenuItem";
-            this.showMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.showMenuItem.Size = new System.Drawing.Size(103, 22);
             this.showMenuItem.Text = "Show";
             this.showMenuItem.Click += new System.EventHandler(this.showMenuItem_Click);
             // 
             // exitMenuItem
             // 
             this.exitMenuItem.Name = "exitMenuItem";
-            this.exitMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitMenuItem.Size = new System.Drawing.Size(103, 22);
             this.exitMenuItem.Text = "Exit";
             this.exitMenuItem.Click += new System.EventHandler(this.exitMenuItem_Click);
             // 
