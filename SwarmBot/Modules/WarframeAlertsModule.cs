@@ -57,7 +57,7 @@ namespace SwarmBot.Warframe
             foreach(string param in keywords)
             {
                 Keyword keyword = await db.getOrCreateKeyword(param);
-                if (db.getKeywordsForMember(Context.User.Id).GetAwaiter().GetResult().Where(x => x.key == param).Count() != 0) { message += "**Error:** you are already following that keyword\n"; }
+                if (db.getKeywordsForMember(Context.User.Id).GetAwaiter().GetResult().Where(x => Regex.IsMatch(x.key, param, RegexOptions.IgnoreCase)).Count() != 0) { message += "**Error:** you are already following that keyword\n"; }
                 else
                 {
                     await keyword.addMemberToTracking(Context.User, db);
@@ -77,7 +77,7 @@ namespace SwarmBot.Warframe
 
             foreach (string param in keywords)
             {
-                Keyword keyword = await db.getOrCreateKeyword(param);
+                Keyword keyword = await db.getKeyword(param);
                 if (db.getKeywordsForMember(Context.User.Id).GetAwaiter().GetResult().Where(x => x.key == param).Count() == 0) { message += "**Error:** you are not following that keyword\n"; }
                 else
                 {

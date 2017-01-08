@@ -55,7 +55,7 @@ namespace SwarmBot.Warframe
 
         public async Task<Keyword> getOrCreateKeyword(string key)
         {
-            IEnumerable<XElement> xEs = keywords.Where(x => x.Attribute("key")?.Value == key);
+            IEnumerable<XElement> xEs = keywords.Where(x => Regex.IsMatch(x.Attribute("key")?.Value, key, RegexOptions.IgnoreCase));
             if(xEs?.Count() != 0)
             {
                 return new Keyword(xEs.First().Attribute("key").Value, this);
@@ -101,7 +101,7 @@ namespace SwarmBot.Warframe
 
         public async Task removeKeywordFromMember(ulong memberID, Keyword keyword)
         {
-            members.Where(x => x.Element("id").Value == memberID.ToString()).Elements("Keyword").Where(x => x.Attribute("key").Value == keyword.key).Remove();
+            members.Where(x => x.Element("id").Value == memberID.ToString()).Elements("Keyword").Where(x => Regex.IsMatch(x.Attribute("key").Value, keyword.key, RegexOptions.IgnoreCase)).Remove();
             x.Save(Config.AlertsDBPath);
         }
 
@@ -137,7 +137,7 @@ namespace SwarmBot.Warframe
         {
             this.key = key;
             ids = new List<ulong>();
-            IEnumerable<XElement> xEs = db.keywords.Where(x => x.Attribute("key")?.Value == key).Elements("Member");
+            IEnumerable<XElement> xEs = db.keywords.Where(x => Regex.IsMatch(x.Attribute("key")?.Value, key, RegexOptions.IgnoreCase)).Elements("Member");
             foreach(XElement xE in xEs)
             {
                 ids.Add(ulong.Parse(xE.Value));
