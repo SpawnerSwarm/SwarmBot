@@ -20,7 +20,7 @@ namespace SwarmBot.Warframe
             string alertText = msgParts[0];
             string link = msgParts[1];
 
-            string[] keywords = alertText.Replace("(", "").Replace(")", "").Replace(":", "").Replace("- ", "").Split(new char[] { ' ' });
+            /*string[] keywords = alertText.Replace("(", "").Replace(")", "").Replace(":", "").Replace("- ", "").Split(new char[] { ' ' });
             foreach(string keyword in keywords)
             {
                 List<XElement> kList = db.keywords.Where(x => Regex.IsMatch(x.Attribute("key").Value, keyword, RegexOptions.IgnoreCase)).ToList();
@@ -33,6 +33,28 @@ namespace SwarmBot.Warframe
                         await Discord.getDiscordMemberByID(member.Value, Discord.client.GetGuild(ulong.Parse(Config.discordSwarmServerId))).CreateDMChannelAsync().GetAwaiter().GetResult().SendMessageAsync(alertText);
                     }
                 }
+            }*/
+
+            Match match = Regex.Match(alertText, @"(?:.+ \(.+\): (.+) - (\d+)m - (\d+)cr(?: - (.+))?)|(?:.+ \(.+\) Invasion: [^ ]+(?: \((.+)\))? VS\. [^ ]+(?: \((.+)\))?)");
+            string minutes = match.Groups[2].Value;
+            string credits = match.Groups[3].Value;
+            string reward = (match.Groups[4].Value != "" ? match.Groups[4].Value : "nothing");
+            string invasionReward1 = (match.Groups[5].Value != "" ? match.Groups[5].Value : "nothing");
+            string invasionReward2 = (match.Groups[6].Value != "" ? match.Groups[6].Value : "nothing");
+
+
+            List<XElement> kList = db.keywords.Where(x => Regex.IsMatch(reward, x.Attribute("key").Value, RegexOptions.IgnoreCase)).ToList();
+            kList.AddRange(db.keywords.Where(x => Regex.IsMatch(invasionReward1, x.Attribute("key").Value, RegexOptions.IgnoreCase)));
+            kList.AddRange(db.keywords.Where(x => Regex.IsMatch(invasionReward2, x.Attribute("key").Value, RegexOptions.IgnoreCase)));
+            kList.AddRange(db.creditAmounts.Where(x => int.Parse(x.Attribute("num").Value) <= int.Parse(credits)));
+            
+            foreach(XElement xE in kList)
+            {
+                List<XElement> members = kList[0].Elements("Member").ToList();
+                foreach (XElement member in members)
+                {
+                    await Discord.getDiscordMemberByID(member.Value, Discord.client.GetGuild(ulong.Parse(Config.discordSwarmServerId))).CreateDMChannelAsync().GetAwaiter().GetResult().SendMessageAsync(alertText);
+                }
             }
         } 
     }
@@ -42,6 +64,7 @@ namespace SwarmBot.Warframe
         public XDocument x;
         internal List<XElement> keywords;
         private List<XElement> members;
+        internal List<XElement> creditAmounts;
         public string path;
 
         public AlertsDB(string path)
@@ -51,11 +74,12 @@ namespace SwarmBot.Warframe
 
             keywords = x.Element("Database").Element("Keywords").Elements("Keyword").ToList();
             members = x.Element("Database").Element("Members").Elements("Member").ToList();
+            creditAmounts = x.Element("Database").Element("Credits").Elements("Amount").ToList();
         }
 
         public async Task<Keyword> getOrCreateKeyword(string key)
         {
-            IEnumerable<XElement> xEs = keywords.Where(x => Regex.IsMatch(x.Attribute("key")?.Value, key, RegexOptions.IgnoreCase));
+            IEnumerable<XElement> xEs = keywords.Where(x => Regex.IsMatch(key, x.Attribute("key")?.Value, RegexOptions.IgnoreCase));
             if(xEs?.Count() != 0)
             {
                 return new Keyword(xEs.First().Attribute("key").Value, this);
@@ -74,6 +98,7 @@ namespace SwarmBot.Warframe
 
             keywords = x.Element("Database").Element("Keywords").Elements("Keyword").ToList();
             members = x.Element("Database").Element("Members").Elements("Member").ToList();
+            creditAmounts = x.Element("Database").Element("Credits").Elements("Amount").ToList();
         }
 
         public async Task<Keyword> getKeyword(string key)
@@ -101,7 +126,7 @@ namespace SwarmBot.Warframe
 
         public async Task removeKeywordFromMember(ulong memberID, Keyword keyword)
         {
-            members.Where(x => x.Element("id").Value == memberID.ToString()).Elements("Keyword").Where(x => Regex.IsMatch(x.Attribute("key").Value, keyword.key, RegexOptions.IgnoreCase)).Remove();
+            members.Where(x => x.Element("id").Value == memberID.ToString()).Elements("Keyword").Where(x => Regex.IsMatch(keyword.key, x.Attribute("key").Value, RegexOptions.IgnoreCase)).Remove();
             x.Save(Config.AlertsDBPath);
         }
 
@@ -116,7 +141,7 @@ namespace SwarmBot.Warframe
 
         public async Task removeKeywordIfEmpty(Keyword keyword)
         {
-            XElement xE = keywords.Where(x => x.Attribute("key").Value == keyword.key).First();
+            XElement xE = keywords.Where(x => Regex.IsMatch(keyword.key, x.Attribute("key").Value, RegexOptions.IgnoreCase)).First();
             if (xE.HasElements) { return; }
             xE.Remove();
             Save(Config.AlertsDBPath);
@@ -125,6 +150,45 @@ namespace SwarmBot.Warframe
         public async Task<bool> memberExists(ulong id)
         {
             return members.Where(x => x?.Element("id")?.Value == id.ToString())?.Count() != 0;
+        }
+
+        public async Task<XAttribute> getCreditTrackingForMember(ulong id)
+        {
+            return members.Where(x => x.Element("id").Value == id.ToString())?.First()?.Element("Credits")?.Attribute("amount");
+        }
+
+        public async Task addCreditTrackingForMember(IUser member, int creditAmount)
+        {
+            XElement xE = members.Where(x => x.Element("id").Value == member.Id.ToString())?.First();
+            if(xE.Elements("Credits").Count() == 0) { xE.Add(new XElement("Credits", new XAttribute("amount", creditAmount))); }
+            else {
+                await removeMemberFromCreditAmount(member.Id, xE.Element("Credits").Attribute("amount").Value);
+                xE.Element("Credits").Attribute("amount").SetValue(creditAmount);
+            }
+            if(creditAmounts.Where(x => x.Attribute("num").Value == creditAmount.ToString()).Count() == 0) {
+                x.Element("Database").Element("Credits").Add(
+                    new XElement("Amount", new XAttribute("num", creditAmount),
+                        new XElement("Member", new XAttribute("name", member.Username), member.Id)
+                    )
+                );
+            }
+            else { creditAmounts.Where(x => x.Attribute("num").Value == creditAmount.ToString()).First().Add(new XElement("Member", new XAttribute("name", member.Username), member.Id)); }
+            Save(Config.AlertsDBPath);
+        }
+
+        private async Task removeMemberFromCreditAmount(ulong memberID, string creditAmount)
+        {
+            XElement xE = creditAmounts.Where(x => x.Attribute("num").Value == creditAmount).First();
+            xE.Elements("Member").Where(x => x.Value == memberID.ToString()).Remove();
+            if(!xE.HasElements) { xE.Remove(); }
+        }
+
+        public async Task removeCreditTrackingFromMember(ulong memberID)
+        {
+            XAttribute x = await getCreditTrackingForMember(memberID);
+            x.Parent.Remove();
+            await removeMemberFromCreditAmount(memberID, x.Value);
+            this.x.Save(Config.AlertsDBPath);
         }
     }
 
@@ -137,7 +201,7 @@ namespace SwarmBot.Warframe
         {
             this.key = key;
             ids = new List<ulong>();
-            IEnumerable<XElement> xEs = db.keywords.Where(x => Regex.IsMatch(x.Attribute("key")?.Value, key, RegexOptions.IgnoreCase)).Elements("Member");
+            IEnumerable<XElement> xEs = db.keywords.Where(x => Regex.IsMatch(key, x.Attribute("key")?.Value, RegexOptions.IgnoreCase)).Elements("Member");
             foreach(XElement xE in xEs)
             {
                 ids.Add(ulong.Parse(xE.Value));
@@ -146,13 +210,13 @@ namespace SwarmBot.Warframe
 
         public async Task addMemberToTracking(IUser member, AlertsDB db)
         {
-            db.keywords.Where(x => x.Attribute("key")?.Value == key).First().Add(new XElement("Member", new XAttribute("name", member.Username), member.Id));
+            db.keywords.Where(x => Regex.IsMatch(key, x.Attribute("key")?.Value, RegexOptions.IgnoreCase)).First().Add(new XElement("Member", new XAttribute("name", member.Username), member.Id));
             db.Save(Config.AlertsDBPath);
         }
 
         public async Task removeMemberFromTracking(IUser member, AlertsDB db)
         {
-            db.keywords.Where(x => x.Attribute("key")?.Value == key).First().Elements("Member").Where(x => x.Value == member.Id.ToString()).Remove();
+            db.keywords.Where(x => Regex.IsMatch(key, x.Attribute("key")?.Value, RegexOptions.IgnoreCase)).First().Elements("Member").Where(x => x.Value == member.Id.ToString()).Remove();
             db.Save(Config.AlertsDBPath);
         }
     }
