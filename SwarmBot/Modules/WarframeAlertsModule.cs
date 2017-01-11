@@ -46,10 +46,10 @@ namespace SwarmBot.Warframe
             }
             message += "Available commands are:\n";
             message += $"\t-** {initialCommandUsed}** -- Display this text or check your current notification status\n";
-            message += $"\t-** {initialCommandUsed} track/add/new/follow <keywords>** -- Add a keyword to track\n";
-                message += $"\t\t-** {initialCommandUsed} track/add/new/follow credits <amount>** -- Track alerts with credit amounts over a number\n";
-            message += $"\t-** {initialCommandUsed} untrack/remove/unfollow <keywords>** -- Remove a keyword from tracking\n";
-                message += $"\t\t-** {initialCommandUsed} untrack/remove/unfollow credits** -- Stop tracking alerts based on credit amounts\n";
+            message += $"\t-** {initialCommandUsed} track*/add/new/follow* <keywords>** -- Add a keyword to track\n";
+                message += $"\t\t-** {initialCommandUsed} track*/add/new/follow* credits <amount>** -- Track alerts with credit amounts over a number\n";
+            message += $"\t-** {initialCommandUsed} untrack*/remove/unfollow* <keywords>** -- Remove a keyword from tracking\n";
+                message += $"\t\t-** {initialCommandUsed} untrack*/remove/unfollow* credits** -- Stop tracking alerts based on credit amounts\n";
 
             await ReplyAsync(message);
         }
