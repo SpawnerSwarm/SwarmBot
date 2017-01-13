@@ -36,7 +36,12 @@ namespace SwarmBot
         {
             rank = rankup.Attribute("name").Value;
             string date = rankup.Value;
-            this.date = (date == "Old" || date == "NaN") ? new DateTime() : DateTime.Parse(date);
+            if (date == "Old" || date == "NaN")
+            {
+                this.date = new DateTime();
+                this.placeHolderDate = date;
+            }
+            else { this.date = DateTime.Parse(date); }
         }
         public string getDate()
         {
