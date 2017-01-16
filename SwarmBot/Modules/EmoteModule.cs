@@ -38,26 +38,28 @@ namespace SwarmBot.Modules
         {
             Emotes emotes = new Emotes(Config.EmoteDBPath);
             page = Math.Abs(page);
-
-            string message = "";
             try
             {
-                message += "Page " + (page == 0 ? 1 : page) + ". To move to the next page, use \"!e list " + (page == 0 ? 2 : page + 1) + "\". To view information about a specific emote, use \"!e list <emote_ref>\".\n";
+                string message = $"Page {(page == 0 ? 1 : page)}. To move to the next page, use **!e list {(page == 0 ? 2 : page + 1)}**. To view information about a specific emote, use **!e list <emote_ref>**.\n";
                 List<Emote> eList = emotes.getBatchEmotes(page, 5);
+                short i = 0;
                 foreach (Emote emote in eList)
                 {
-                    message += "```xl\nName: " + emote.name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
+                    IUser user = (Context.IsPrivate ? Context.Client.CurrentUser : Discord.getDiscordMemberByID(emote.creator, Context.Guild as SocketGuild));
+                    await ReplyAsync((i == 0 ? message : ""), false, buildEmbed(emote.name, emote.reference, emote.requiredRank, emote.content, user));
+                    /*message += "```xl\nName: " + emote.name.Replace('\'', 'ꞌ'); //Replaces the apostraphe with a Latin Small Letter Saltillo (U+A78C) so it won't break Discord formatting (as much).
                     message += "\nReference: " + emote.reference;
                     message += "\nRequired Rank: " + emote.requiredRank;
-                    message += "\nCreator: " + emote.creator + "\n```\n";
+                    message += "\nCreator: " + emote.creator + "\n```\n";*/
+                    i++;
                 }
-                if (!message.Contains("Name")) { message = "http://i.imgur.com/zdMAeE9.png"; }
+                if (i == 0) { await ReplyAsync("http://i.imgur.com/zdMAeE9.png"); }
             }
             catch (XMLException x)
             {
                 if (x.errorCode == XMLErrorCode.NotFound) { await ReplyAsync("http://i.imgur.com/zdMAeE9.png"); return; }
             }
-            await ReplyAsync(message);
+            //await ReplyAsync(message);
             return;
         }
 
@@ -83,6 +85,44 @@ namespace SwarmBot.Modules
                 return;
             }
             await e.e.Channel.SendMessageAsync("Successfully created emote " + emote.name + "!");
+        }
+
+        public Embed buildEmbed(string name, string reference, Rank rank, string content, IUser author)
+        {
+            string url = (Regex.IsMatch(content, @"http(?:s)?:\/\/[^ \/]+\....") ? content : "http://i.imgur.com/88Cxeyw.png");
+
+            EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder()
+                .WithIconUrl(author.AvatarUrl)
+                .WithName(author.Username);
+
+            EmbedBuilder builder = new EmbedBuilder()
+                .WithThumbnailUrl(url.Replace(".gif", "h.jpg"))
+                .WithTitle(name)
+                .WithAuthor(authorBuilder)
+                .AddField(x =>
+                {
+                    x.Name = "Reference";
+                    x.Value = reference;
+                    x.IsInline = true;
+                })
+                .AddField(x =>
+                {
+                    x.Name = "RequiredRank";
+                    x.Value = rank.ToString();
+                    x.IsInline = true;
+                })
+                .WithColor(rank.color);
+
+            if(url == "http://i.imgur.com/88Cxeyw.png")
+            {
+                builder.WithDescription(content);
+            }
+            else
+            {
+                builder.Url = url;
+            }
+
+            return builder.Build();
         }
     }
 }
