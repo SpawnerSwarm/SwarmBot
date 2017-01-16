@@ -24,35 +24,96 @@ namespace SwarmBot.Modules
                 XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
                 XMLMember member = memberDB.getMemberById(user.Id);
                 trilean isReady = member.checkReadyForRankup();
-                string message = "```xl\n";
-                message += member.name + " is a(n) " + member.rank + "\n";
+                //string message = "```xl\n";
+                //message += member.name + " is a(n) " + member.rank + "\n";
+                EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder()
+                    .WithIconUrl(user.AvatarUrl)
+                    .WithName(member.name);
+                EmbedBuilder builder = new EmbedBuilder()
+                    .WithAuthor(authorBuilder)
+                    .WithColor(member.rank.color)
+                    .AddField(x =>
+                    {
+                        x.Name = "Rank";
+                        x.Value = member.rank.ToString();
+                        x.IsInline = true;
+                    });
+
                 if (isReady.value == TrileanValue.Tri)
                 {
+                    builder.AddField(x =>
+                    {
+                        x.Name = "Last Rankup";
+                        x.Value = "Unknown";
+                        x.IsInline = true;
+                    });
                     switch ((XMLErrorCode)isReady.embedded)
                     {
-                        case XMLErrorCode.Old: message += "We can't tell whether or not " + member.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.\n"; break;
-                        case XMLErrorCode.Maximum: message += "He/She has reached the maximum possible rank.\n"; break;
+                        case XMLErrorCode.Old: builder.WithDescription($"We can't tell whether or not {member.name} is ready for an upgrade, but they probably are since our data dates back before this bot's conception."); break; //message += "We can't tell whether or not " + member.name + " is ready for an upgrade, but they probably are since our data dates back before this bot's conception.\n"; break;
+                        case XMLErrorCode.Maximum: builder.WithDescription("He/She has reached the maximum possible rank."); break;//message += "He/She has reached the maximum possible rank.\n"; break;
                     }
                 }
                 else if (isReady.value == TrileanValue.False)
                 {
-                    message += "He/she is not eligible for a rankup at this time.\n";
-                    message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                    //message += "He/she is not eligible for a rankup at this time.\n";
+                    //message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                    builder.AddField(x =>
+                    {
+                        x.Name = "Last Rankup";
+                        x.Value = member.rankupHistory[member.rank - 1].date.ToShortDateString();
+                        x.IsInline = true;
+                    })
+                    .WithDescription($"{member.name} is not eligible for a rankup at this time.\nIt has been {Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value} days since their last rankup.");
                 }
                 else if (isReady.value == TrileanValue.True)
                 {
-                    message += "He/she is eligible for a rankup.\n";
-                    message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                    //message += "He/she is eligible for a rankup.\n";
+                    //message += "It has been " + Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value + " days since their last rankup.\n";
+                    builder.AddField(x =>
+                    {
+                        x.Name = "Last Rankup";
+                        x.Value = member.rankupHistory[member.rank - 1].date.ToShortDateString();
+                        x.IsInline = true;
+                    })
+                    .WithDescription($"{member.name} is eligible for a rankup.\nIt has been {Regex.Match((string)isReady.embedded, @"(.+)\.(?:.+)?").Groups[1].Value} days since their last rankup.");
                 }
-                message += member.name + " has donated " + member.forma + " Forma\n";
+                //message += member.name + " has donated " + member.forma + " Forma\n";
+                builder.AddField(x => {
+                    x.Name = "Forma Donated";
+                    x.Value = member.forma.ToString();
+                    x.IsInline = true;
+                });
                 if (verbose)
                 {
-                    if (member.WFName != "" && member.WFName != "NaN") { message += "\nWarframe name is " + member.WFName; }
-                    if (member.SKName != "" && member.SKName != "NaN") { message += "\nSpiral Knights name is " + member.SKName; }
-                    if (member.steamName != "" && member.steamName != "NaN") { message += "\nSteam name is " + member.steamName; }
+                    if (member.WFName != "" && member.WFName != "NaN") {
+                        builder.AddField(x =>
+                        {
+                            x.Name = "Warframe";
+                            x.Value = member.WFName;
+                            x.IsInline = true;
+                        });
+                    }//message += "\nWarframe name is " + member.WFName; }
+                    if (member.SKName != "" && member.SKName != "NaN")
+                    {
+                        builder.AddField(x =>
+                        {
+                            x.Name = "Spiral Knights";
+                            x.Value = member.SKName;
+                            x.IsInline = true;
+                        });
+                    }//message += "\nSpiral Knights name is " + member.SKName; }
+                    if (member.steamName != "" && member.steamName != "NaN")
+                    {
+                        builder.AddField(x =>
+                        {
+                            x.Name = "Steam";
+                            x.Value = member.steamName;
+                            x.IsInline = true;
+                        });
+                    }//message += "\nSteam name is " + member.steamName; }
                 }
-                message += "```";
-                await Context.Channel.SendMessageAsync(message);
+                //message += "```";
+                await Context.Channel.SendMessageAsync("", false, builder);
             }
             catch (XMLException x)
             {
