@@ -64,7 +64,7 @@ namespace SwarmBot.Modules
         }
 
         [Command("create"), Summary("Create a new emote"), Alias("new", "make"), RequireOwner]
-        public async Task create(string name, string reference, short requiredRank, string content)
+        public async Task create(string name, string reference, short requiredRank, string content, IUser creator)
         {
             DiscordCommandArgs e = new DiscordCommandArgs
             {
@@ -74,8 +74,8 @@ namespace SwarmBot.Modules
                 requiredRank = requiredRank, //Required Rank
                 id = content, //Content
             };
-            
-            Emote emote = new Emote(e.name, e.reference, e.id, e.requiredRank);
+
+            Emote emote = new Emote(e.name, e.reference, e.id, e.requiredRank, creator.Id.ToString());
             Emotes emotes = new Emotes(Config.EmoteDBPath);
             try { emotes.addEmote(emote); }
             catch (XMLException x)

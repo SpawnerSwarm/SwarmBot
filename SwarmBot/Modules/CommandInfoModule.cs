@@ -29,7 +29,7 @@ namespace SwarmBot.Modules
                 {
                     x.Name = group.name;
                     string str = "";
-                    foreach (Command command in group.commands)
+                    foreach (IDBCommand command in group.commands)
                     {
                         str += $"{command.syntax}\n";
                     }
@@ -72,24 +72,28 @@ namespace SwarmBot.Modules
     internal class Group
     {
         internal string name;
-        internal List<Command> commands;
+        internal List<IDBCommand> commands;
 
         internal Group(XElement x)
         {
             name = x.Attribute("name").Value;
-            commands = new List<Command>();
+            commands = new List<IDBCommand>();
             foreach(XElement xE in x.Elements("Command"))
             {
                 commands.Add(new Command(xE));
             }
+            foreach(XElement xE in x.Elements("SubModule"))
+            {
+                commands.Add(new SubModule(xE));
+            }
         }
     }
 
-    internal class Command
+    internal class Command : IDBCommand
     {
-        internal string name;
-        internal string syntax;
-        internal List<string> aliases;
+        public string name { get; set; }
+        public string syntax { get; set; }
+        public List<string> aliases { get; set; }
         internal string description;
         internal List<Parameter> parameters;
 
@@ -132,5 +136,39 @@ namespace SwarmBot.Modules
             optional = x.Attribute("optional") != null;
             description = x.Value;
         }
+    }
+
+    internal class SubModule : IDBCommand
+    {
+        public string name { get; set; }
+        public List<string> aliases { get; set; }
+        public string syntax
+        {
+            get
+            {
+                return $"**!{name}** -- More information available on {name} commands";
+            }
+            set
+            {
+                
+            }
+        }
+
+        internal SubModule(XElement x)
+        {
+            name = x.Element("Name").Value;
+            aliases = new List<string>();
+            foreach(XElement xE in x.Element("Aliases")?.Elements("Alias"))
+            {
+                aliases.Add(xE.Value);
+            }
+        }
+    }
+
+    internal interface IDBCommand
+    {
+        string name { get; set; }
+        List<string> aliases { get; set; }
+        string syntax { get; set; }
     }
 }
