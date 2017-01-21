@@ -211,7 +211,9 @@
       <DependentUpon>FormUI.cs</DependentUpon>
     </Compile>
     <Compile Include="Modules\BasicMemberDBModule.cs" />
+    <Compile Include="Modules\CommandInfoModule.cs" />
     <Compile Include="Modules\EmoteModule.cs" />
+    <Compile Include="Modules\NexusStatsModule.cs" />
     <Compile Include="Modules\Preconditions\RequireUserId.cs" />
     <Compile Include="Modules\RandomCommandsModule.cs" />
     <Compile Include="Modules\TaggingModule.cs" />

@@ -41,6 +41,7 @@ namespace SwarmBot
                 Config.MemberDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.EmoteDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.AlertsDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
+                Config.CommandInfoDBPath = Path.Combine(Config.AppDataPath, sr.ReadLine());
                 Config.discordToken = sr.ReadLine();
                 Config.discordArchiveServerId = sr.ReadLine();
                 Config.discordSwarmServerId = sr.ReadLine();
@@ -132,6 +133,7 @@ namespace SwarmBot
         public static string MemberDBPath;
         public static string EmoteDBPath;
         public static string AlertsDBPath;
+        public static string CommandInfoDBPath;
         internal static string oldMemberDBPath, oldEmoteDBPath, oldAlertsDBPath;
         public static DirectoryInfo ExePath;
         public static string discordToken;

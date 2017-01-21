@@ -206,7 +206,7 @@ namespace SwarmBot.Modules
                 XMLMember member = memberDB.getMemberById(e.member.Id);
                 XMLMember author = memberDB.getMemberById(e.e.Author.Id);
                 if (!author.checkPermissions(Rank.Officer)) { await ReplyAsync("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
-                if (e.e.Author.Id == (ulong)member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await ReplyAsync("```xl\nSorry, you can't promote yourself!\n```"); return; }
+                if (e.e.Author.Id == member.discordId && !author.checkPermissions(Rank.GuildMaster)) { await ReplyAsync("```xl\nSorry, you can't promote yourself!\n```"); return; }
                 if (member.rank == Rank.GuildMaster && e.force == "") { await ReplyAsync("```xl\nCan't promote " + member.name + " because they are already at maximum rank.\n```"); return; }
 
                 Rank targetRank = e.force == "" ? (Rank)(member.rank + 1) : (Rank)e.force;
