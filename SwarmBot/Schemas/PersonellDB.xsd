@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Database">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" name="Define">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:unsignedShort">
+                <xs:attribute name="type" type="xs:string" use="required" />
+                <xs:attribute name="for" type="xs:string" use="required" />
+                <xs:attribute name="name" type="xs:string" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element maxOccurs="unbounded" name="Member">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Name" type="xs:string" />
+              <xs:element name="Rank" type="xs:string" />
+              <xs:element name="RankupHistory">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="Rankup">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute name="name" type="Rank" use="required" />
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Names">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Warframe" type="xs:string" />
+                    <xs:element name="SpiralKnights" type="xs:string" />
+                    <xs:element name="Discord" type="xs:string" />
+                    <xs:element name="DiscordId" type="xs:unsignedLong" />
+                    <xs:element name="Steam" type="xs:string" />
+                    <xs:element minOccurs="0" name="SteamId">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute name="numerical" type="xs:string" use="optional" />
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element minOccurs="0" name="FailedTrial" type="xs:boolean" />
+              <xs:element name="FormaDonated" type="xs:integer" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="Rank">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Recruit"/>
+      <xs:enumeration value="Member"/>
+      <xs:enumeration value="Member II"/>
+      <xs:enumeration value="Veteran"/>
+      <xs:enumeration value="Officer"/>
+      <xs:enumeration value="General"/>
+      <xs:enumeration value="Guild Master"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

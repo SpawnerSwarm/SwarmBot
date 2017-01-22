@@ -248,7 +248,16 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Schemas\alerts.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Schemas\commandInfo.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Schemas\emotes.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Schemas\PersonellDB.xsd">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
