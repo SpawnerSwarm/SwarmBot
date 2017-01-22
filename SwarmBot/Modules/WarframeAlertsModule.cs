@@ -45,11 +45,13 @@ namespace SwarmBot.Warframe
                 message += $"Detected existing tracking for {Context.User.Username}. You are currently not tracking any keywords. ";
             }
             message += "Available commands are:\n";
-            message += $"\t-** {initialCommandUsed}** -- Display this text or check your current notification status\n";
-            message += $"\t-** {initialCommandUsed} track*/add/new/follow* <keywords>** -- Add a keyword to track\n";
-                message += $"\t\t-** {initialCommandUsed} track*/add/new/follow* credits <amount>** -- Track alerts with credit amounts over a number\n";
-            message += $"\t-** {initialCommandUsed} untrack*/remove/unfollow* <keywords>** -- Remove a keyword from tracking\n";
-                message += $"\t\t-** {initialCommandUsed} untrack*/remove/unfollow* credits** -- Stop tracking alerts based on credit amounts\n";
+            //message += $"\t-** {initialCommandUsed}** -- Display this text or check your current notification status\n";
+            //message += $"\t-** {initialCommandUsed} track*/add/new/follow* <keywords>** -- Add a keyword to track\n";
+            //    message += $"\t\t-** {initialCommandUsed} track*/add/new/follow* credits <amount>** -- Track alerts with credit amounts over a number\n";
+            //message += $"\t-** {initialCommandUsed} untrack*/remove/unfollow* <keywords>** -- Remove a keyword from tracking\n";
+            //    message += $"\t\t-** {initialCommandUsed} untrack*/remove/unfollow* credits** -- Stop tracking alerts based on credit amounts\n";
+            CommandInfoDB info = new CommandInfoDB(Config.CommandInfoDBPath);
+            message += ((DBSubModule)info.getCommandByName("wfalerts")).getDescriptionForCommandUsed(initialCommandUsed);
 
             await ReplyAsync(message);
         }

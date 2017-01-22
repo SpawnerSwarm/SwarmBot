@@ -24,7 +24,7 @@ namespace SwarmBot.Modules
             EmbedBuilder builder = new EmbedBuilder()
                 .WithFooter(footer)
                 .WithColor(Rank.GuildMaster.color);
-            foreach(Group group in infoDB.groups)
+            foreach (DBGroup group in infoDB.groups)
             {
                 builder.AddField(x =>
                 {
@@ -43,31 +43,36 @@ namespace SwarmBot.Modules
         public async Task help(string commandName)
         {
             CommandInfoDB infoDB = new CommandInfoDB(Config.CommandInfoDBPath);
-            IDBCommand _command = infoDB.getCommandByName(commandName.Replace("!", ""));
+            commandName = commandName.Replace("!", "");
+            IDBCommand _command = infoDB.getCommandByName(commandName);
             EmbedBuilder builder;
-            switch(_command.isSubModule)
+            switch (_command.isSubModule)
             {
                 case true:
                     builder = new EmbedBuilder()
-                        .WithColor(Rank.GuildMaster.color)
-                        .WithDescription(_command.syntax);
+                        .WithDescription($"**{_command.name}** -- **!{commandName}**")
+                        .AddField(x =>
+                        {
+                            x.Name = "Available commands";
+                            x.Value = ((DBSubModule)_command).getDescriptionForCommandUsed(commandName);
+                        });
                     await ReplyAsync("", embed: builder.Build());
                     break;
                 case false:
-                    Command command = (Command)_command;
+                    DBCommand command = (DBCommand)_command;
                     builder = new EmbedBuilder()
                         .WithColor(command.requiredRank.color)
-                        .WithDescription($"{command.syntax}{(command.description == "" ? "" : $"\n\n{command.description}")}\n\nRequired Rank: {command.requiredRank}");
-                    foreach(Parameter parameter in command.parameters)
+                        .WithDescription($"**{command.name}** -- {command.syntax.Replace(command.name, commandName)}{(command.description == "" ? "" : $"\n\n{command.description}")}\n\nRequired Rank: {command.requiredRank}");
+                    foreach (DBParameter parameter in command.parameters)
                     {
                         EmbedFieldBuilder fBuilder = new EmbedFieldBuilder()
                             .WithIsInline(true)
                             .WithName(parameter.name);
                         string s = $"{parameter.description}\n\nOptional: {parameter.optional.ToString()}";
-                        if(parameter.prefix != null)
+                        if (parameter.prefix != null)
                         {
                             s += $"\n\nPossible Prefixes:";
-                            foreach(string prefix in parameter.prefix.Split('|'))
+                            foreach (string prefix in parameter.prefix.Split('|'))
                             {
                                 s += $" {prefix} ";
                             }
@@ -87,8 +92,10 @@ namespace SwarmBot.Modules
             }
         }
     }
+}
+namespace SwarmBot.XML {
 
-    internal class CommandInfoDB
+    public class CommandInfoDB
     {
         private XDocument _document;
         public XElement document { get
@@ -96,7 +103,7 @@ namespace SwarmBot.Modules
                 return _document.Element("Database");
             } }
         public string path { get; internal set; }
-        public List<Group> groups => getGroups();
+        public List<DBGroup> groups => getGroups();
 
         public CommandInfoDB(string path)
         {
@@ -109,46 +116,59 @@ namespace SwarmBot.Modules
             }*/
         }
 
-        public Group getGroupByName(string groupName)
+        public DBGroup getGroupByName(string groupName)
         {
             IEnumerable<XElement> xEs = document.Elements("Group").Where(x => x.Attribute("name").Value == groupName);
             if(xEs.Count() == 1)
             {
-                return new Group(xEs.First());
+                return new DBGroup(xEs.First());
             } else
             {
                 throw new Exception("No groups found by that name");
             }
         }
 
-        public List<Group> getGroups()
+        public List<DBGroup> getGroups()
         {
-            List<Group> groups = new List<Group>();
+            List<DBGroup> groups = new List<DBGroup>();
             foreach(XElement xE in document.Elements("Group"))
             {
-                groups.Add(new Group(xE));
+                groups.Add(new DBGroup(xE));
             }
             return groups;
         }
 
-        public IDBCommand getCommandByName(string commandName)
+        public IDBCommand getCommandByName(string commandName, bool searchAliases = true)
         {
-            IEnumerable<XElement> xEs = document.Elements("Group").Elements("Command").Where(x => x.Element("Name").Value == commandName);
+            /*IEnumerable<XElement> xEs = document.Elements("Group").Elements("Command").Where(x => x.Element("Name").Value == commandName || x.Element("Aliases")?.Elements("Alias")?.Where(y => y.Value == commandName)?.Count() != 0);
             if (xEs.Count() == 1)
             {
-                return new Command(xEs.First());
+                return new DBCommand(xEs.First());
             }
             else
             {
-                xEs = document.Elements("Group").Elements("SubModule").Where(x => x.Element("Name").Value == commandName);
+                xEs = document.Elements("Group").Elements("SubModule").Where(x => x.Element("Name").Value == commandName || x.Element("Aliases")?.Elements("Alias")?.Where(y => y.Value == commandName)?.Count() != 0);
                 if(xEs.Count() == 1)
                 {
-                    return new SubModule(xEs.First());
+                    return new DBSubModule(xEs.First());
                 }
                 else
                 {
                     throw new Exception("No commands found by that name");
                 }
+            }*/
+            IEnumerable<IDBCommand> commands = getCommands().Where(x => x.name == commandName || x.aliases.Contains(commandName));
+            if(commands.Count() == 1)
+            {
+                return commands.First();
+            }
+            else if(commands.Count() < 1)
+            {
+                throw new Exception("No commands found by that name");
+            }
+            else
+            {
+                throw new Exception("Multiple commands found by that name");
             }
         }
 
@@ -157,11 +177,11 @@ namespace SwarmBot.Modules
             List<IDBCommand> commands = new List<IDBCommand>();
             foreach (XElement xE in document.Elements("Group").Elements("Command"))
             {
-                commands.Add(new Command(xE));
+                commands.Add(new DBCommand(xE));
             }
             foreach(XElement xE in document.Elements("Group").Elements("SubModule"))
             {
-                commands.Add(new SubModule(xE));
+                commands.Add(new DBSubModule(xE));
             }
             return commands;
         }
@@ -178,28 +198,28 @@ namespace SwarmBot.Modules
         }
     }
 
-    internal class Group
+    public class DBGroup
     {
         internal string name;
         internal List<IDBCommand> commands;
 
-        internal Group(XElement x)
+        internal DBGroup(XElement x)
         {
             name = x.Attribute("name").Value;
             commands = new List<IDBCommand>();
             foreach(XElement xE in x.Elements("Command"))
             {
-                commands.Add(new Command(xE));
+                commands.Add(new DBCommand(xE));
             }
             foreach(XElement xE in x.Elements("SubModule"))
             {
-                commands.Add(new SubModule(xE));
+                commands.Add(new DBSubModule(xE));
             }
         }
 
         internal IDBCommand getCommandByName(string commandName)
         {
-            IEnumerable<IDBCommand> commands = this.commands.Where(x => x.name == commandName);
+            IEnumerable<IDBCommand> commands = this.commands.Where(x => x.name == commandName || x.aliases.Contains(commandName));
             if(commands.Count() == 1)
             {
                 return commands.First();
@@ -211,14 +231,14 @@ namespace SwarmBot.Modules
         }
     }
 
-    internal class Command : IDBCommand
+    public class DBCommand : IDBCommand
     {
         public string name { get; set; }
         public string syntax {
             get
             {
                 string str = $"**!{name}**";
-                foreach(Parameter parameter in parameters)
+                foreach(DBParameter parameter in parameters)
                 {
                     char st = '|', en = '|';
                     switch(parameter.optional)
@@ -237,15 +257,15 @@ namespace SwarmBot.Modules
                 return str;
             } set { } }
         public List<string> aliases { get; set; }
-        internal string description;
-        internal List<Parameter> parameters;
+        public string description { get; set; }
+        internal List<DBParameter> parameters;
 
         internal bool SwarmServerRequired;
         internal Rank requiredRank;
 
         public bool isSubModule { get; set; }
 
-        internal Command(XElement x)
+        internal DBCommand(XElement x)
         {
             name = x.Element("Name").Value;
             //syntax = x.Element("Syntax").Value;
@@ -255,10 +275,10 @@ namespace SwarmBot.Modules
                 aliases.Add(xE.Value);
             }
             description = x.Element("Description").Value;
-            parameters = new List<Parameter>();
+            parameters = new List<DBParameter>();
             foreach(XElement xE in x.Element("Parameters").Elements("Parameter"))
             {
-                parameters.Add(new Parameter(xE));
+                parameters.Add(new DBParameter(xE));
             }
 
             SwarmServerRequired = x.Element("Requirements").Element("SwarmServerRequired") != null;
@@ -274,7 +294,7 @@ namespace SwarmBot.Modules
         }
     }
 
-    internal class Parameter
+    public class DBParameter
     {
         internal string name;
         internal bool optional;
@@ -283,7 +303,7 @@ namespace SwarmBot.Modules
         internal bool hasContent;
         internal string valueType;
 
-        internal Parameter(XElement x)
+        internal DBParameter(XElement x)
         {
             name = x.Attribute("name").Value;
             optional = x.Attribute("optional") != null;
@@ -294,7 +314,7 @@ namespace SwarmBot.Modules
         }
     }
 
-    internal class SubModule : IDBCommand
+    public class DBSubModule : IDBCommand
     {
         public string name { get; set; }
         public List<string> aliases { get; set; }
@@ -310,8 +330,9 @@ namespace SwarmBot.Modules
             }
         }
         public bool isSubModule { get; set; }
+        public string description { get; set; }
 
-        internal SubModule(XElement x)
+        internal DBSubModule(XElement x)
         {
             name = x.Element("Name").Value;
             aliases = new List<string>();
@@ -320,14 +341,25 @@ namespace SwarmBot.Modules
                 aliases.Add(xE.Value);
             }
             isSubModule = true;
+            description = x.Element("Description").Value.Replace("\\t", "\t");
+        }
+
+        public string getDescriptionForCommandUsed(string command)
+        {
+            if(command.StartsWith("!"))
+            {
+                command = command.Substring(1);
+            }
+            return description.Replace("{initialCommandUsed}", command);
         }
     }
 
-    internal interface IDBCommand
+    public interface IDBCommand
     {
         string name { get; set; }
         List<string> aliases { get; set; }
         string syntax { get; set; }
         bool isSubModule { get; set; }
+        string description { get; set; }
     }
 }

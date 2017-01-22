@@ -21,7 +21,10 @@ namespace SwarmBot.Modules
             string cmd = remainder.Replace(" ", "");
             if (cmd == "")
             {
-                await ReplyAsync("Welcome to the Spawner Swarm Emotes system (beta)! To send an emote, send a message like this '!e <emote_ref>'. To see a list of emotes, send '!emotes list' or '!e list'");
+                CommandInfoDB info = new CommandInfoDB(Config.CommandInfoDBPath);
+                string message = "Avaliable commands are:\n";
+                message += ((DBSubModule)info.getCommandByName("emotes")).getDescriptionForCommandUsed(Context.Message.Content);
+                await ReplyAsync(message);
             }
             else
             {
