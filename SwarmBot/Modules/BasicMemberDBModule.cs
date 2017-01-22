@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace SwarmBot.Modules
 {
-    public class BasicMemberDBModule : ModuleBase
+    public partial class BasicMemberDBModule : ModuleBase
     {
         [Command("getMember"), Summary("Gets information about a member from the Database"), RequireContext(ContextType.Guild), Alias("member", "get")]
         public async Task getMember([Summary("The user to get information about")] IGuildUser user, [Summary("If true, additional information will be provided")] string _verbose = "")

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SwarmBot
 {
-    class Rankup
+    public class Rankup
     {
         public Rank rank;
         public DateTime date;

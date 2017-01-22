@@ -5,10 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Trileans;
+using SwarmBot.Modules;
+using Discord;
 
 namespace SwarmBot.XML
 {
-    class XMLDocument
+    public partial class XMLDocument
     {
         public XDocument document { get; internal set; }
         public string path { get; internal set; }
@@ -32,7 +34,7 @@ namespace SwarmBot.XML
 
         public XMLMember getMemberById(string id)
         {
-            XElement[] memberArr = document.Descendants("Member").Where(x => x.Element("Names").Element("DiscordId").Value == id).ToArray();
+            XElement[] memberArr = document.Element("Database").Elements("Member").Where(x => x.Element("Names").Element("DiscordId").Value == id).ToArray();
             
             if(memberArr.Length == 1) { return new XMLMember(memberArr[0], this); }
             else if(memberArr.Length < 1) { throw new XMLException(XMLErrorCode.NotFound); }
@@ -43,7 +45,10 @@ namespace SwarmBot.XML
         {
             return getMemberById(id.ToString());
         }
-
+        public XMLMember getMemberById(IUser user)
+        {
+            return getMemberById(user.Id);
+        }
         public int getDefine(string value, DefineType _for)
         {
             List<XElement> defines = document.Element("Database").Elements("Define").Where(x => x.Attribute("name").Value == value).Where(x => x.Attribute("for").Value == _for).ToList();

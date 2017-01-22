@@ -212,6 +212,7 @@
     </Compile>
     <Compile Include="Modules\BasicMemberDBModule.cs" />
     <Compile Include="Modules\CommandInfoModule.cs" />
+    <Compile Include="Modules\DeadlyRunnersModule.cs" />
     <Compile Include="Modules\EmoteModule.cs" />
     <Compile Include="Modules\NexusStatsModule.cs" />
     <Compile Include="Modules\Preconditions\RequireUserId.cs" />

@@ -8,7 +8,7 @@ using Trileans;
 
 namespace SwarmBot.XML
 {
-    class XMLMember
+    public partial class XMLMember
     {
         public string name, WFName, SKName, discordName, steamName;
         public ulong discordId;
@@ -28,7 +28,7 @@ namespace SwarmBot.XML
             this.xE = xE;
             this.x = x;
 
-            foreach(XElement rankup in xE.Element("RankupHistory").Descendants("Rankup").ToList())
+            foreach(XElement rankup in xE.Element("RankupHistory").Elements("Rankup").ToList())
             {
                 rankupHistory.Add(new Rankup(rankup));
             }
