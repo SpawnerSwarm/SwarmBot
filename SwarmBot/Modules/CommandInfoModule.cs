@@ -22,7 +22,8 @@ namespace SwarmBot.Modules
             EmbedFooterBuilder footer = new EmbedFooterBuilder()
                 .WithText("() = Required argument. [] = Optional argument.");
             EmbedBuilder builder = new EmbedBuilder()
-                .WithFooter(footer);
+                .WithFooter(footer)
+                .WithColor(Rank.GuildMaster.color);
             foreach(Group group in infoDB.groups)
             {
                 builder.AddField(x =>
@@ -38,34 +39,142 @@ namespace SwarmBot.Modules
             }
             await ReplyAsync("", false, builder.Build());
         }
+        [Command("help")]
+        public async Task help(string commandName)
+        {
+            CommandInfoDB infoDB = new CommandInfoDB(Config.CommandInfoDBPath);
+            IDBCommand _command = infoDB.getCommandByName(commandName.Replace("!", ""));
+            EmbedBuilder builder;
+            switch(_command.isSubModule)
+            {
+                case true:
+                    builder = new EmbedBuilder()
+                        .WithColor(Rank.GuildMaster.color)
+                        .WithDescription(_command.syntax);
+                    await ReplyAsync("", embed: builder.Build());
+                    break;
+                case false:
+                    Command command = (Command)_command;
+                    builder = new EmbedBuilder()
+                        .WithColor(command.requiredRank.color)
+                        .WithDescription($"{command.syntax}{(command.description == "" ? "" : $"\n\n{command.description}")}\n\nRequired Rank: {command.requiredRank}");
+                    foreach(Parameter parameter in command.parameters)
+                    {
+                        EmbedFieldBuilder fBuilder = new EmbedFieldBuilder()
+                            .WithIsInline(true)
+                            .WithName(parameter.name);
+                        string s = $"{parameter.description}\n\nOptional: {parameter.optional.ToString()}";
+                        if(parameter.prefix != null)
+                        {
+                            s += $"\n\nPossible Prefixes:";
+                            foreach(string prefix in parameter.prefix.Split('|'))
+                            {
+                                s += $" {prefix} ";
+                            }
+                        }
+                        s += $"\n\nType: {(parameter.hasContent ? parameter.valueType : "Empty")}";
+                        builder.AddField(x =>
+                        {
+                            x.IsInline = true;
+                            x.Name = parameter.name;
+                            x.Value = s;
+                        });
+                        //fBuilder.WithValue(s);
+                        //builder.AddField(x => x = fBuilder);
+                    }
+                    await ReplyAsync("", embed: builder.Build());
+                    break;
+            }
+        }
     }
 
     internal class CommandInfoDB
     {
-        public XDocument document { get; internal set; }
+        private XDocument _document;
+        public XElement document { get
+            {
+                return _document.Element("Database");
+            } }
         public string path { get; internal set; }
-        public List<Group> groups;
+        public List<Group> groups => getGroups();
 
         public CommandInfoDB(string path)
         {
-            document = XDocument.Load(path);
+            _document = XDocument.Load(path);
             this.path = path;
-            groups = new List<Group>();
-            foreach(XElement xE in document.Element("Database").Elements("Group"))
+            /*groups = new List<Group>();
+            foreach(XElement xE in document.Elements("Group"))
+            {
+                groups.Add(new Group(xE));
+            }*/
+        }
+
+        public Group getGroupByName(string groupName)
+        {
+            IEnumerable<XElement> xEs = document.Elements("Group").Where(x => x.Attribute("name").Value == groupName);
+            if(xEs.Count() == 1)
+            {
+                return new Group(xEs.First());
+            } else
+            {
+                throw new Exception("No groups found by that name");
+            }
+        }
+
+        public List<Group> getGroups()
+        {
+            List<Group> groups = new List<Group>();
+            foreach(XElement xE in document.Elements("Group"))
             {
                 groups.Add(new Group(xE));
             }
+            return groups;
+        }
+
+        public IDBCommand getCommandByName(string commandName)
+        {
+            IEnumerable<XElement> xEs = document.Elements("Group").Elements("Command").Where(x => x.Element("Name").Value == commandName);
+            if (xEs.Count() == 1)
+            {
+                return new Command(xEs.First());
+            }
+            else
+            {
+                xEs = document.Elements("Group").Elements("SubModule").Where(x => x.Element("Name").Value == commandName);
+                if(xEs.Count() == 1)
+                {
+                    return new SubModule(xEs.First());
+                }
+                else
+                {
+                    throw new Exception("No commands found by that name");
+                }
+            }
+        }
+
+        public List<IDBCommand> getCommands()
+        {
+            List<IDBCommand> commands = new List<IDBCommand>();
+            foreach (XElement xE in document.Elements("Group").Elements("Command"))
+            {
+                commands.Add(new Command(xE));
+            }
+            foreach(XElement xE in document.Elements("Group").Elements("SubModule"))
+            {
+                commands.Add(new SubModule(xE));
+            }
+            return commands;
         }
 
         public CommandInfoDB(XDocument document, string path)
         {
-            this.document = document;
+            this._document = document;
             this.path = path;
         }
 
         public void Save(string path)
         {
-            document.Save(path);
+            _document.Save(path);
         }
     }
 
@@ -87,12 +196,46 @@ namespace SwarmBot.Modules
                 commands.Add(new SubModule(xE));
             }
         }
+
+        internal IDBCommand getCommandByName(string commandName)
+        {
+            IEnumerable<IDBCommand> commands = this.commands.Where(x => x.name == commandName);
+            if(commands.Count() == 1)
+            {
+                return commands.First();
+            }
+            else
+            {
+                throw new Exception("No commands found by that name");
+            }
+        }
     }
 
     internal class Command : IDBCommand
     {
         public string name { get; set; }
-        public string syntax { get; set; }
+        public string syntax {
+            get
+            {
+                string str = $"**!{name}**";
+                foreach(Parameter parameter in parameters)
+                {
+                    char st = '|', en = '|';
+                    switch(parameter.optional)
+                    {
+                        case false:
+                            st = '(';
+                            en = ')';
+                            break;
+                        case true:
+                            st = '[';
+                            en = ']';
+                            break;
+                    }
+                    str += $" {st}{(parameter.prefix == null ? "" : $"*{parameter.prefix.Replace("|", "/")}* ")}{(parameter.hasContent ? parameter.name : "")}{en}";
+                }
+                return str;
+            } set { } }
         public List<string> aliases { get; set; }
         internal string description;
         internal List<Parameter> parameters;
@@ -100,10 +243,12 @@ namespace SwarmBot.Modules
         internal bool SwarmServerRequired;
         internal Rank requiredRank;
 
+        public bool isSubModule { get; set; }
+
         internal Command(XElement x)
         {
             name = x.Element("Name").Value;
-            syntax = x.Element("Syntax").Value;
+            //syntax = x.Element("Syntax").Value;
             aliases = new List<string>();
             foreach(XElement xE in x.Element("Aliases")?.Elements("Alias"))
             {
@@ -121,6 +266,11 @@ namespace SwarmBot.Modules
             {
                 requiredRank = x.Element("Requirements").Element("RequiredRank").Value;
             }
+            else
+            {
+                requiredRank = Rank.Recruit;
+            }
+            isSubModule = false;
         }
     }
 
@@ -129,12 +279,18 @@ namespace SwarmBot.Modules
         internal string name;
         internal bool optional;
         internal string description;
+        internal string prefix;
+        internal bool hasContent;
+        internal string valueType;
 
         internal Parameter(XElement x)
         {
             name = x.Attribute("name").Value;
             optional = x.Attribute("optional") != null;
             description = x.Value;
+            prefix = x.Attribute("prefix")?.Value;
+            hasContent = !bool.TryParse(x.Attribute("hasContent")?.Value, out hasContent);
+            valueType = x.Attribute("type").Value;
         }
     }
 
@@ -153,6 +309,7 @@ namespace SwarmBot.Modules
                 
             }
         }
+        public bool isSubModule { get; set; }
 
         internal SubModule(XElement x)
         {
@@ -162,6 +319,7 @@ namespace SwarmBot.Modules
             {
                 aliases.Add(xE.Value);
             }
+            isSubModule = true;
         }
     }
 
@@ -170,5 +328,6 @@ namespace SwarmBot.Modules
         string name { get; set; }
         List<string> aliases { get; set; }
         string syntax { get; set; }
+        bool isSubModule { get; set; }
     }
 }

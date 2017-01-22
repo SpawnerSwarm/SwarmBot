@@ -29,6 +29,8 @@
                                   <xs:attribute name="name" type="xs:string" use="required" />
                                   <xs:attribute name="optional" type="xs:boolean" use="optional" />
                                   <xs:attribute name="prefix" type="xs:string" use="optional" />
+                                  <xs:attribute name="hasContent" type="xs:boolean" use="optional" default="true" />
+                                  <xs:attribute name="type" type="xs:string" use="required" />
                                 </xs:extension>
                               </xs:simpleContent>
                             </xs:complexType>
