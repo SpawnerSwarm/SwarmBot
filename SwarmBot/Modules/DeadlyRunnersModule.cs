@@ -31,7 +31,10 @@ namespace SwarmBot.Modules
             public async Task List()
             {
                 XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+
                 List<Weapon> weapons = memberDB.getAllWeapons();
+                weapons.Sort((x, y) => string.Compare(x.name, y.name));
+
                 EmbedBuilder builder = new EmbedBuilder()
                     .WithTitle("Deadly Runners")
                     .WithColor(Rank.General.color);
@@ -56,7 +59,11 @@ namespace SwarmBot.Modules
                         .WithIconUrl(user.AvatarUrl)
                         .WithName(member.name))
                     .WithColor(Rank.General.color);
-                foreach (Weapon weapon in member.getMastery())
+
+                List<Weapon> weapons = member.getMastery();
+                weapons.Sort((x, y) => string.Compare(x.name, y.name));
+
+                foreach (Weapon weapon in weapons)
                 {
                     builder.Description += $"{weapon.name}\n";
                 }
@@ -136,7 +143,7 @@ namespace SwarmBot.XML
 {
     public partial class XMLMember
     {
-        public IEnumerable<Modules.BasicMemberDBModule.DeadlyRunnersModule.Weapon> getMastery()
+        public List<BasicMemberDBModule.DeadlyRunnersModule.Weapon> getMastery()
         {
             return x.getWeaponsForMember(discordId.ToString());
         }
@@ -186,9 +193,9 @@ namespace SwarmBot.XML
             return weapons;
         }
 
-        public IEnumerable<BasicMemberDBModule.DeadlyRunnersModule.Weapon> getWeaponsForMember(string id)
+        public List<BasicMemberDBModule.DeadlyRunnersModule.Weapon> getWeaponsForMember(string id)
         {
-            return getAllWeapons().Where(x => x._members.Contains(id));
+            return getAllWeapons().Where(x => x._members.Contains(id)).ToList();
         }
 
         public XElement getOrCreateWeapon(string name)
