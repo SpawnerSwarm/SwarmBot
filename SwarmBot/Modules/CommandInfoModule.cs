@@ -62,7 +62,11 @@ namespace SwarmBot.Modules
                     DBCommand command = (DBCommand)_command;
                     builder = new EmbedBuilder()
                         .WithColor(command.requiredRank.color)
-                        .WithDescription($"**{command.name}** -- {command.syntax.Replace(command.name, commandName)}{(command.description == "" ? "" : $"\n\n{command.description}")}\n\nRequired Rank: {command.requiredRank}");
+                        .WithDescription($"**{command.name}** -- {command.syntax.Replace(command.name, commandName)}{(command.description == "" ? "" : $"\n\n{command.description}")}\n\nRequired Rank: {command.requiredRank}\n\nAliases: {command.name}");
+                    foreach(string str in command.aliases)
+                    {
+                        builder.Description += $", {str}";
+                    }
                     foreach (DBParameter parameter in command.parameters)
                     {
                         EmbedFieldBuilder fBuilder = new EmbedFieldBuilder()

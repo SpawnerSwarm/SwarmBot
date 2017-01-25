@@ -130,7 +130,7 @@ namespace SwarmBot.Modules
                 return;
             }
         }
-        [Command("createMember"), Summary("Create a new member in the database"), RequireContext(ContextType.Guild)]
+        [Command("createMember"), Alias("member new") Summary("Create a new member in the database"), RequireContext(ContextType.Guild)]
         public async Task createMember([Summary("The Discord user to create an entry for")] IGuildUser user, [Summary("Optional Arguments"), Remainder] string remainder = "")
         {
             Match cmd = Regex.Match(remainder, @"(?:(?:--date |-d )([^ ]+))", RegexOptions.IgnoreCase);
