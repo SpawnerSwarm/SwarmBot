@@ -41,7 +41,7 @@ namespace SwarmBot.UI
         {
             if(!SwConsole.InvokeRequired)
             {
-                SwConsole.Text += text + "\n";
+                SwConsole.Text += $"{DateTime.Now} -- {text}\n";
             }
             else
             {
