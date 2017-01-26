@@ -53,5 +53,11 @@ namespace SwarmBot.Modules
         {
             await ReplyAsync("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy");
         }
+        [Command("uptime"), Alias("time")]
+        public async Task uptime()
+        {
+            TimeSpan time = DateTime.Now - Program.startTime;
+            await ReplyAsync($"SwarmBot has been online continuously for **{time.Days}** days **{time.Hours}** hours **{time.Minutes}** minutes **{time.Seconds}** seconds");
+        }
     }
 }

@@ -23,6 +23,7 @@ namespace SwarmBot
         /// </summary>
         public delegate void StringDelegate(string string1);
         public static event StringDelegate logHandler;
+        public static DateTime startTime;
 
         public static void Log(string text)
         {
@@ -34,6 +35,7 @@ namespace SwarmBot
         static void Main()
         {
             if (System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Length > 1) { return; }
+            startTime = DateTime.Now;
             Config.ExePath = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location).Directory;
             using (StreamReader sr = File.OpenText(Path.Combine(Config.ExePath.FullName, "config.txt")))
             {
