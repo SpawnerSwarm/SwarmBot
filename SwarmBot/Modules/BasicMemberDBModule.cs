@@ -288,5 +288,19 @@ namespace SwarmBot.Modules
             message += "\n```";
             await ReplyAsync(message);
         }
+
+        [Command("updatewf"), RequireContext(ContextType.Guild)]
+        public async Task updateWF(IUser user, string wf)
+        {
+            XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
+            XMLMember member = memberDB.getMemberById(user);
+
+            XMLMember author = memberDB.getMemberById(Context.User);
+            if(!author.checkPermissions(Rank.Veteran)) { await ReplyAsync("You don't have the permissions to do that"); return; }
+
+            member.xE.Element("Names").Element("Warframe").Value = wf;
+            memberDB.Save(memberDB.path);
+            await ReplyAsync($"Updated Warframe name of {member.name}");
+        }
     }
 }
