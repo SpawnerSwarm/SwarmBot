@@ -9,7 +9,6 @@ using SwarmBot.Warframe;
 using Discord;
 using Discord.Commands;
 using Discord.Modules;
-using Discord.Net;
 using Discord.WebSocket;
 using Discord.Audio;
 using System.Text.RegularExpressions;
@@ -72,6 +71,17 @@ namespace SwarmBot
                     else { await Discord.client.SetGameAsync("DEBUG MODE"); }
                     await WarframeAlertsModule.newAlertReceived(e);
                 }
+            };
+            Discord.client.UserJoined += async (e) =>
+            {
+                if (e.Guild.Id == 137991656547811328)
+                {
+                    await (e.Guild.GetChannel(137991656547811328) as IMessageChannel).SendMessageAsync($"Greetings {e.Username}! Welcome to the Swarm!\nPlease read the guild mail at https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy and ask a Veteran or above if you have any questions!");
+                }
+            };
+            Discord.client.Log += async (e) =>
+            {
+                Log($"Discord.Net Log.\n\tException: {e.Exception}\n\tMessage: {e.Message}\n\tSource: {e.Source}");
             };
 
             Discord.initializeDiscordClient();

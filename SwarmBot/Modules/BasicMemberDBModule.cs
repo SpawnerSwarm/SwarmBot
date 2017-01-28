@@ -147,12 +147,20 @@ namespace SwarmBot.Modules
                 XMLMember author = memberDB.getMemberById(e.e.Author.Id);
                 if (!author.checkPermissions(Rank.Veteran)) { await ReplyAsync("```xl\nSorry, you don't have the permissions to do that\n```"); return; }
 
-                try { memberDB.getMemberById(e.member.Id); }
+                /*try { memberDB.getMemberById(e.member.Id); }
                 catch (XMLException x)
                 {
                     if (x.errorCode == XMLErrorCode.MultipleFound) { await ReplyAsync("`An error occured. Multiple members were found for the provided ID.`"); return; }
                     else if (x.errorCode != XMLErrorCode.NotFound) { await ReplyAsync("`An unexpected error occured. " + x.message + "`"); return; }
+                }*/
+                bool b = false;
+                try { memberDB.getMemberById(e.member.Id); }
+                catch (XMLException x)
+                {
+                    if(x.errorCode != XMLErrorCode.NotFound) { await ReplyAsync("`An unexpected error occured. " + x.message + "`"); return; }
+                    b = true;
                 }
+                if(b == false) { await ReplyAsync("Error: Member already exists!"); return; }
 
                 DateTime date;
                 if (e.date != "") { try { date = DateTime.Parse(e.date); } catch { await ReplyAsync("Invalid Date"); return; } }

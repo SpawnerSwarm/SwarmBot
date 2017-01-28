@@ -46,7 +46,7 @@ namespace SwarmBot.Warframe
             List<XElement> kList = db.keywords.Where(x => Regex.IsMatch(reward, x.Attribute("key").Value, RegexOptions.IgnoreCase)).ToList();
             kList.AddRange(db.keywords.Where(x => Regex.IsMatch(invasionReward1, x.Attribute("key").Value, RegexOptions.IgnoreCase)));
             kList.AddRange(db.keywords.Where(x => Regex.IsMatch(invasionReward2, x.Attribute("key").Value, RegexOptions.IgnoreCase)));
-            kList.AddRange(db.creditAmounts.Where(x => int.Parse(x.Attribute("num").Value) <= int.Parse(credits)));
+            if (credits != "") { kList.AddRange(db.creditAmounts.Where(x => int.Parse(x.Attribute("num").Value) <= int.Parse(credits))); }
             
             foreach(XElement xE in kList)
             {
