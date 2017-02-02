@@ -46,7 +46,9 @@ namespace SwarmBot.Modules
                         x.Value = weapon.listMembers();
                     });
                 }
-                await ReplyAsync("", embed: builder.Build());
+                //await ReplyAsync("", embed: builder.Build());
+                await Context.User.CreateDMChannelAsync().GetAwaiter().GetResult().SendMessageAsync("", embed: builder.Build());
+                await ReplyAsync("Sent the list in a PM");
             }
 
             [Command("viewUser"), Alias("user", "showUser", "infoUser"), Summary("Show the mastery for a specific user"), RequireContext(ContextType.Guild)]
