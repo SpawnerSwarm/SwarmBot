@@ -154,7 +154,15 @@ namespace SwarmBot.Warframe
 
         public async Task<XAttribute> getCreditTrackingForMember(ulong id)
         {
-            return members.Where(x => x.Element("id").Value == id.ToString())?.First()?.Element("Credits")?.Attribute("amount");
+            List<XElement> xEs = members.Where(x => x.Element("id").Value == id.ToString()).ToList();
+            if(members.Count != 0)
+            {
+                return members.First()?.Element("Credits")?.Attribute("amount");
+            }
+            else
+            {
+                return new XAttribute("Credits", null);
+            }
         }
 
         public async Task addCreditTrackingForMember(IUser member, int creditAmount)
