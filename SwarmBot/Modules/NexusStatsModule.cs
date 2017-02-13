@@ -20,8 +20,9 @@ namespace SwarmBot.Modules
     class NexusStatsModule : ModuleBase
     {
         [Command("pricecheck"), Alias("pc"), Summary("Check the price of a warframe item")]
-        public async Task priceCheck(string id)
+        public async Task priceCheck(string id, [Remainder] string moreId = "")
         {
+            if (moreId != "") { id += $" {moreId}"; }
             DiscordCommandArgs e = new DiscordCommandArgs
             {
                 e = Context.Message
@@ -31,24 +32,48 @@ namespace SwarmBot.Modules
             if (t == true)
             {
                 Item i = (Item)t.embedded;
-                //e.Channel.SendMessage(i.Title);
-                string message = "```xl\n";
-                Component[] set = i.Components.Where(x => x.name == "Set").ToArray();
-                if (set.Length > 0)
+
+                EmbedBuilder builder = new EmbedBuilder()
+                    .WithTitle(i.Title)
+                    .WithDescription($"Price Check for search term {id}")
+                    .WithUrl($"https://nexus-stats.com/{i.Type}/{i.id.Replace(" ", "%20")}")
+                    .WithThumbnailUrl($"https://nexus-stats.com/img/items/{i.Title.Replace(" ", "%20")}-min.png");
+
+                if (i.Type == "Mods")
                 {
-                    message += "Average complete set price is " + set[0].avg + "\n";
-                }
-                foreach (Component component in i.Components)
-                {
-                    if (component.name != "Set")
+                    builder.AddField(x =>
                     {
-                        message += "\t" + component.name + " average price is " + component.avg + "\n";
-                    }
+                        x.Name = "Single Unit";
+                        x.Value = i.Component("Single Unit").getAverage();
+                        x.Value += $"\n\nDemand: {i.SupDem[1]}%, Supply: {i.SupDem[0]}%";
+                    });
                 }
-                message += "Supply is at " + i.SupDem[0] + "%\n";
-                message += "Demand is at " + i.SupDem[1] + "%\n";
-                message += "\n```\nThis feature is in Beta. Stats provided by https://nexus-stats.com.";
-                await e.e.Channel.SendMessageAsync(message);
+                else if (i.Type == "Prime")
+                {
+                    foreach(Component component in i.Components.Where(x => x.name != "Set"))
+                    {
+                        builder.AddField(x =>
+                        {
+                            x.Name = component.name;
+                            x.Value = component.getAverage();
+                            x.IsInline = true;
+                        });
+                    }
+                    builder.AddField(x =>
+                    {
+                        x.Name = "Set";
+                        x.Value = i.Component("Set").getAverage();
+                        x.Value += $"\n\nDemand: {i.SupDem[1]}%, Supply: {i.SupDem[0]}%";
+                        x.IsInline = true;
+                    });
+                }
+
+                EmbedFooterBuilder footer = new EmbedFooterBuilder()
+                    .WithIconUrl("https://nexus-stats.com/img/logo.png")
+                    .WithText("Nexus-Stats -- https://nexus-stats.com");
+                builder.WithFooter(footer);
+
+                await ReplyAsync("", embed: builder.Build());
             }
             else
             {
@@ -101,12 +126,27 @@ namespace SwarmBot.Modules
 
     public class Item
     {
-        public string _id;
+        public string id;
         public string Title;
         public string Type;
         public short[] SupDem;
         public short[] SupDemNum;
         public Component[] Components;
+
+        public Component Component(string name)
+        {
+            List<Component> components = Components.Where(x => x.name == name).ToList();
+            if(components.Count == 1)
+            {
+                return components.First();
+            }
+            else
+            {
+                return new ComponentBuilder()
+                    .WithName("No Data")
+                    .WithAvg("No Data");
+            }
+        }
     }
     public class Component
     {
@@ -114,5 +154,37 @@ namespace SwarmBot.Modules
         public string avg;
         public string comp_val_rt;
         public bool visible;
+
+        public string getAverage()
+        {
+            return (this.avg == "" ? "No Data" : avg);
+        }
+    }
+    public class ComponentBuilder : Component
+    {
+        public ComponentBuilder WithName(string name)
+        {
+            this.name = name;
+            return this;
+        }
+        public ComponentBuilder WithAvg(string avg)
+        {
+            this.avg = avg;
+            return this;
+        }
+        public ComponentBuilder WithComp_Val_Rt(string comp_val_rt)
+        {
+            this.comp_val_rt = comp_val_rt;
+            return this;
+        }
+        public ComponentBuilder WithVisible(bool visible)
+        {
+            this.visible = visible;
+            return this;
+        }
+        public Component Build()
+        {
+            return (Component)this;
+        }
     }
 }
