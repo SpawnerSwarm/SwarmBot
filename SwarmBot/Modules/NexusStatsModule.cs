@@ -39,7 +39,7 @@ namespace SwarmBot.Modules
                     .WithUrl($"https://nexus-stats.com/{i.Type}/{i.id.Replace(" ", "%20")}")
                     .WithThumbnailUrl($"https://nexus-stats.com/img/items/{i.Title.Replace(" ", "%20")}-min.png");
 
-                if (i.Type == "Mods")
+                if (i.Type == "Mods" || i.Type == "Arcane")
                 {
                     builder.AddField(x =>
                     {
@@ -70,7 +70,7 @@ namespace SwarmBot.Modules
 
                 EmbedFooterBuilder footer = new EmbedFooterBuilder()
                     .WithIconUrl("https://nexus-stats.com/img/logo.png")
-                    .WithText("Nexus-Stats -- https://nexus-stats.com");
+                    .WithText("NexusStats - https://nexus-stats.com");
                 builder.WithFooter(footer);
 
                 await ReplyAsync("", embed: builder.Build());
