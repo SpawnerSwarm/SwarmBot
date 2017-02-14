@@ -71,6 +71,15 @@ namespace SwarmBot
                     else { await Discord.client.SetGameAsync("DEBUG MODE"); }
                     await WarframeAlertsModule.newAlertReceived(e);
                 }
+                else if(e.Channel.Id == 137991656547811328)
+                {
+                    IGuildUser user = await (e.Channel as IGuildChannel).GetUserAsync(e.Author.Id);
+                    if(user.RoleIds.Contains<ulong>(280864289420738561) && e.Attachments.Count >= 1)
+                    {
+                        await (e as IUserMessage).AddReactionAsync(Emoji.Parse("<:Weeb:230529609475686400>"));
+                    }
+                    
+                }
             };
             Discord.client.UserJoined += async (e) =>
             {
