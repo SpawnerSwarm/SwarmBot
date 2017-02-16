@@ -51,7 +51,7 @@ namespace SwarmBot.Modules
         [Command("guildmail"), Alias("gm", "mail")]
         public async Task guildmail()
         {
-            await ReplyAsync("https://1drv.ms/b/s!AnyOF5dOdoX0v0iXHyVMBfggyOqy");
+            await ReplyAsync(Config.guildmailURL);
         }
         [Command("uptime"), Alias("time")]
         public async Task uptime()

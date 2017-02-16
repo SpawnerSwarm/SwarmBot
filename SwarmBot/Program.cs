@@ -46,6 +46,7 @@ namespace SwarmBot
                 Config.discordToken = sr.ReadLine();
                 Config.discordArchiveServerId = sr.ReadLine();
                 Config.discordSwarmServerId = sr.ReadLine();
+                Config.guildmailURL = sr.ReadLine();
                 Config.debugModeActive = false;
             }
             Application.EnableVisualStyles();
@@ -160,6 +161,7 @@ namespace SwarmBot
         public static string discordToken;
         public static string discordArchiveServerId;
         public static string discordSwarmServerId;
+        public static string guildmailURL;
         public static bool debugModeActive;
     }
 }
