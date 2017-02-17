@@ -43,7 +43,7 @@ namespace SwarmBot.Modules
             page = Math.Abs(page);
             try
             {
-                string message = $"Page {(page == 0 ? 1 : page)}. To move to the next page, use **!e list {(page == 0 ? 2 : page + 1)}**. To view information about a specific emote, use **!e list <emote_ref>**.\n";
+                string message = $"Page {(page == 0 ? 1 : page)}. To move to the next page, use **!e list {(page == 0 ? 2 : page + 1)}**.\n";
                 List<Emote> eList = emotes.getBatchEmotes(page, 5);
                 short i = 0;
                 foreach (Emote emote in eList)
