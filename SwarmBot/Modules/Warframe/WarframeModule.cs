@@ -43,12 +43,10 @@ namespace SwarmBot.Warframe
             process.Start();
             //* Read the output (or the error)
             string output = process.StandardOutput.ReadToEnd();
-            Console.WriteLine(output);
             string err = process.StandardError.ReadToEnd();
-            Console.WriteLine(err);
             process.WaitForExit();
 
-            if (err != null) { Program.Log(err); }
+            if (err != "") { Program.Log(err); }
 
             return output;
         }
@@ -58,13 +56,13 @@ namespace SwarmBot.Warframe
             get
             {
                 string data = runCommand("alerts");
-                Program.Log(data);
                 JArray json = JArray.Parse(data);
                 List<Alert> alerts = new List<Alert>();
                 foreach (JObject obj in json)
                 {
                     alerts.Add(JsonConvert.DeserializeObject<Alert>(obj.ToString()));
                 }
+                alerts.Sort((x, y) => TimeSpan.Compare(x.remainingTime, y.remainingTime));
                 return alerts;
             }
         }
@@ -85,6 +83,22 @@ namespace SwarmBot.Warframe
         public string activation;
         public string expiry;
         public Mission mission;
+
+        private static readonly TimeSpan __defTime;
+        private TimeSpan _remainingTime;
+        public TimeSpan remainingTime
+        {
+            get
+            {
+                if(_remainingTime != __defTime) { return _remainingTime; }
+                else
+                {
+                    TimeSpan rem = DateTime.Parse(expiry.Split('.').First()) - DateTime.UtcNow;
+                    _remainingTime = rem;
+                    return rem;
+                }
+            }
+        }
 
         public class AlertRewards
         {

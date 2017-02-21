@@ -34,7 +34,7 @@ namespace SwarmBot.Warframe
                     rewardtext += $"{reward.count} {reward.type} + ";
                 }
                 rewardtext += $"{alert.mission.reward.credits}cr";
-                TimeSpan rem = DateTime.Parse(alert.expiry.Split('.').First()) - DateTime.UtcNow;
+                TimeSpan rem = alert.remainingTime;
                 string remainingTime = $"{rem.Days}d {rem.Hours}h {rem.Minutes}m {rem.Seconds}s remaining";
                 builder.AddField(x =>
                 {
