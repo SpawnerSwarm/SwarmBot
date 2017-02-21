@@ -47,6 +47,8 @@ namespace SwarmBot
                 Config.discordArchiveServerId = sr.ReadLine();
                 Config.discordSwarmServerId = sr.ReadLine();
                 Config.guildmailURL = sr.ReadLine();
+                Config.wfWorldStateURL = sr.ReadLine();
+                Config.wfJSPath = sr.ReadLine();
                 Config.debugModeActive = false;
             }
             Application.EnableVisualStyles();
@@ -162,6 +164,8 @@ namespace SwarmBot
         public static string discordArchiveServerId;
         public static string discordSwarmServerId;
         public static string guildmailURL;
+        public static string wfWorldStateURL;
+        public static string wfJSPath;
         public static bool debugModeActive;
     }
 }

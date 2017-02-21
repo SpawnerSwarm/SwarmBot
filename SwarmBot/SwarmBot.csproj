@@ -237,11 +237,12 @@
     <Compile Include="Modules\CommandInfoModule.cs" />
     <Compile Include="Modules\DeadlyRunnersModule.cs" />
     <Compile Include="Modules\EmoteModule.cs" />
-    <Compile Include="Modules\NexusStatsModule.cs" />
+    <Compile Include="Modules\Warframe\NexusStatsModule.cs" />
     <Compile Include="Modules\Preconditions\RequireUserId.cs" />
     <Compile Include="Modules\RandomCommandsModule.cs" />
     <Compile Include="Modules\TaggingModule.cs" />
-    <Compile Include="Modules\WarframeAlertsModule.cs" />
+    <Compile Include="Modules\Warframe\WarframeAlertsModule.cs" />
+    <Compile Include="Modules\Warframe\WarframeModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rankup.cs" />

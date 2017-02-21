@@ -196,6 +196,7 @@ namespace SwarmBot
             await commands.AddModuleAsync<Modules.TaggingModule>();
             await commands.AddModuleAsync<Modules.CommandInfoModule>();
             await commands.AddModuleAsync<Modules.NexusStatsModule>();
+            await commands.AddModuleAsync<Warframe.WarframeModule>();
             //await commands.AddModuleAsync<Warframe.WarframeAlertsModule>();
             //await commands.AddTypeReader<bool>(new TypeReaders.BooleanTypeReader);
 

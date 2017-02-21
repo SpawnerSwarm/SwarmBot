@@ -13,11 +13,40 @@ using System.Text.RegularExpressions;
 
 namespace SwarmBot.Warframe
 {
-    [Group("warframealerts"), Alias("wfalerts", "alerts", "wf")]
+    [Group("warframe alerts"), Alias("warframealerts", "wf alerts", "wfalerts", "alerts", "wf")]
     public partial class WarframeAlertsModule : ModuleBase
     {
-        [Command()]
+        [Command(), RequireOwner]
         public async Task Default()
+        {
+            List<Alert> alerts = WorldState.Alerts;
+            EmbedBuilder builder = new EmbedBuilder()
+                .WithTitle("Alerts");
+            foreach(Alert alert in alerts)
+            {
+                string rewardtext = "";
+                foreach(string reward in alert.mission.reward.items)
+                {
+                    rewardtext += $"{reward} + ";
+                }
+                foreach(Alert.AlertRewards.CountedItem reward in alert.mission.reward.countedItems)
+                {
+                    rewardtext += $"{reward.count} {reward.type} + ";
+                }
+                rewardtext += $"{alert.mission.reward.credits}cr";
+                TimeSpan rem = DateTime.Parse(alert.expiry.Split('.').First()) - DateTime.UtcNow;
+                string remainingTime = $"{rem.Days}d {rem.Hours}h {rem.Minutes}m {rem.Seconds}s remaining";
+                builder.AddField(x =>
+                {
+                    x.Name = $"{(alert.mission.archwingRequired ? "ARCHWING " : "")} {alert.mission.missionFaction} {alert.mission.missionType} on {alert.mission.node}";
+                    x.Value = $"{rewardtext}\nLevel {alert.mission.minEnemyLevel} - {alert.mission.maxEnemyLevel}\n{remainingTime}";
+                });
+            }
+            await ReplyAsync("", embed:builder.Build());
+        }
+
+        [Command("tracking")]
+        public async Task Tracking()
         {
             AlertsDB db = new AlertsDB(Config.AlertsDBPath);
 
