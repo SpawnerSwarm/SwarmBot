@@ -117,53 +117,13 @@ namespace SwarmBot.Warframe
     public class Mission
     {
         public string node;
-        private string type;
-        private string faction;
+        public string type;
+        public string faction;
         public Alert.AlertRewards reward;
         public short minEnemyLevel;
         public short maxEnemyLevel;
         public short maxWaveNum;
         public bool nightmare;
         public bool archwingRequired;
-        
-        public Type missionType
-        {
-            get
-            {
-                Type type;
-                Enum.TryParse<Type>(this.type, out type);
-                return type;
-            }
-        }
-        public Faction missionFaction
-        {
-            get
-            {
-                Faction faction;
-                Enum.TryParse<Faction>(this.faction, out faction);
-                return faction;
-            }
-        }
-
-        public enum Type
-        {
-            Excavation,
-            Sabotage,
-            MobileDefense,
-            Assassination,
-            Extermination,
-            Hive,
-            Defense,
-            Interception,
-            Rathuum,
-            Conclave,
-            Rescue,
-            Spy,
-            Survival,
-            Capture,
-            DarkSector,
-            Hijack,
-            Assault
-        }
     }
 }

@@ -38,7 +38,7 @@ namespace SwarmBot.Warframe
                 string remainingTime = $"{rem.Days}d {rem.Hours}h {rem.Minutes}m {rem.Seconds}s remaining";
                 builder.AddField(x =>
                 {
-                    x.Name = $"{(alert.mission.archwingRequired ? "ARCHWING " : "")} {alert.mission.missionFaction} {alert.mission.missionType} on {alert.mission.node}";
+                    x.Name = $"{(alert.mission.archwingRequired ? "ARCHWING " : "")} {alert.mission.faction} {alert.mission.type} on {alert.mission.node}";
                     x.Value = $"{rewardtext}\nLevel {alert.mission.minEnemyLevel} - {alert.mission.maxEnemyLevel}\n{remainingTime}";
                 });
             }
