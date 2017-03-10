@@ -14,6 +14,28 @@ namespace SwarmBot.Modules
 {
     class TaggingModule : ModuleBase
     {
+        public static async Task assignRankTagsToMember(IGuildUser member, IUserMessage e, Rank rank)
+        {
+            for (int i = 1; i <= rank; i++)
+            {
+                IRole role = (e.Channel as IGuildChannel).Guild.Roles.Where(x => x.Name == (Rank)i).First();
+                if (!member.RoleIds.Contains(role.Id))
+                {
+                    await Discord.applyRoleToMember(member, e, (Rank)i);
+                    await Task.Delay(1000);
+                }
+            }
+            for (int i = 7; i > rank; i--)
+            {
+                IRole role = (e.Channel as IGuildChannel).Guild.Roles.Where(x => x.Name == (Rank)i).First();
+                if (member.RoleIds.Contains(role.Id))
+                {
+                    await Discord.removeRoleFromMember(member, e, (Rank)i);
+                    await Task.Delay(1000);
+                }
+            }
+        }
+        
         [Command("tagme"), Alias("tag"), Summary("Applies a discord notification tag for a specific group"), RequireContext(ContextType.Guild)]
         public async Task tagme([Summary("The tag to be applied")] string tag)
         {
@@ -31,12 +53,7 @@ namespace SwarmBot.Modules
                 XMLDocument memberDB = new XMLDocument(Config.MemberDBPath);
                 XMLMember member = memberDB.getMemberById(e.member.Id);
 
-                for (int i = 1; i <= member.rank; i++)
-                {
-                    //await (e.member as IGuildUser).AddRolesAsync(((e.e.Channel as IGuildChannel)?.Guild as IGuild).Roles.Where(x => x.Name == ((Rank)i).ToString()).First());
-                    await Discord.applyRoleToMember(e.member, e.e, (Rank)i);
-                    await Task.Delay(300);
-                }
+                await assignRankTagsToMember((e.member as IGuildUser), e.e, member.rank);
                 await e.e.Channel.SendMessageAsync("Successfully gave you the rank tags!");
                 Program.Log("Added rank tags through " + member.rank.ToString() + " to member " + member.name);
                 return;

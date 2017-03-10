@@ -238,7 +238,8 @@ namespace SwarmBot.Modules
                     {
                         trilean trilean = member.Promote(targetDate, targetRank);
                         //await (e.member as IGuildUser).AddRolesAsync(((e.e.Channel as IGuildChannel)?.Guild as SocketGuild).Roles.Where(x => x.Name == (Rank)trilean.embedded).First());
-                        await Discord.applyRoleToMember(e.member, e.e, (Rank)trilean.embedded);
+
+                        TaggingModule.assignRankTagsToMember((e.member as IGuildUser), e.e, (Rank)trilean.embedded);
                         await ReplyAsync("```xl\nSuccessfully promoted " + member.name + " to " + trilean.embedded + "\n```");
                     }
                     catch (XMLException x)

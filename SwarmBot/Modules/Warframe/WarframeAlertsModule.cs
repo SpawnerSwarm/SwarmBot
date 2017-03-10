@@ -16,7 +16,7 @@ namespace SwarmBot.Warframe
     [Group("warframe alerts"), Alias("warframealerts", "wf alerts", "wfalerts", "alerts", "wf")]
     public partial class WarframeAlertsModule : ModuleBase
     {
-        [Command(), RequireOwner]
+        [Command()]
         public async Task Default()
         {
             List<Alert> alerts = WorldState.Alerts;

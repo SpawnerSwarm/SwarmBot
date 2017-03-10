@@ -212,9 +212,14 @@ namespace SwarmBot
             if (!(message.HasMentionPrefix(client.CurrentUser, ref argPos) || message.HasCharPrefix('!', ref argPos))) return;
 
             var context = new CommandContext(client, message);
+            Task.Run(() => ExecuteCommand(context, argPos, message));
+        }
+
+        public async Task ExecuteCommand(CommandContext context, int argPos, SocketUserMessage message)
+        {
             var result = await commands.ExecuteAsync(context, argPos, map);
 
-            if(!result.IsSuccess)
+            if (!result.IsSuccess)
             {
                 await message.Channel.SendMessageAsync($"**Error:** {result.ErrorReason}");
             }
