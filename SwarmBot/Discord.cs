@@ -51,6 +51,8 @@ namespace SwarmBot
     {
         public static DiscordSocketClient client;
         public static CommandHandler handler;
+        public static Dictionary<ulong, short> userImageInfractions = new Dictionary<ulong, short>();
+        public static Dictionary<ulong, DateTime> userImageInfractionTimeouts = new Dictionary<ulong, DateTime>();
 
         public static async Task applyRoleToMember(IUser member, IUserMessage e, string roleName)
         {

@@ -59,5 +59,13 @@ namespace SwarmBot.Modules
             TimeSpan time = DateTime.Now - Program.startTime;
             await ReplyAsync($"SwarmBot has been online continuously for **{time.Days}** days **{time.Hours}** hours **{time.Minutes}** minutes **{time.Seconds}** seconds");
         }
+
+        //Debug Commands
+        [Command("infractions"), RequireOwner]
+        public async Task infractions(IUser user = null)
+        {
+            if (user == null) { user = Context.User; }
+            await ReplyAsync($"{user.Username} has {Discord.userImageInfractions[user.Id]} with a {(DateTime.Now - Discord.userImageInfractionTimeouts[user.Id])} delay");
+        }
     }
 }

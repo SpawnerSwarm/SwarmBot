@@ -74,12 +74,31 @@ namespace SwarmBot
                     else { await Discord.client.SetGameAsync("DEBUG MODE"); }
                     await WarframeAlertsModule.newAlertReceived(e);
                 }
-                else if(e.Channel.Id == 137991656547811328)
+                else if((e.Channel.Id == 137991656547811328 || e.Channel.Id == 165649798551175169) && !e.Author.IsBot)
                 {
                     IGuildUser user = await (e.Channel as IGuildChannel).GetUserAsync(e.Author.Id);
-                    if(user.RoleIds.Contains<ulong>(280864289420738561) && e.Attachments.Count >= 1)
+                    if (e.Attachments.Count >= 1 && user.RoleIds.Contains<ulong>(280864289420738561))
                     {
                         await (e as IUserMessage).AddReactionAsync(Emoji.Parse("<:Weeb:230529609475686400>"));
+                    }
+                    else if(e.Attachments.Count >= 1 || e.Embeds.Count >= 1)
+                    {
+                        if (!Discord.userImageInfractionTimeouts.ContainsKey(user.Id) || Discord.userImageInfractionTimeouts[user.Id] == null) { Discord.userImageInfractionTimeouts.Add(user.Id, DateTime.Now); }
+                        if (!Discord.userImageInfractions.ContainsKey(user.Id)) { Discord.userImageInfractions.Add(user.Id, 0); }
+                        if (TimeSpan.Compare(new TimeSpan(0, 5, 0), DateTime.Now - Discord.userImageInfractionTimeouts[user.Id]) <= 0)
+                        {
+                            Discord.userImageInfractions[user.Id] = 0;
+                        }
+                        Discord.userImageInfractions[user.Id] += (short)(e.Attachments.Count + e.Embeds.Count);
+                        if (Discord.userImageInfractions[user.Id] > 5)
+                        {
+                            await e.DeleteAsync();
+                            await e.Channel.SendMessageAsync("Sorry, you've been sending too many images. Please wait 5 minutes before sending another one.");
+                        }
+                        else
+                        {
+                            Discord.userImageInfractionTimeouts[user.Id] = DateTime.Now;
+                        }
                     }
                     
                 }
