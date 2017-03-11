@@ -242,6 +242,7 @@
     <Compile Include="Modules\RandomCommandsModule.cs" />
     <Compile Include="Modules\TaggingModule.cs" />
     <Compile Include="Modules\Warframe\WarframeAlertsModule.cs" />
+    <Compile Include="Modules\Warframe\WarframeFissuresModule.cs" />
     <Compile Include="Modules\Warframe\WarframeModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

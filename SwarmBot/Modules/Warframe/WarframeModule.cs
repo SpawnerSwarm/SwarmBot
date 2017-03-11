@@ -66,31 +66,37 @@ namespace SwarmBot.Warframe
                 return alerts;
             }
         }
+        //Don't ask me why the fissures don't use the Mission format
+        public static List<Fissure> Fissures
+        {
+            get
+            {
+                string data = runCommand("fissures");
+                JArray json = JArray.Parse(data);
+                List<Fissure> fissures = new List<Fissure>();
+                foreach (JObject obj in json)
+                {
+                    fissures.Add(JsonConvert.DeserializeObject<Fissure>(obj.ToString()));
+                }
+                fissures = fissures.OrderBy(x => x.tierNum).ToList();
+                return fissures;
+            }
+        }
     }
 
-    public enum Faction
+    public class WorldStateEvent
     {
-        Grineer,
-        Corpus,
-        Infested,
-        Corrupted,
-        Orokin
-    }
-
-    public class Alert
-    {
-        public string id;
         public string activation;
         public string expiry;
-        public Mission mission;
 
         private static readonly TimeSpan __defTime;
+
         private TimeSpan _remainingTime;
         public TimeSpan remainingTime
         {
             get
             {
-                if(_remainingTime != __defTime) { return _remainingTime; }
+                if (_remainingTime != __defTime) { return _remainingTime; }
                 else
                 {
                     TimeSpan rem = DateTime.Parse(expiry.Split('.').First()) - DateTime.UtcNow;
@@ -99,6 +105,12 @@ namespace SwarmBot.Warframe
                 }
             }
         }
+    }
+
+    public class Alert : WorldStateEvent
+    {
+        public string id;
+        public Mission mission;
 
         public class AlertRewards
         {
@@ -112,6 +124,16 @@ namespace SwarmBot.Warframe
                 public string type;
             }
         }
+    }
+
+    public class Fissure : WorldStateEvent
+    {
+        public string id;
+        public string node;
+        public string missionType;
+        public string enemy;
+        public string tier;
+        public short tierNum;
     }
 
     public class Mission
